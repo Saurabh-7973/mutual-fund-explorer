@@ -14,7 +14,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
 import { SegmentedRow } from '@/components/ui/SegmentedRow';
-import { formatDate, todayInIndia } from '@/domain/dates';
+import { formatDate, parseIsoDate, todayInIndia } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
 import { formatInr, formatNav } from '@/domain/format';
 import { lastPoint, resolvePurchaseNavWithLatest } from '@/domain/nav';
@@ -30,7 +30,13 @@ import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 export default function AddHoldingScreen() {
-  const params = useLocalSearchParams<{ code: string; name?: string }>();
+  const params = useLocalSearchParams<{
+    code: string;
+    name?: string;
+    mode?: string;
+    amount?: string;
+    start?: string;
+  }>();
   const schemeCode = parseSchemeCode(params.code);
   if (schemeCode === null) {
     return (
@@ -43,10 +49,30 @@ export default function AddHoldingScreen() {
       </View>
     );
   }
-  return <AddHoldingForm schemeCode={schemeCode} paramName={params.name} />;
+  return (
+    <AddHoldingForm
+      schemeCode={schemeCode}
+      paramName={params.name}
+      sipPrefill={params.mode === 'sip' ? { amount: params.amount, start: parseIsoDate(params.start ?? '') } : null}
+    />
+  );
 }
 
-function AddHoldingForm({ schemeCode, paramName }: { schemeCode: number; paramName: string | undefined }) {
+interface SipPrefill {
+  amount: string | undefined;
+  start: IsoDate | null;
+}
+
+function AddHoldingForm({
+  schemeCode,
+  paramName,
+  sipPrefill,
+}: {
+  schemeCode: number;
+  paramName: string | undefined;
+  /** From "Add instalments due" on the fund page: open in SIP mode with these values. */
+  sipPrefill: SipPrefill | null;
+}) {
   const { colors, radius, spacing, typography } = useTheme();
   const series = useFundSeries(schemeCode);
   const { history, latest, points } = series;
@@ -59,7 +85,7 @@ function AddHoldingForm({ schemeCode, paramName }: { schemeCode: number; paramNa
   const [unitsTouched, setUnitsTouched] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState<IsoDate | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [mode, setMode] = useState<'once' | 'sip'>('once');
+  const [mode, setMode] = useState<'once' | 'sip'>(sipPrefill !== null ? 'sip' : 'once');
 
   const units = validateUnits(unitsText);
   // Raw history points plus the /latest point separately: never the merged series.
@@ -138,6 +164,8 @@ function AddHoldingForm({ schemeCode, paramName }: { schemeCode: number; paramNa
               latestPoint={latest.data?.point ?? null}
               points={points}
               today={today}
+              initialAmount={sipPrefill?.amount}
+              initialStart={sipPrefill?.start ?? null}
             />
           ) : history.isLoading ? (
             <AppText variant="caption" tone="muted">

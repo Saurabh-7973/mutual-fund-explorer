@@ -32,18 +32,30 @@ export interface SipFormProps {
   /** History merged with /latest: what the preview is valued at. */
   points: readonly NavPoint[];
   today: IsoDate;
+  /** Prefilled when continuing a detected SIP. */
+  initialAmount?: string;
+  initialStart?: IsoDate | null;
 }
 
 /**
  * A monthly SIP added in one go: amount and start date, then every instalment up to today
  * is priced like a single purchase. Built for people with years of SIPs to catch up on.
  */
-export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, points, today }: SipFormProps) {
+export function SipForm({
+  schemeCode,
+  schemeName,
+  historyPoints,
+  latestPoint,
+  points,
+  today,
+  initialAmount,
+  initialStart = null,
+}: SipFormProps) {
   const { colors, radius, spacing, typography } = useTheme();
   const addLot = usePortfolioStore((s) => s.addLot);
-  const [amountText, setAmountText] = useState('');
+  const [amountText, setAmountText] = useState(initialAmount ?? '');
   const [amountTouched, setAmountTouched] = useState(false);
-  const [startDate, setStartDate] = useState<IsoDate | null>(null);
+  const [startDate, setStartDate] = useState<IsoDate | null>(initialStart);
   const [submitted, setSubmitted] = useState(false);
 
   const amount = validateSipAmount(amountText);
@@ -162,12 +174,6 @@ export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, po
               XIRR {formatPercent(preview.xirr)} a year
             </AppText>
           )}
-          {plan.awaiting.length > 0 && (
-            <AppText variant="caption" tone="warning">
-              The instalment of {formatDate(plan.awaiting[0] ?? today)} isn't included: its NAV isn't published yet. Add
-              it later as a single purchase.
-            </AppText>
-          )}
           <AppText variant="caption" tone="muted">
             Units are worked out as the amount ÷ the NAV of each instalment's date (or the next NAV after a holiday).
             Your statement may differ in the last decimal because of stamp duty.
@@ -175,10 +181,19 @@ export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, po
         </Card>
       )}
 
+      {plan !== null && plan.awaiting.length > 0 && (
+        // Shown even when nothing can be saved yet, so "why is Save empty?" has an answer.
+        <AppText variant="caption" tone="warning" accessibilityLiveRegion="polite">
+          {count === 0
+            ? `The instalment of ${formatDate(plan.awaiting[0] ?? today)} can't be priced yet: its NAV isn't published. Add it once it is, usually the next business day.`
+            : `The instalment of ${formatDate(plan.awaiting[0] ?? today)} isn't included: its NAV isn't published yet. Add it later.`}
+        </AppText>
+      )}
+
       <Button
         label={count > 0 ? `Save ${count} ${count === 1 ? 'instalment' : 'instalments'}` : 'Save'}
         onPress={save}
-        disabled={submitted && count === 0}
+        disabled={count === 0 && (submitted || plan !== null)}
       />
     </View>
   );

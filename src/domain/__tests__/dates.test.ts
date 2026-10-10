@@ -8,6 +8,7 @@ import {
   formatAsOf,
   formatDate,
   formatDuration,
+  ordinalDay,
   formatMonthYear,
   fromLocalDate,
   parseApiDate,
@@ -104,5 +105,13 @@ describe('formatDuration', () => {
     expect(formatDuration(365)).toBe('1 year');
     expect(formatDuration(430)).toBe('1 year 2 months');
     expect(formatDuration(1100)).toBe('3 years');
+  });
+});
+
+describe('ordinalDay', () => {
+  it('uses the right suffix, including the teens', () => {
+    expect([1, 2, 3, 4, 10, 11, 12, 13, 21, 22, 23, 31].map(ordinalDay)).toEqual([
+      '1st', '2nd', '3rd', '4th', '10th', '11th', '12th', '13th', '21st', '22nd', '23rd', '31st',
+    ]);
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { addDays } from '../dates';
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { MAX_SIP_INSTALMENTS, planSip, sipGain } from '../sip';
+import { MAX_SIP_INSTALMENTS, detectSip, planSip, sipGain } from '../sip';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -66,5 +66,34 @@ describe('sipGain', () => {
     expect(formatInr(result.gain, VALUE_SCALE, 'always')).toBe('+₹1,28,155.18');
     expect(result.returnHundredths).toBe(4497n);
     expect(sipGain(0n, { paid: 0n }).returnHundredths).toBeNull();
+  });
+});
+
+describe('detectSip', () => {
+  const points = daily('2025-01-01', 400, '10.0000');
+
+  it('recognises the SIP that planSip created and says when the next one is due', () => {
+    const plan = planSip(points, null, 5000, d('2025-01-31'), d('2025-06-15'));
+    const sip = detectSip(plan.instalments);
+    expect(sip).toEqual({ amountRupees: 5000, dayOfMonth: 31, lastDate: '2025-05-31', nextDate: '2025-06-30' });
+  });
+
+  it('needs three monthly purchases of the same amount', () => {
+    const two = planSip(points, null, 5000, d('2025-01-10'), d('2025-02-20')).instalments;
+    expect(detectSip(two)).toBeNull();
+    const mixed = [
+      ...planSip(points, null, 5000, d('2025-01-10'), d('2025-03-20')).instalments,
+      ...planSip(points, null, 2000, d('2025-04-10'), d('2025-04-20')).instalments,
+    ];
+    expect(detectSip(mixed)).toBeNull(); // the latest run (₹2,000) is a single purchase
+  });
+
+  it('ignores a one-off purchase before the run', () => {
+    const lots = [
+      { units: '7', purchaseDate: d('2024-12-03'), applied: { navDate: d('2024-12-03'), nav: '10.0000' } },
+      ...planSip(points, null, 1000, d('2025-01-10'), d('2025-04-20')).instalments,
+    ];
+    expect(detectSip(lots)?.amountRupees).toBe(1000);
+    expect(detectSip(lots)?.nextDate).toBe('2025-05-10');
   });
 });

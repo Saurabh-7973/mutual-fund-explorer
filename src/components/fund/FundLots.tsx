@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 
-import { formatDate } from '@/domain/dates';
+import { formatDate, ordinalDay, todayInIndia } from '@/domain/dates';
 import { NAV_SCALE, VALUE_SCALE, toPlainString } from '@/domain/decimal';
-import { formatNav, formatPercent, formatUnits } from '@/domain/format';
+import { formatInr, formatNav, formatPercent, formatUnits } from '@/domain/format';
 import { holdingsByFund, portfolioDayGain, purchaseTimeline, type TimelineEntry } from '@/domain/holdings';
+import { detectSip } from '@/domain/sip';
 import type { NavPoint } from '@/domain/types';
 import { evaluateLot } from '@/domain/valuation';
 import { useDayChange } from '@/query/hooks';
@@ -14,6 +16,7 @@ import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { Term } from '../ui/Term';
 import { PrivateAmount } from '../ui/PrivateAmount';
@@ -27,6 +30,8 @@ export interface FundLotsProps {
 }
 
 const navText = (scaled: bigint) => formatNav(toPlainString(scaled, NAV_SCALE));
+/** "₹5,000": whole rupees without paise. */
+const rupeesText = (rupees: number) => formatInr(BigInt(rupees) * 100n, 2).replace(/\.00$/, '');
 
 /** Purchases shown before "Show earlier purchases". */
 const RECENT_PURCHASES = 4;
@@ -49,6 +54,10 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
     [lots, last],
   );
   const timeline = useMemo(() => purchaseTimeline(lots), [lots]);
+  const sip = useMemo(() => detectSip(lots), [lots]);
+  // An instalment can be added once a NAV on or after its date is out, not merely once its date has passed.
+  const sipDue = sip !== null && sip.nextDate <= last.date;
+  const sipWaiting = sip !== null && !sipDue && sip.nextDate <= todayInIndia();
   const [showAll, setShowAll] = useState(false);
   const hiddenCount = showAll ? 0 : Math.max(0, timeline.length - RECENT_PURCHASES);
   const shown = hiddenCount > 0 ? timeline.slice(hiddenCount) : timeline;
@@ -123,6 +132,50 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
       )}
 
       <View style={{ paddingVertical: spacing.md }}>
+        {sip !== null && (
+          // A running SIP: say so, and offer to catch up on instalments due since the last one.
+          <View
+            style={[
+              {
+                marginHorizontal: spacing.lg,
+                marginBottom: spacing.md,
+                padding: spacing.md,
+                gap: spacing.sm,
+                borderRadius: radius.md,
+                backgroundColor: colors.primarySoft,
+              },
+            ]}
+          >
+            <AppText variant="labelStrong" numeric>
+              SIP of {rupeesText(sip.amountRupees)} on the {ordinalDay(sip.dayOfMonth)} of each month
+            </AppText>
+            <AppText variant="caption" tone="muted" numeric>
+              {sipDue
+                ? `Instalments due since ${formatDate(sip.lastDate)} aren't recorded yet.`
+                : sipWaiting
+                  ? `The ${formatDate(sip.nextDate)} instalment can be added once its NAV is published.`
+                  : `Next instalment ${formatDate(sip.nextDate)}.`}
+            </AppText>
+            {sipDue && (
+              <Button
+                label="Add instalments due"
+                variant="secondary"
+                icon="add"
+                onPress={() =>
+                  router.push({
+                    pathname: '/add-holding',
+                    params: {
+                      code: String(schemeCode),
+                      mode: 'sip',
+                      amount: String(sip.amountRupees),
+                      start: sip.nextDate,
+                    },
+                  })
+                }
+              />
+            )}
+          </View>
+        )}
         <AppText variant="label" tone="muted" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs }}>
           {timeline.length} {timeline.length === 1 ? 'purchase' : 'purchases'} · swipe one to remove it
         </AppText>

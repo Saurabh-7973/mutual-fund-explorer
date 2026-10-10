@@ -25,6 +25,7 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 - *"Which of my SIPs is dragging?"* → Holdings already sorts by XIRR; with SIPs entered in one go, the XIRR is meaningful.
 - *"The preview says ₹2,84,999.97 invested, but I paid ₹2,85,000."* Units are rounded to 4 decimals, so units × NAV fell 3 paise short. → The SIP preview shows the rupees actually paid and the gain against them (`sipGain`).
 - *"My fund page is a 57-row list now."* → The purchase timeline shows the latest 4 and "Show 53 earlier purchases".
+- *"Next month I have to come back and type the new instalment."* → The app spots a running SIP (3 or more monthly purchases of the same amount on the same day, month-ends included: `detectSip`) and shows "SIP of ₹5,000 on the 10th of each month". Once a NAV on or after the next date is out, "Add instalments due" opens the SIP form prefilled from that date; before then it says when the instalment can be added.
 - *"The date picker looks like a different app, and scrolling back to 2022 takes forever."* → The app's own calendar: tap the month to jump to a year; dates outside the fund's data are greyed out.
 
 ### Meena (near retirement)

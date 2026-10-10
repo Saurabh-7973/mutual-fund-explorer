@@ -154,3 +154,10 @@ export function formatDuration(days: number): string {
   const rest = months % 12;
   return `${years} ${years === 1 ? 'year' : 'years'}${rest > 0 ? ` ${rest} ${rest === 1 ? 'month' : 'months'}` : ''}`;
 }
+
+/** "1st", "2nd", "3rd", "11th", "22nd": a day of the month as people say it. */
+export function ordinalDay(day: number): string {
+  const teen = day % 100 >= 11 && day % 100 <= 13;
+  const suffix = teen ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' } as Record<number, string>)[day % 10] ?? 'th';
+  return `${day}${suffix}`;
+}
