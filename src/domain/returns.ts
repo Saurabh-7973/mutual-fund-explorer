@@ -57,3 +57,15 @@ export function trailingReturns(points: readonly NavPoint[]): PeriodReturn[] {
     return { key, label, kind: result.kind, percent: result.percent, startDate: start.date, endDate: last.date };
   });
 }
+
+/**
+ * The one return a fund page leads with: 3-year CAGR, the horizon long-term investors
+ * and SEBI factsheets compare on; else 1 year; else since start. Null with no history.
+ */
+export function headlineReturn(rows: readonly PeriodReturn[]): PeriodReturn | null {
+  for (const key of ['3Y', '1Y', 'ALL']) {
+    const row = rows.find((r) => r.key === key && r.percent !== null);
+    if (row !== undefined) return row;
+  }
+  return null;
+}

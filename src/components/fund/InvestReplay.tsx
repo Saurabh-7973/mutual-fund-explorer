@@ -10,7 +10,6 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
@@ -30,7 +29,7 @@ const rupees = (amount: number) => formatInr(BigInt(amount) * 100n, 2).replace(/
  * What a regular investment in this fund would be worth today, replayed on its real NAVs.
  * Long-term investors think in "monthly SIP for five years", so that's the question it answers.
  */
-export function InvestReplayCard({ points }: { points: NavPoint[] }) {
+export function InvestReplay({ points }: { points: NavPoint[] }) {
   const { spacing } = useTheme();
   const [mode, setMode] = useState<InvestMode>('sip');
   const [amount, setAmount] = useState(5000);
@@ -51,10 +50,7 @@ export function InvestReplayCard({ points }: { points: NavPoint[] }) {
   const years = chosen === null ? '' : `${chosen / 12} ${chosen === 12 ? 'year' : 'years'}`;
 
   return (
-    <Card style={{ gap: spacing.md }}>
-      <AppText variant="heading" accessibilityRole="header">
-        If you had invested
-      </AppText>
+    <>
       <View style={[styles.wrap, { gap: spacing.sm }]}>
         <Chip label="Monthly SIP" selected={mode === 'sip'} onPress={() => switchMode('sip')} />
         <Chip label="One time" selected={mode === 'lumpsum'} onPress={() => switchMode('lumpsum')} />
@@ -111,7 +107,7 @@ export function InvestReplayCard({ points }: { points: NavPoint[] }) {
           purchase at the next published NAV, before taxes and exit loads. Past returns don't predict future ones.
         </AppText>
       )}
-    </Card>
+    </>
   );
 }
 

@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -15,7 +14,6 @@ import { useTheme } from '@/theme/useTheme';
 
 import { LotRow } from '../holdings/LotRow';
 import { AppText } from '../ui/AppText';
-import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
@@ -31,7 +29,7 @@ export interface FundLotsProps {
  * "Your investment": shown first on the fund page when you hold the fund, because your
  * own numbers matter more than the fund's. Renders nothing when you don't.
  */
-export function FundLots({ schemeCode, name, last }: FundLotsProps) {
+export function FundLots({ schemeCode, last }: FundLotsProps) {
   const { colors, radius, spacing } = useTheme();
   const lots = usePortfolioStore(useShallow((s) => s.lots.filter((lot) => lot.schemeCode === schemeCode)));
   const removeLot = usePortfolioStore((s) => s.removeLot);
@@ -49,7 +47,12 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
     <View
       style={[
         styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg, paddingTop: spacing.lg },
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          borderRadius: radius.lg,
+          paddingTop: spacing.lg,
+        },
       ]}
     >
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.md }}>
@@ -98,14 +101,7 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
       {evaluated.map((lot) => (
         <LotRow key={lot.id} lot={lot} status={lot.status} onRemove={removeLot} />
       ))}
-      <View style={{ padding: spacing.lg, paddingTop: spacing.sm }}>
-        <Button
-          label="Add another purchase"
-          variant="ghost"
-          icon="add"
-          onPress={() => router.push({ pathname: '/add-holding', params: { code: String(schemeCode), name } })}
-        />
-      </View>
+      <View style={{ height: spacing.sm }} />
     </View>
   );
 }

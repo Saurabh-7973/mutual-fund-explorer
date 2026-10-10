@@ -8,7 +8,6 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
 import { Chip } from '../ui/Chip';
 
 const HOLDS = [3, 5] as const;
@@ -18,7 +17,7 @@ const HOLDS = [3, 5] as const;
  * for N years, what did I get?". A range from worst to best with the typical result marked
  * says more about a fund than any single trailing number, which depends on today's date.
  */
-export function ConsistencyCard({ points }: { points: NavPoint[] }) {
+export function Consistency({ points }: { points: NavPoint[] }) {
   const { colors, radius, spacing } = useTheme();
   const summaries = useMemo(() => HOLDS.map((years) => rollingReturns(points, years)), [points]);
   const available = HOLDS.filter((_, i) => summaries[i] !== null);
@@ -35,10 +34,7 @@ export function ConsistencyCard({ points }: { points: NavPoint[] }) {
   const lossPct = Math.round(summary.lossShare * 100);
 
   return (
-    <Card style={{ gap: spacing.md }}>
-      <AppText variant="heading" accessibilityRole="header">
-        How consistent were returns?
-      </AppText>
+    <>
       <View style={[styles.wrap, { gap: spacing.sm }]}>
         {HOLDS.map((y) => (
           <Chip
@@ -93,7 +89,7 @@ export function ConsistencyCard({ points }: { points: NavPoint[] }) {
         {formatMonthYear(summary.from)} and {formatMonthYear(summary.through)}, from NAVs only. Past returns don't predict
         future ones.
       </AppText>
-    </Card>
+    </>
   );
 }
 

@@ -7,14 +7,13 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Card } from '../ui/Card';
 
 /**
  * Trailing returns as a small bar chart: the length makes periods comparable at a glance,
  * the number gives the exact figure, and each row says whether it is absolute or a yearly rate.
  * When any period is negative, bars grow both ways from a shared zero line.
  */
-export function ReturnsCard({ points }: { points: NavPoint[] }) {
+export function ReturnsBars({ points }: { points: NavPoint[] }) {
   const { colors, radius, spacing } = useTheme();
   const rows = useMemo(() => trailingReturns(points), [points]);
   const values = rows.map((row) => row.percent).filter((p): p is number => p !== null);
@@ -22,10 +21,7 @@ export function ReturnsCard({ points }: { points: NavPoint[] }) {
   const twoSided = values.some((p) => p < 0);
 
   return (
-    <Card style={{ gap: spacing.md }}>
-      <AppText variant="heading" accessibilityRole="header">
-        Trailing returns
-      </AppText>
+    <>
       <View style={{ gap: spacing.sm }}>
         {rows.map((row) => {
           const kind = row.kind === 'absolute' ? 'absolute' : 'a year';
@@ -86,7 +82,7 @@ export function ReturnsCard({ points }: { points: NavPoint[] }) {
         Under a year the change is absolute; from a year it is compounded yearly (CAGR). NAV-based, so IDCW payouts
         aren't added back. Past returns don't predict future ones.
       </AppText>
-    </Card>
+    </>
   );
 }
 

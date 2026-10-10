@@ -1,8 +1,18 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View, type ListRenderItem } from 'react-native';
+import {
+  ActivityIndicator,
+  FlatList,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+  type ListRenderItem,
+} from 'react-native';
 
+import { RecentFundRow } from '@/components/search/RecentFundRow';
 import { SchemeRow, SCHEME_ROW_HEIGHT } from '@/components/search/SchemeRow';
 import { AppText } from '@/components/ui/AppText';
 import { Banner } from '@/components/ui/Banner';
@@ -24,6 +34,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { useOnline } from '@/hooks/useOnline';
 import { useSchemeSearch } from '@/query/hooks';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -46,6 +57,7 @@ export default function ExploreScreen() {
   const debounced = useDebouncedValue(text, 300);
   const { query, normalized, enabled } = useSchemeSearch(debounced);
   const online = useOnline();
+  const recentlyViewed = usePreferencesStore((s) => s.recentlyViewed);
   const keyboard = useKeyboardOverlap();
 
   // The Watchlist empty state links here with a suggested query.
@@ -105,11 +117,27 @@ export default function ExploreScreen() {
   const renderBody = () => {
     if (!enabled) {
       return (
-        <View style={{ padding: spacing.lg, gap: spacing.md }}>
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+        >
           {typedLength > 0 && typedLength < MIN_QUERY_LENGTH && (
             <AppText tone="muted" variant="label">
               Type at least {MIN_QUERY_LENGTH} characters. Search matches whole words.
             </AppText>
+          )}
+          {recentlyViewed.length > 0 && (
+            <View style={{ gap: spacing.xs, marginBottom: spacing.md }}>
+              <AppText variant="heading" accessibilityRole="header">
+                Recently viewed
+              </AppText>
+              <View>
+                {recentlyViewed.map((fund) => (
+                  <RecentFundRow key={fund.schemeCode} fund={fund} />
+                ))}
+              </View>
+            </View>
           )}
           <AppText variant="heading" accessibilityRole="header">
             Start with a collection
@@ -119,7 +147,7 @@ export default function ExploreScreen() {
               <Chip key={item.query} label={item.label} onPress={() => setText(item.query)} />
             ))}
           </View>
-        </View>
+        </ScrollView>
       );
     }
 
