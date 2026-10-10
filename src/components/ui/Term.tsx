@@ -34,7 +34,7 @@ export function Term({ term, label, variant = 'label', tone = 'muted' }: TermPro
         accessibilityLabel={`${label ?? entry.title}. What does this mean?`}
         style={[styles.row, { gap: spacing.xs }]}
       >
-        <AppText variant={variant} tone={tone}>
+        <AppText variant={variant} tone={tone} maxFontSizeMultiplier={1.3}>
           {label ?? entry.title}
         </AppText>
         <Ionicons name="information-circle-outline" size={14} color={colors.textMuted} />

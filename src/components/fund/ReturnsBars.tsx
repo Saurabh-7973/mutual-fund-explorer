@@ -34,10 +34,10 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
                 accessibilityLabel={`${row.label}: not enough history`}
                 style={[styles.row, { gap: spacing.md }]}
               >
-                <AppText variant="label" style={styles.label}>
+                <AppText variant="label" maxFontSizeMultiplier={1.3} style={styles.label}>
                   {row.label}
                 </AppText>
-                <AppText variant="caption" tone="muted" style={styles.flex}>
+                <AppText variant="caption" maxFontSizeMultiplier={1.3} tone="muted" style={styles.flex}>
                   Not enough history
                 </AppText>
               </View>
@@ -55,7 +55,7 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
               accessibilityLabel={`${row.label}: ${p < 0 ? 'down' : p > 0 ? 'up' : 'unchanged'} ${formatPercent(Math.abs(p), 'negative-only')} ${row.kind === 'absolute' ? 'absolute' : 'per year'}`}
               style={[styles.row, { gap: spacing.md }]}
             >
-              <AppText variant="label" style={styles.label}>
+              <AppText variant="label" maxFontSizeMultiplier={1.3} style={styles.label}>
                 {row.label}
               </AppText>
               {twoSided ? (
@@ -68,10 +68,10 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
                 <View style={[styles.flex, styles.track]}>{bar}</View>
               )}
               <View style={styles.value}>
-                <AppText variant="label" tone={tone} numeric>
+                <AppText variant="label" maxFontSizeMultiplier={1.3} tone={tone} numeric>
                   {formatPercent(p)}
                 </AppText>
-                <AppText variant="caption" tone="muted">
+                <AppText variant="caption" maxFontSizeMultiplier={1.3} tone="muted">
                   {kind}
                 </AppText>
               </View>
@@ -83,7 +83,7 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
         <Term term="absolute" label="Absolute" variant="caption" />
         <Term term="cagr" label="A year (CAGR)" variant="caption" />
       </View>
-      <AppText variant="caption" tone="muted">
+      <AppText variant="caption" maxFontSizeMultiplier={1.3} tone="muted">
         Under a year the change is absolute; from a year it is compounded yearly (CAGR). NAV-based, so IDCW payouts
         aren't added back. Past returns don't predict future ones.
       </AppText>
@@ -93,11 +93,11 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', minHeight: 36 },
-  label: { width: 76 },
+  label: { width: 84 },
   flex: { flex: 1 },
   track: { flexDirection: 'row', alignItems: 'center' },
   half: { flex: 1, flexDirection: 'row' },
   end: { justifyContent: 'flex-end' },
   axis: { width: 1, height: 16 },
-  value: { width: 72, alignItems: 'flex-end' },
+  value: { width: 84, alignItems: 'flex-end' },
 });

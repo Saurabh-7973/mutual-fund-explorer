@@ -292,9 +292,7 @@ export default function HoldingsScreen() {
 
       {/* One figure per row keeps the list calm; this switches which one. */}
       <View style={[styles.listHeader, { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}>
-        <AppText variant="caption" tone="muted" style={styles.flex}>
-          Swipe left on a fund to remove it
-        </AppText>
+        <View style={styles.flex} />
         <View style={[styles.inline, { gap: spacing.md }]}>
           <Pressable
             onPress={() => setColumn(nextColumn.key)}
@@ -325,6 +323,7 @@ export default function HoldingsScreen() {
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
       <ScreenHeader
         title="Holdings"
+        subtitle="Swipe left on a fund to remove it"
         right={
           <IconButton
             name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
