@@ -7,7 +7,7 @@ import { VALUE_SCALE } from '@/domain/decimal';
 import { formatInr, formatPercent } from '@/domain/format';
 import { annualisedReturn, holdingsByFund } from '@/domain/holdings';
 import { lastPoint } from '@/domain/nav';
-import { planSip } from '@/domain/sip';
+import { planSip, sipGain } from '@/domain/sip';
 import type { IsoDate, NavPoint } from '@/domain/types';
 import { validateSipAmount } from '@/domain/validation';
 import { evaluateLot } from '@/domain/valuation';
@@ -20,6 +20,7 @@ import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { SignedAmount } from '../ui/SignedAmount';
+import { SignedPercent } from '../ui/SignedPercent';
 import { DateField } from './DateField';
 
 export interface SipFormProps {
@@ -61,7 +62,9 @@ export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, po
       applied: i.applied,
       status: evaluateLot({ units: i.units, applied: i.applied }, last),
     }));
-    return { fund: holdingsByFund(lots)[0], xirr: annualisedReturn(lots) };
+    const fund = holdingsByFund(lots)[0];
+    if (fund === undefined) return null;
+    return { fund, xirr: annualisedReturn(lots), ...sipGain(fund.current, plan) };
   }, [plan, last, schemeCode, schemeName]);
 
   const showAmountError = !amount.ok && (amountTouched || submitted);
@@ -135,7 +138,7 @@ export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, po
         message={dateMessage}
       />
 
-      {preview !== null && preview.fund !== undefined && plan !== null && (
+      {preview !== null && plan !== null && (
         <Card style={{ gap: spacing.sm }}>
           <AppText variant="label" tone="muted">
             {count} {count === 1 ? 'instalment' : 'instalments'},{' '}
@@ -149,7 +152,10 @@ export function SipForm({ schemeCode, schemeName, historyPoints, latestPoint, po
             <AppText variant="label" tone="muted" numeric>
               on {formatInr(plan.paid, VALUE_SCALE)} paid
             </AppText>
-            <SignedAmount value={preview.fund.current - plan.paid} scale={VALUE_SCALE} variant="label" />
+            <SignedAmount value={preview.gain} scale={VALUE_SCALE} variant="label" />
+            {preview.returnHundredths !== null && (
+              <SignedPercent hundredths={preview.returnHundredths} variant="label" />
+            )}
           </View>
           {preview.xirr !== null && (
             <AppText variant="label" tone="muted" numeric>

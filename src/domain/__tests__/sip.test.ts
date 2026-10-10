@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { addDays } from '../dates';
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { MAX_SIP_INSTALMENTS, planSip } from '../sip';
+import { MAX_SIP_INSTALMENTS, planSip, sipGain } from '../sip';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -55,5 +55,16 @@ describe('planSip', () => {
 
   it('caps a SIP at 40 years', () => {
     expect(MAX_SIP_INSTALMENTS).toBe(480);
+  });
+});
+
+describe('sipGain', () => {
+  it('measures the gain against the rupees paid, not units × NAV', () => {
+    const paid = 285_000n * 10n ** 12n;
+    const current = 413_155_18n * 10n ** 10n;
+    const result = sipGain(current, { paid });
+    expect(formatInr(result.gain, VALUE_SCALE, 'always')).toBe('+₹1,28,155.18');
+    expect(result.returnHundredths).toBe(4497n);
+    expect(sipGain(0n, { paid: 0n }).returnHundredths).toBeNull();
   });
 });

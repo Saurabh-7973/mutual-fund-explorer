@@ -67,3 +67,9 @@ export function planSip(
   }
   return plan;
 }
+
+/** What a planned SIP gained against the rupees actually paid, at VALUE_SCALE. */
+export function sipGain(currentValue: bigint, plan: Pick<SipPlan, 'paid'>): { gain: bigint; returnHundredths: bigint | null } {
+  const gain = currentValue - plan.paid;
+  return { gain, returnHundredths: plan.paid > 0n ? divRound(gain * 10_000n, plan.paid) : null };
+}
