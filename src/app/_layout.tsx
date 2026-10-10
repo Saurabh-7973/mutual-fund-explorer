@@ -51,6 +51,7 @@ export default function RootLayout() {
             <Stack.Screen name="fund/[code]/index" options={{ title: '' }} />
             <Stack.Screen name="fund/[code]/navs" options={{ title: 'NAV history' }} />
             <Stack.Screen name="add-holding" options={{ presentation: 'modal', title: 'Add holding' }} />
+            <Stack.Screen name="compare" options={{ title: 'Compare funds' }} />
           </Stack>
           <StatusBar style="auto" />
         </ThemeProvider>

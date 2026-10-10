@@ -226,6 +226,12 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
           }
         >
           <ReturnsBars points={points} />
+          <Button
+            label="Compare with another fund"
+            variant="secondary"
+            icon="git-compare-outline"
+            onPress={() => router.push({ pathname: '/compare', params: { a: String(schemeCode), nameA: name } })}
+          />
         </Section>
 
         <Section

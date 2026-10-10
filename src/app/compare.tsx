@@ -1,0 +1,289 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { useMemo, useState, type ReactNode } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { CompareChart } from '@/components/fund/CompareChart';
+import { AppText } from '@/components/ui/AppText';
+import { Card } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ErrorState } from '@/components/ui/ErrorState';
+import { SegmentedRow } from '@/components/ui/SegmentedRow';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { Term } from '@/components/ui/Term';
+import { comparisonCovers, compareGrowth } from '@/domain/compare';
+import { formatDate } from '@/domain/dates';
+import { formatPercent } from '@/domain/format';
+import { maxDrawdown, rollingReturns } from '@/domain/longTerm';
+import { trailingReturns } from '@/domain/returns';
+import { describeScheme } from '@/domain/schemeName';
+import { parseSchemeCode } from '@/domain/search';
+import type { NavPoint } from '@/domain/types';
+import { useFundSeries } from '@/query/hooks';
+import { usePortfolioStore } from '@/store/portfolioStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
+import { MIN_TOUCH } from '@/theme/tokens';
+import { useTheme } from '@/theme/useTheme';
+
+const RANGES = [
+  { key: '12', label: '1Y', months: 12 },
+  { key: '36', label: '3Y', months: 36 },
+  { key: '60', label: '5Y', months: 60 },
+  { key: 'all', label: 'All', months: null },
+] as const;
+
+export default function CompareScreen() {
+  const params = useLocalSearchParams<{ a: string; b?: string; nameA?: string }>();
+  const a = parseSchemeCode(params.a);
+  const b = parseSchemeCode(params.b);
+  if (a === null) {
+    return (
+      <Centered>
+        <EmptyState icon="link-outline" title="That link doesn't point to a scheme" />
+      </Centered>
+    );
+  }
+  if (b === null) return <ChooseFund a={a} nameA={params.nameA} />;
+  return <Comparison a={a} b={b} />;
+}
+
+function Centered({ children }: { children: ReactNode }) {
+  const { colors } = useTheme();
+  return <View style={[styles.centered, { backgroundColor: colors.background }]}>{children}</View>;
+}
+
+/** Pick the second fund from the ones you already follow, hold or looked at. */
+function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
+  const { colors, spacing } = useTheme();
+  const watchlist = usePortfolioStore((s) => s.watchlist);
+  const lots = usePortfolioStore((s) => s.lots);
+  const recent = usePreferencesStore((s) => s.recentlyViewed);
+  const candidates = useMemo(() => {
+    const seen = new Set<number>([a]);
+    const list: { schemeCode: number; schemeName: string; why: string }[] = [];
+    const add = (code: number, name: string, why: string) => {
+      if (seen.has(code)) return;
+      seen.add(code);
+      list.push({ schemeCode: code, schemeName: name, why });
+    };
+    for (const lot of lots) add(lot.schemeCode, lot.schemeName, 'In your holdings');
+    for (const item of watchlist) add(item.schemeCode, item.schemeName, 'On your watchlist');
+    for (const item of recent) add(item.schemeCode, item.schemeName, 'Recently viewed');
+    return list;
+  }, [a, lots, watchlist, recent]);
+
+  if (candidates.length === 0) {
+    return (
+      <Centered>
+        <EmptyState
+          icon="git-compare-outline"
+          title="Nothing to compare with yet"
+          body="Open or star another fund first; it will show up here."
+          action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
+        />
+      </Centered>
+    );
+  }
+
+  return (
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+      <AppText variant="heading" accessibilityRole="header">
+        Compare {nameA !== undefined ? describeScheme(nameA).title : 'this fund'} with
+      </AppText>
+      <View>
+        {candidates.map((fund) => {
+          const label = describeScheme(fund.schemeName);
+          return (
+            <Pressable
+              key={fund.schemeCode}
+              accessibilityRole="button"
+              onPress={() => router.setParams({ b: String(fund.schemeCode) })}
+              style={({ pressed }) => [
+                styles.choice,
+                { borderBottomColor: colors.border, gap: 2, opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <AppText variant="labelStrong" numberOfLines={1}>
+                {label.title}
+              </AppText>
+              <AppText variant="caption" tone="muted">
+                {[label.plan, label.option, fund.why].filter((part): part is string => part !== null).join(' · ')}
+              </AppText>
+            </Pressable>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
+interface FundFacts {
+  title: string;
+  returns: ReturnType<typeof trailingReturns>;
+  drawdown: ReturnType<typeof maxDrawdown>;
+  rolling: ReturnType<typeof rollingReturns>;
+  since: NavPoint | undefined;
+}
+
+function facts(name: string, points: NavPoint[]): FundFacts {
+  return {
+    title: describeScheme(name).title,
+    returns: trailingReturns(points),
+    drawdown: maxDrawdown(points),
+    rolling: rollingReturns(points, 3),
+    since: points[0],
+  };
+}
+
+/** Two funds side by side: one growth chart, then the same figures in two columns. */
+function Comparison({ a, b }: { a: number; b: number }) {
+  const { colors, radius, spacing } = useTheme();
+  const seriesA = useFundSeries(a);
+  const seriesB = useFundSeries(b);
+  const [rangeKey, setRangeKey] = useState<(typeof RANGES)[number]['key'] | null>(null);
+  const pointsA = seriesA.points;
+  const pointsB = seriesB.points;
+  const nameA = seriesA.history.data?.meta.schemeName ?? `Scheme ${a}`;
+  const nameB = seriesB.history.data?.meta.schemeName ?? `Scheme ${b}`;
+
+  const covered = useMemo(
+    () => (pointsA && pointsB ? RANGES.filter((r) => comparisonCovers(pointsA, pointsB, r.months)) : []),
+    [pointsA, pointsB],
+  );
+  const range =
+    RANGES.find((r) => r.key === rangeKey) ?? covered.find((r) => r.key === '36') ?? covered[covered.length - 1];
+  const growth = useMemo(
+    () => (pointsA && pointsB && range ? compareGrowth(pointsA, pointsB, range.months) : null),
+    [pointsA, pointsB, range],
+  );
+  const fa = useMemo(() => (pointsA ? facts(nameA, pointsA) : null), [pointsA, nameA]);
+  const fb = useMemo(() => (pointsB ? facts(nameB, pointsB) : null), [pointsB, nameB]);
+
+  const failed = seriesA.history.isError ? seriesA.history : seriesB.history.isError ? seriesB.history : null;
+  if (failed !== null) {
+    return (
+      <Centered>
+        <ErrorState error={failed.error} onRetry={() => void failed.refetch()} />
+      </Centered>
+    );
+  }
+  if (!fa || !fb || !pointsA || !pointsB) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.background, padding: spacing.lg, gap: spacing.md }}>
+        <Skeleton height={20} width="60%" />
+        <Skeleton height={180} />
+        <Skeleton height={240} />
+      </View>
+    );
+  }
+
+  const ret = (f: FundFacts, key: string) => f.returns.find((r) => r.key === key)?.percent ?? null;
+  const rows: { label: string; term?: Parameters<typeof Term>[0]['term']; a: number | null; b: number | null; kind: 'pct' | 'share' }[] = [
+    { label: '1 year', a: ret(fa, '1Y'), b: ret(fb, '1Y'), kind: 'pct' },
+    { label: '3 years, a year', term: 'cagr', a: ret(fa, '3Y'), b: ret(fb, '3Y'), kind: 'pct' },
+    { label: '5 years, a year', a: ret(fa, '5Y'), b: ret(fb, '5Y'), kind: 'pct' },
+    { label: 'Typical 3-year hold', term: 'rolling', a: fa.rolling?.median ?? null, b: fb.rolling?.median ?? null, kind: 'pct' },
+    {
+      label: '3-year holds that lost money',
+      a: fa.rolling ? fa.rolling.lossShare * 100 : null,
+      b: fb.rolling ? fb.rolling.lossShare * 100 : null,
+      kind: 'share',
+    },
+    { label: 'Worst fall', term: 'drawdown', a: fa.drawdown?.percent ?? null, b: fb.drawdown?.percent ?? null, kind: 'pct' },
+  ];
+  const show = (v: number | null, kind: 'pct' | 'share') =>
+    v === null ? '—' : kind === 'share' ? `${Math.round(v)}%` : formatPercent(v);
+  const tone = (v: number | null, kind: 'pct' | 'share') =>
+    v === null || kind === 'share' ? ('default' as const) : v > 0 ? ('gain' as const) : v < 0 ? ('loss' as const) : ('muted' as const);
+
+  return (
+    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
+      <Card style={{ gap: spacing.md }}>
+        <AppText variant="heading" accessibilityRole="header">
+          Growth of ₹10,000
+        </AppText>
+        <SegmentedRow
+          accessibilityLabel="Period"
+          options={RANGES.map((r) => ({ key: r.key, label: r.label, disabled: !covered.includes(r) }))}
+          selected={range?.key ?? 'all'}
+          onSelect={setRangeKey}
+        />
+        {growth !== null && <CompareChart growth={growth} labelA={fa.title} labelB={fb.title} />}
+        <AppText variant="caption" tone="muted">
+          Both start at ₹10,000 on the same day, so their lines are comparable. NAV-based, before taxes and exit loads.
+        </AppText>
+      </Card>
+
+      <Card style={{ gap: 0, paddingHorizontal: 0, paddingVertical: spacing.sm }}>
+        <View style={[styles.row, { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, gap: spacing.sm }]}>
+          <View style={styles.labelCol} />
+          {[fa, fb].map((f, i) => (
+            <View key={i} style={[styles.valueCol, { gap: 4 }]}>
+              <View style={[styles.swatch, { backgroundColor: colors.chart[i] }]} />
+              <AppText variant="caption" numberOfLines={2} style={styles.right}>
+                {f.title}
+              </AppText>
+            </View>
+          ))}
+        </View>
+        {rows.map((row) => (
+          <View
+            key={row.label}
+            accessible
+            accessibilityLabel={`${row.label}: ${fa.title} ${show(row.a, row.kind)}, ${fb.title} ${show(row.b, row.kind)}`}
+            style={[
+              styles.row,
+              { borderTopColor: colors.border, paddingHorizontal: spacing.lg, gap: spacing.sm, minHeight: MIN_TOUCH },
+              styles.divider,
+            ]}
+          >
+            <View style={styles.labelCol}>
+              {row.term ? <Term term={row.term} label={row.label} /> : <AppText variant="label" tone="muted">{row.label}</AppText>}
+            </View>
+            <AppText variant="labelStrong" numeric tone={tone(row.a, row.kind)} style={[styles.valueCol, styles.right]}>
+              {show(row.a, row.kind)}
+            </AppText>
+            <AppText variant="labelStrong" numeric tone={tone(row.b, row.kind)} style={[styles.valueCol, styles.right]}>
+              {show(row.b, row.kind)}
+            </AppText>
+          </View>
+        ))}
+        <View style={[styles.row, styles.divider, { borderTopColor: colors.border, paddingHorizontal: spacing.lg, gap: spacing.sm, minHeight: MIN_TOUCH }]}>
+          <AppText variant="label" tone="muted" style={styles.labelCol}>
+            NAV data since
+          </AppText>
+          <AppText variant="label" numeric style={[styles.valueCol, styles.right]}>
+            {fa.since ? formatDate(fa.since.date) : '—'}
+          </AppText>
+          <AppText variant="label" numeric style={[styles.valueCol, styles.right]}>
+            {fb.since ? formatDate(fb.since.date) : '—'}
+          </AppText>
+        </View>
+      </Card>
+
+      <Pressable
+        onPress={() => router.setParams({ b: '' })}
+        accessibilityRole="button"
+        style={[styles.change, { borderRadius: radius.md }]}
+      >
+        <AppText variant="labelStrong" tone="primary">
+          Compare with a different fund
+        </AppText>
+      </Pressable>
+      <AppText variant="caption" tone="muted">
+        Past returns don't predict future ones. Figures from published NAVs (mfapi.in); ratings and costs aren't in this data.
+      </AppText>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  centered: { flex: 1, justifyContent: 'center' },
+  choice: { minHeight: 60, justifyContent: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  divider: { borderTopWidth: StyleSheet.hairlineWidth },
+  labelCol: { flex: 1.3 },
+  valueCol: { flex: 1, alignItems: 'flex-end' },
+  right: { textAlign: 'right' },
+  swatch: { width: 14, height: 3, borderRadius: 2 },
+  change: { minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
+});
