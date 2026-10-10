@@ -46,6 +46,13 @@ describe('holdingsCsv', () => {
     ]);
   });
 
+  it('neutralises text that a spreadsheet would run as a formula', () => {
+    const row = holdingsCsv([{ ...lot, schemeName: '=HYPERLINK("http://x","y")' }]).split('\n')[1] ?? '';
+    expect(row.startsWith(`"'=HYPERLINK(""http://x"",""y"")",`)).toBe(true);
+    expect(holdingsCsv([{ ...lot, schemeName: '+cmd' }]).split('\n')[1]?.startsWith("'+cmd,")).toBe(true);
+    expect(holdingsCsv([{ ...lot, schemeName: '@SUM(A1)' }]).split('\n')[1]?.startsWith("'@SUM(A1),")).toBe(true);
+  });
+
   it('quotes names with commas', () => {
     expect(holdingsCsv([{ ...lot, schemeName: 'A, B Fund' }]).split('\n')[1]?.startsWith('"A, B Fund",')).toBe(true);
   });
