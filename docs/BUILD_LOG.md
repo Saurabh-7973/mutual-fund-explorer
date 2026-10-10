@@ -146,3 +146,20 @@ _(Claude Code: add entries below this line.)_
 - Everything else in the Phase 3 list worked. Pull to refresh on the fund screen misbehaved. Cause: the screen used Gesture Handler's `ScrollView` (needed for chart scrubbing) with React Native's `RefreshControl`. Gesture Handler's `ScrollView` clones its refresh control with a gesture ref and waits on it (`waitFor`); only Gesture Handler's own `RefreshControl` is a gesture handler, so the pull never resolved properly on Android. Fix: import `RefreshControl` from `react-native-gesture-handler` too (confirmed in `GestureComponents.tsx`).
 - The user asked why the header is unused. The plan put the long name in the content and left the header title empty, which left an empty bar. Now the header stays empty while the title block is visible and shows the short fund title (from `describeScheme`) once it scrolls out of view, so the bar always says which fund you're in. The star stays at the right.
 - Checks: `npm run check` 146 passed; Android export clean.
+
+---
+
+## Phase 4: Add holding (10 Oct 2026, Claude Code)
+
+**Built:** `src/app/add-holding.tsx` (modal). Units field with live validation (`validateUnits`, shown once touched or after Save), purchase date via `DateField` bounded by the earliest NAV and today in India, the pricing message from `describePurchaseDate`, the cut-off note, a preview card (matched: priced-at NAV with its date, invested, value as of the latest NAV, gain as `SignedAmount` + `SignedPercent`; pending: the "Awaiting NAV" note), and Save.
+
+**Decisions**
+- Pricing uses `resolvePurchaseNavWithLatest(history.data.points, latest.data?.point ?? null, purchaseDate, today)`: raw history and /latest kept separate, as CLAUDE.md requires. The preview values against `lastPoint` of the merged series, which is the freshest NAV on screen.
+- If the history fails or is paused offline, a compact `ErrorState` with Retry shows under the date field, the date field stays disabled, and Save can't succeed (no resolution).
+- After a Save attempt with errors, Save is disabled until the form becomes valid, so repeated taps don't do anything confusing.
+- Reused `fundDisplayName` from `FundGate` for the name fallback chain.
+- Live data for the phone test (122639): no NAV on Fri 2 Oct 2026 (Gandhi Jayanti) or Sat 3 Oct; Mon 5 Oct 88.76200; Sun 31 Mar 2024 74.86850 (a real Sunday NAV); latest 9 Oct 88.92580, nothing yet for 10 Oct.
+
+**Pre-built code changed:** none.
+
+**Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.
