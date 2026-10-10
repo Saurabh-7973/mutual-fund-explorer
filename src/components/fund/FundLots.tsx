@@ -1,5 +1,5 @@
-import { useCallback, useMemo, type ReactNode } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { formatDate } from '@/domain/dates';
@@ -28,6 +28,9 @@ export interface FundLotsProps {
 
 const navText = (scaled: bigint) => formatNav(toPlainString(scaled, NAV_SCALE));
 
+/** Purchases shown before "Show earlier purchases". */
+const RECENT_PURCHASES = 4;
+
 /**
  * "Your investment", shown first when you hold the fund: the value and return, a strip of
  * three figures, then every purchase on a timeline with your average cost after each one,
@@ -46,6 +49,9 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
     [lots, last],
   );
   const timeline = useMemo(() => purchaseTimeline(lots), [lots]);
+  const [showAll, setShowAll] = useState(false);
+  const hiddenCount = showAll ? 0 : Math.max(0, timeline.length - RECENT_PURCHASES);
+  const shown = hiddenCount > 0 ? timeline.slice(hiddenCount) : timeline;
   const dayGain = useMemo(
     () => (fund === undefined ? null : portfolioDayGain([fund], new Map([[schemeCode, change]]))),
     [fund, schemeCode, change],
@@ -118,10 +124,23 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
 
       <View style={{ paddingVertical: spacing.md }}>
         <AppText variant="label" tone="muted" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs }}>
-          Purchases · swipe one to remove it
+          {timeline.length} {timeline.length === 1 ? 'purchase' : 'purchases'} · swipe one to remove it
         </AppText>
-        {timeline.map((entry, i) => (
-          <TimelineRow key={entry.id} entry={entry} first={i === 0} onRemove={removeLot} />
+        {hiddenCount > 0 && (
+          // A long SIP would be dozens of rows: show the latest few, the rest on request.
+          <Pressable
+            onPress={() => setShowAll(true)}
+            accessibilityRole="button"
+            style={[styles.event, styles.centered, { paddingRight: spacing.lg, gap: spacing.md, minHeight: 44 }]}
+          >
+            <Spine filled={false} first />
+            <AppText variant="label" tone="primary" style={styles.flex}>
+              Show {hiddenCount} earlier {hiddenCount === 1 ? 'purchase' : 'purchases'}
+            </AppText>
+          </Pressable>
+        )}
+        {shown.map((entry, i) => (
+          <TimelineRow key={entry.id} entry={entry} first={i === 0 && hiddenCount === 0} onRemove={removeLot} />
         ))}
         <TodayRow last={last} average={average} />
       </View>
@@ -155,10 +174,7 @@ function Spine({ filled, first = false, last = false }: { filled: boolean; first
         style={[styles.spineLine, { backgroundColor: colors.border, top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]}
       />
       <View
-        style={[
-          styles.dot,
-          { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface },
-        ]}
+        style={[styles.dot, { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface }]}
       />
     </View>
   );
@@ -216,7 +232,9 @@ function TimelineRow({
           <AppText variant="caption" tone="muted" numeric>
             {formatUnits(entry.units)} units
             {entry.nav !== null ? ` at ${formatNav(entry.nav)}` : ''}
-            {entry.navDate !== null && entry.navDate !== entry.purchaseDate ? ` (NAV of ${formatDate(entry.navDate)})` : ''}
+            {entry.navDate !== null && entry.navDate !== entry.purchaseDate
+              ? ` (NAV of ${formatDate(entry.navDate)})`
+              : ''}
           </AppText>
           {entry.averageNavAfter !== null && entry.nav !== null && (
             <AppText variant="caption" tone="muted" numeric>
@@ -261,6 +279,7 @@ const styles = StyleSheet.create({
   cell: { flex: 1, alignItems: 'center' },
   divider: { width: StyleSheet.hairlineWidth, marginVertical: 10 },
   event: { flexDirection: 'row', alignItems: 'stretch' },
+  centered: { alignItems: 'center' },
   spine: { width: 40, alignItems: 'center', justifyContent: 'center' },
   spineLine: { position: 'absolute', width: 2 },
   dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },

@@ -176,7 +176,12 @@ export function CalendarSheet({
                     { borderRadius: radius.pill, backgroundColor: selected ? colors.primary : colors.surfaceMuted },
                   ]}
                 >
-                  <AppText variant="labelStrong" numeric style={{ color: selected ? colors.onPrimary : colors.text }}>
+                  <AppText
+                    variant="labelStrong"
+                    numeric
+                    maxFontSizeMultiplier={1.3}
+                    style={{ color: selected ? colors.onPrimary : colors.text }}
+                  >
                     {year}
                   </AppText>
                 </Pressable>
@@ -188,7 +193,12 @@ export function CalendarSheet({
             <View style={styles.week}>
               {WEEKDAYS.map((day, i) => (
                 <View key={i} style={styles.cell}>
-                  <AppText variant="caption" tone="muted" accessibilityLabel={WEEKDAY_NAMES[i]}>
+                  <AppText
+                    variant="caption"
+                    tone="muted"
+                    maxFontSizeMultiplier={1.3}
+                    accessibilityLabel={WEEKDAY_NAMES[i]}
+                  >
                     {day}
                   </AppText>
                 </View>
@@ -226,6 +236,7 @@ export function CalendarSheet({
                         <AppText
                           variant="label"
                           numeric
+                          maxFontSizeMultiplier={1.3}
                           style={{
                             color: selected ? colors.onPrimary : enabled ? colors.text : colors.border,
                           }}
