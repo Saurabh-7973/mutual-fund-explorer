@@ -31,7 +31,7 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 
 ## Features
 
-- **Explore:** search by name (debounced, from 3 characters), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
+- **Explore:** search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
 - **Fund screen:** latest NAV with its date and the change from the previous NAV; a chart with 1M to All ranges and touch scrubbing; trailing returns (1M and 6M absolute; 1Y, 3Y, 5Y and since start annualised), each labelled; your holdings in the fund; recent NAVs; and a full NAV history list that marks unusual gaps in the data.
 - **Watchlist:** each fund's latest NAV and its date, a stale flag for NAVs over 7 days old (closed or merged schemes), pull to refresh, remove with Undo, and offline display from the saved cache.
 - **Holdings:** record a purchase by units and date; see invested amount, current value, gain in ₹ and %, and p.a. (CAGR) after a year; portfolio totals; remove with confirmation.
@@ -76,6 +76,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 
 - **Date, not time.** The form records a purchase date, so it can't model the 3 pm cut-off. For an exact match, enter the allotment date from your statement.
 - **mfapi.in is a free community API.** It has no service guarantee and its rate limits aren't published. Its history can lag `/latest` by a day, and for some schemes it starts after the fund's launch, so the app says "earliest NAV available".
+- **Search matches whole words, up to 15 results.** That's how mfapi.in's search works: "parag" finds Parag Parikh funds, "par" finds nothing. The app tells you to type full words, and to add words when 15 results come back.
 - **Returns are NAV-based.** IDCW payouts aren't added back, and exit loads, stamp duty and taxes aren't modelled.
 - **Units use a dot for decimals.** Commas are rejected rather than guessed, because "1,254" could be a thousands separator.
 - **Totals are summed exactly, then rounded**, so they can differ from the sum of the rounded rows by a paisa.

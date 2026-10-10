@@ -12,6 +12,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { IconButton } from '@/components/ui/IconButton';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import {
+  MIN_QUERY_LENGTH,
   SEARCH_RESULT_CAP,
   SEARCH_SUGGESTIONS,
   filterSchemes,
@@ -102,9 +103,9 @@ export default function ExploreScreen() {
     if (!enabled) {
       return (
         <View style={{ padding: spacing.lg, gap: spacing.md }}>
-          {typedLength > 0 && typedLength < 3 && (
+          {typedLength > 0 && typedLength < MIN_QUERY_LENGTH && (
             <AppText tone="muted" variant="label">
-              Type at least 3 characters. Search matches whole words.
+              Type at least {MIN_QUERY_LENGTH} characters. Search matches whole words.
             </AppText>
           )}
           <AppText variant="heading" accessibilityRole="header">

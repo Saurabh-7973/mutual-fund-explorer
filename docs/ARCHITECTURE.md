@@ -41,6 +41,9 @@ Quirks the code handles, all seen in live responses:
 - Closed schemes are served normally (100121's latest NAV is from 2018). Any latest NAV more than 7 days old is flagged as stale.
 - Some NAVs fall on weekends (Sunday 31 Mar 2024, the financial year-end), so rules read the data, never a weekday calendar.
 - Rows can be malformed or duplicated. They are skipped and counted; a response with no usable rows is an error.
+- Search matches whole words, not parts of words: `hdfc` and `parag` find 15 schemes each, `hdf` and `par` find none. So the screen searches from 2 characters (enough for "JM", JM Financial) and its hint and empty state tell the user to type full words. Matching parts of words would mean downloading and filtering the full scheme list (about 40,000 names), which isn't worth it for this app.
+- Search returns at most 15 results. When exactly 15 come back, Explore says so and suggests adding words.
+- History accepts `startDate` and `endDate` and honours them. The app doesn't use them: it fetches the full history once and slices ranges locally.
 
 Errors are typed (`timeout`, `network`, `rate_limited`, `http`, `not_found`, `bad_data`). Each kind decides two things: whether to retry (timeouts, network drops, HTTP 429 and 5xx retry twice with backoff; 404 and bad data don't) and what the screen says. Requests time out after 15 s (20 s for full histories). NetInfo drives TanStack's online state and AppState drives its focus state, so data refetches on reconnect and when the app returns to the foreground.
 

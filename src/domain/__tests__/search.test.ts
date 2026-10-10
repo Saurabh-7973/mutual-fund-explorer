@@ -16,9 +16,10 @@ describe('normalizeQuery', () => {
     expect(normalizeQuery('\tNIFTY 50\n')).toBe('nifty 50');
   });
 
-  it('starts searching from three characters', () => {
-    expect(isSearchable(normalizeQuery(' hd '))).toBe(false);
-    expect(isSearchable(normalizeQuery('hdf'))).toBe(true);
+  it('starts searching from two characters, so two-letter fund houses such as JM work', () => {
+    expect(isSearchable(normalizeQuery(' j '))).toBe(false);
+    expect(isSearchable(normalizeQuery(' JM '))).toBe(true);
+    expect(isSearchable(normalizeQuery('hdfc'))).toBe(true);
   });
 });
 

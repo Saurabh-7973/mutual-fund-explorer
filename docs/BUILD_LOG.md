@@ -113,3 +113,12 @@ _(Claude Code: add entries below this line.)_
 - "Searching…" dimming not observed by the user (hard to catch by hand on a fast connection); left as is.
 - Second round: filters stayed on after clearing the search and resurfaced on the next search. They now reset whenever the field is emptied (clear button or backspace).
 - Second round: the empty state still looked low. Cause: SDK 57 Android is edge-to-edge, so the keyboard draws over the screen instead of resizing it, and the "centred" block was centred partly behind the keyboard. New hook `src/hooks/useKeyboardOverlap.ts` measures how much of the view the keyboard covers (`measureInWindow` against the keyboard's `screenY`) and pads it out, so the empty and error states centre in the visible area.
+
+### Before Phase 3: whole-word search follow-ups (10 Oct 2026, Claude Code)
+
+- The user confirmed both Phase 2 fixes on the phone (filters reset on clear; empty state centred above the keyboard).
+- `mfx-CLAUDE.md` and `mfx-RUNBOOK.md` were already gone: they had been moved over `CLAUDE.md` and `docs/RUNBOOK.md` in `edacb1f`. `git status` was clean.
+- Corrected the wrong "substring match" claim. The `MIN_QUERY_LENGTH` comment in `src/domain/search.ts` now describes whole-word matching; `docs/ARCHITECTURE.md` lists it with the other API quirks, along with the 15-result cap and date-range support from Phase 0; the README's known limitations say it too.
+- **Domain rule changed (user-approved): `MIN_QUERY_LENGTH` 3 → 2.** With whole-word matching, a two-letter fund house couldn't be searched at all. Checked live: `q=jm` returns 15 (JM Financial schemes), `q=ab` 9 (Birla "Series AB" plans), `q=a` 0. Test updated (`j` no, `JM` yes); the screen's hint now reads the constant.
+- Process correction: commit `178ca49` ran only the type check, not the tests, "to save resources". From now on `npm run check` runs before every commit, including small fixes; it takes seconds.
+- Checks: `npm run check`: typecheck 0 errors; 16 suites, 144 tests passed.

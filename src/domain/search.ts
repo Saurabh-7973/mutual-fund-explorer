@@ -2,8 +2,13 @@ import { describeScheme } from './schemeName';
 
 /** Search rules, kept out of the screen so they are tested. */
 
-/** mfapi search is a substring match; under 3 characters it returns noise. */
-export const MIN_QUERY_LENGTH = 3;
+/**
+ * mfapi search matches whole words, not parts of words ("parag" finds 15 schemes,
+ * "par" finds none), so a short query can't be a prefix of a longer name. Two
+ * characters is the shortest useful query: fund houses such as "JM" (JM Financial)
+ * are two letters. A single letter returns nothing.
+ */
+export const MIN_QUERY_LENGTH = 2;
 
 export interface SearchSuggestion {
   label: string;
