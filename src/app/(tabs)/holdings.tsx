@@ -26,10 +26,12 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PrivateAmount } from '@/components/ui/PrivateAmount';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Term } from '@/components/ui/Term';
 import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
 import { formatAsOf } from '@/domain/dates';
+import type { GlossaryKey } from '@/domain/glossary';
 import { VALUE_SCALE } from '@/domain/decimal';
 import { formatPercent } from '@/domain/format';
 import {
@@ -224,7 +226,7 @@ export default function HoldingsScreen() {
             <PrivateAmount value={totals.current} scale={VALUE_SCALE} variant="figure" />
             <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
             <View style={{ gap: spacing.sm }}>
-              <Row label="1D returns">
+              <Row label="1D returns" term="oneDay">
                 {dayGain !== null ? (
                   <View style={[styles.inline, { gap: spacing.xs }]}>
                     <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
@@ -247,7 +249,7 @@ export default function HoldingsScreen() {
               <Row label="Invested">
                 <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="label" />
               </Row>
-              <Row label="XIRR">
+              <Row label="XIRR" term="xirr">
                 {xirr !== null ? (
                   <AppText
                     variant="label"
@@ -359,12 +361,18 @@ export default function HoldingsScreen() {
   );
 }
 
-function Row({ label, children }: { label: string; children: ReactNode }) {
+function Row({ label, term, children }: { label: string; term?: GlossaryKey; children: ReactNode }) {
   return (
     <View style={styles.kv}>
-      <AppText variant="label" tone="muted" style={styles.flex}>
-        {label}
-      </AppText>
+      <View style={styles.flex}>
+        {term !== undefined ? (
+          <Term term={term} label={label} />
+        ) : (
+          <AppText variant="label" tone="muted">
+            {label}
+          </AppText>
+        )}
+      </View>
       {children}
     </View>
   );

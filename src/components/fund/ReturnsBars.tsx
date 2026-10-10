@@ -7,6 +7,7 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Term } from '../ui/Term';
 
 /**
  * Trailing returns as a small bar chart: the length makes periods comparable at a glance,
@@ -77,6 +78,10 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
             </View>
           );
         })}
+      </View>
+      <View style={[styles.row, { gap: spacing.lg }]}>
+        <Term term="absolute" label="Absolute" variant="caption" />
+        <Term term="cagr" label="A year (CAGR)" variant="caption" />
       </View>
       <AppText variant="caption" tone="muted">
         Under a year the change is absolute; from a year it is compounded yearly (CAGR). NAV-based, so IDCW payouts

@@ -15,6 +15,7 @@ import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
 import { IconButton } from '../ui/IconButton';
+import { Term } from '../ui/Term';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
@@ -239,9 +240,12 @@ function TodayRow({ last, average }: { last: NavPoint; average: bigint | null })
           NAV {formatNav(last.nav)} on {formatDate(last.date)}
         </AppText>
         {average !== null && (
-          <AppText variant="caption" tone="muted" numeric>
-            Your average cost is {navText(average)} a unit
-          </AppText>
+          <View style={[styles.line, { gap: 4 }]}>
+            <Term term="averageCost" label="Your average cost" variant="caption" />
+            <AppText variant="caption" tone="muted" numeric>
+              is {navText(average)} a unit
+            </AppText>
+          </View>
         )}
       </View>
     </View>

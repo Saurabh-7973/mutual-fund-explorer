@@ -10,6 +10,7 @@ import type { NavPoint, SchemeMeta } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Term } from '../ui/Term';
 import { Banner } from '../ui/Banner';
 
 /** "Equity Scheme - Flexi Cap Fund" → "Equity · Flexi Cap", the way investors name categories. */
@@ -32,9 +33,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
   const change = useMemo(() => latestChange(points), [points]);
   const last = points[points.length - 1];
   const stale = last !== undefined && isStale(last.date, todayInIndia());
-  const tags = [label.plan, label.option, shortCategory(meta.schemeCategory)].filter(
-    (part): part is string => part !== null,
-  );
+  const category = shortCategory(meta.schemeCategory);
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -42,11 +41,16 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
         <AppText variant="title" accessibilityRole="header">
           {label.title}
         </AppText>
-        {tags.length > 0 && (
-          <AppText variant="label" tone="muted">
-            {tags.join(' · ')}
-          </AppText>
-        )}
+        {/* Plan and option explain themselves on tap; the category is plain text. */}
+        <View style={[styles.line, { gap: spacing.md }]}>
+          {label.plan !== null && <Term term="direct" label={label.plan} />}
+          {label.option !== null && <Term term="idcw" label={label.option} />}
+          {category !== null && (
+            <AppText variant="label" tone="muted">
+              {category}
+            </AppText>
+          )}
+        </View>
       </View>
       {headline !== null && headline.percent !== null && (
         <View
@@ -61,9 +65,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
           >
             {formatPercent(headline.percent)}
           </AppText>
-          <AppText variant="label" tone="muted">
-            {headline.key === 'ALL' ? 'a year since start' : `${headline.key} annualised`}
-          </AppText>
+          <Term term="cagr" label={headline.key === 'ALL' ? 'a year since start' : `${headline.key} annualised`} />
         </View>
       )}
       {stale && (

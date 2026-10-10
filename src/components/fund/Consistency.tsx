@@ -8,6 +8,7 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Term } from '../ui/Term';
 import { SegmentedRow } from '../ui/SegmentedRow';
 
 const HOLDS = [3, 5] as const;
@@ -41,6 +42,7 @@ export function Consistency({ points }: { points: NavPoint[] }) {
         selected={String(chosenYears)}
         onSelect={(key) => setYears(Number(key))}
       />
+      <Term term="rolling" label="What are rolling returns?" variant="caption" />
       <AppText>
         Buying on any day since {formatMonthYear(points[0]?.date ?? summary.from)} and holding for {chosenYears} years
         returned:

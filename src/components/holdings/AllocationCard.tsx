@@ -7,6 +7,7 @@ import type { AllocationSlice, AssetClassSlice } from '@/domain/holdings';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Term } from '../ui/Term';
 
 /** Colour follows the class, never its rank, so Equity is the same blue on every screen. */
 const CLASS_SLOT: Record<AssetClass, number | null> = {
@@ -63,9 +64,9 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
   return (
     <View style={{ gap: spacing.md }}>
       <View style={styles.header}>
-        <AppText variant="label" tone="muted" style={styles.flex}>
-          Allocation
-        </AppText>
+        <View style={styles.flex}>
+          <Term term="assetClass" label="Allocation" />
+        </View>
         <View style={[styles.segment, { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill }]}>
           {(['class', 'fund'] as const).map((option) => (
             <Pressable

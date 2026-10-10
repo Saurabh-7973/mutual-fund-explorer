@@ -6,12 +6,13 @@ import type { NavPoint, SchemeMeta } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Term } from '../ui/Term';
 
 /** Four facts in a grid, label above value: scannable without reading sentences. */
 export function KeyFacts({ meta, last, first, skipped }: { meta: SchemeMeta; last: NavPoint; first: NavPoint; skipped: number }) {
   const { colors, spacing } = useTheme();
   const facts = [
-    { label: `NAV · ${formatDate(last.date)}`, value: formatNav(last.nav) },
+    { label: `NAV · ${formatDate(last.date)}`, value: formatNav(last.nav), term: 'nav' as const },
     { label: 'Fund house', value: meta.fundHouse ?? '—' },
     { label: 'NAV data since', value: formatDate(first.date) },
     { label: 'Scheme code', value: String(meta.schemeCode) },
@@ -21,9 +22,13 @@ export function KeyFacts({ meta, last, first, skipped }: { meta: SchemeMeta; las
       <View style={[styles.grid, { borderColor: colors.border }]}>
         {facts.map((fact) => (
           <View key={fact.label} style={[styles.cell, { paddingVertical: spacing.sm, gap: 2 }]}>
-            <AppText variant="caption" tone="muted">
-              {fact.label}
-            </AppText>
+            {'term' in fact && fact.term !== undefined ? (
+              <Term term={fact.term} label={fact.label} variant="caption" />
+            ) : (
+              <AppText variant="caption" tone="muted">
+                {fact.label}
+              </AppText>
+            )}
             <AppText variant="label" numeric numberOfLines={1} selectable>
               {fact.value}
             </AppText>
