@@ -254,3 +254,21 @@ Every item was driven on the Android emulator (Expo Go, SDK 57) with adb: deep l
 - Typing speed vs requests: the 300 ms debounce is in `useDebouncedValue`; requests weren't counted.
 
 **Checks:** `npm run check`: typecheck 0 errors; 17 suites, 148 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.
+
+---
+
+## Phase 8: Tests, docs, final verification (10 Oct 2026, Claude Code)
+
+**Store test:** `src/store/__tests__/portfolioStore.test.ts`, 4 tests against the real persisted store with the AsyncStorage Jest mock: `unwatch` returns `{ item, index }` and `undoUnwatch` restores the order (and `unwatch` of an unknown code returns null); `addLot` then `removeLot`; storage holds JSON under `mfx.portfolio` with `version: 1` and only `watchlist` and `lots` (no `hydrated`); corrupt saved JSON (a lot with units "abc") is dropped on `persist.rehydrate()` and `hydrated` becomes true.
+
+**Docs**
+- `README.md`: test count, project structure (new `signed` and `holdings` domain files), and a troubleshooting entry for Expo Go's "Failed to download remote update" in airplane mode (with the `adb reverse` workaround). No screenshots section was filled: none were provided.
+- `docs/ARCHITECTURE.md`: test count and what the tests cover; fixed row heights and the 1.3× font cap; list headers in `getItemLayout`; Gesture Handler's `RefreshControl`; the edge-to-edge keyboard; how UI was verified (phone plus adb-driven emulator) and how to test offline cold starts in Expo Go.
+- `AI_CONTEXT.md`: filled from this log. Added how the agent was directed during the build, where AI helped, the list of Claude Code's mistakes and corrections from phases 0–8 (including the three "carry over" items: inline `#` comments in zsh, whole-word search, hand-computed money), and two decisions. The five **[YOU]** markers are left for the user's own words; nothing was invented.
+
+**Final verification**
+- `npm run check`: typecheck 0 errors; 18 suites, 152 tests passed.
+- `npx expo export --platform android`: clean.
+- `npx expo-doctor`: 21/21 checks passed. `npx expo install --check`: dependencies up to date.
+- Rule greps on `src/app` and `src/components`: nothing found. `src/app` holds route files only.
+- The Phase 7 list was run on the emulator in Phase 7 (results above). **Still open:** one full pass on the user's real phone in Expo Go, and the items Phase 7 couldn't verify on the emulator.

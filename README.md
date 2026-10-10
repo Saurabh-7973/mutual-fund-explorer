@@ -26,7 +26,7 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 | Command | What it does |
 |---|---|
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Jest: 140+ tests on dates, money, NAV rules, parsing, the API client and the store |
+| `npm test` | Jest: 150+ tests on dates, money, NAV rules, parsing, the API client and the store |
 | `npm run check` | Both |
 
 ## Features
@@ -60,7 +60,7 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 src/
   app/          routes (Expo Router): (tabs)/index, watchlist, holdings; fund/[code]/index, navs; add-holding
   components/   ui/, search/, fund/, form/, watchlist/, holdings/
-  domain/       pure rules: dates, decimal, format, nav, returns, valuation, validation, chart, search
+  domain/       pure rules: dates, decimal, format, nav, returns, valuation, validation, chart, search, signed, holdings
   api/          mfapi.in client, response parsing, typed errors, real-payload fixtures
   query/        TanStack Query client, keys, options, data hooks, persistence
   store/        Zustand portfolio store and its pure transitions
@@ -91,6 +91,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 ## Troubleshooting
 
 - **"Project is incompatible with this version of Expo Go":** see the SDK section above.
+- **Expo Go shows "Failed to download remote update" after relaunching in airplane mode:** in development, Expo Go downloads the app's code from Metro at each launch. To test offline on an Android emulator, run `adb reverse tcp:8081 tcp:8081` and open `exp://127.0.0.1:8081`; the code then arrives over adb while the API stays unreachable.
 - **Odd bundling errors after switching branches:** `npx expo start -c` clears Metro's cache.
 - **Jest says the React Native preset has moved:** `npm install --save-dev @react-native/jest-preset@^0.86.3`.
 

@@ -14,7 +14,7 @@ src/api (fetch, timeout,            src/store/portfolioSchema.ts (pure transitio
   │                                    │
   └──────────────► src/domain ◄────────┘
        pure TypeScript: dates, money, NAV rules, returns, formatting,
-       validation, chart geometry. No React, no network. 140 unit tests.
+       validation, chart geometry, sort and sign rules. No React, no network.
 ```
 
 Two kinds of state, two tools:
@@ -84,11 +84,16 @@ The form records a date, not a time, so it can't model the 3 pm cut-off. The for
 - The chart downsamples to about 150 points with Largest-Triangle-Three-Buckets, which keeps spikes and crashes that "every nth point" would drop. The x axis is proportional to calendar days, so a hole in the data shows as a long straight segment instead of disappearing.
 - Scrubbing state lives inside the chart component, so dragging re-renders only the chart; the static path layer is memoised.
 - The NAV list is a `FlatList` with one fixed row height for both row kinds (NAV and gap marker), `getItemLayout` and memoised rows. That is smooth for thousands of rows without adding FlashList.
+- Every list row has a fixed height (search 76, watchlist 76, holdings 148, NAV list 48) and caps text growth at 1.3× (`maxFontSizeMultiplier`), so `getItemLayout` stays exact at the largest system font size and rows truncate with an ellipsis instead of overflowing. Where a list has a header, its height is part of the offsets: the Explore "Open scheme code" row counts as one row, the Holdings summary card is measured with `onLayout`, and the Watchlist header sits outside the list.
+- The fund screen scrolls with Gesture Handler's `ScrollView` so a horizontal drag scrubs the chart and a vertical swipe scrolls. Its pull-to-refresh must be Gesture Handler's `RefreshControl` too: that `ScrollView` waits on the refresh control's gesture, which React Native's `RefreshControl` doesn't provide, and on Android pull-to-refresh broke until this was changed.
+- Android in SDK 57 is edge-to-edge, so the keyboard draws over the screen instead of resizing it. Explore's empty and error states measure how much the keyboard covers (`useKeyboardOverlap`) and centre in the visible part.
 - The chart is drawn with `react-native-svg` and scrubbed with Gesture Handler, both included in Expo Go. Skia and Reanimated were left out on purpose. They bring nothing at 150 points, and leaving them out sidesteps the Hermes memory regression that SDK 56 and early SDK 57 had in apps importing Reanimated or worklets (fixed in `expo@57.0.9`).
 
 ## Testing
 
-The risky logic is pure TypeScript, so it is tested without a device: 140 Jest tests over dates, money, NAV rules, returns, formatting, validation, parsing, the API client (with a mocked `fetch`) and the store's transitions. Fixtures are real mfapi.in payloads captured on 10 Oct 2026, including real holiday gaps (Independence Day 2023, Good Friday 2024 with its Sunday NAV, Gandhi Jayanti 2026). UI behaviour is checked against a manual QA list on a real phone; component tests are listed as future work.
+The risky logic is pure TypeScript, so it is tested without a device: 152 Jest tests over dates, money, NAV rules, returns, formatting, validation, parsing, sorting, the API client (with a mocked `fetch`), the store's transitions, and the persisted store itself (Undo order, versioned JSON without `hydrated`, corrupt rows dropped on rehydrate). Fixtures are real mfapi.in payloads captured on 10 Oct 2026, including real holiday gaps (Independence Day 2023, Good Friday 2024 with its Sunday NAV, Gandhi Jayanti 2026). UI behaviour was checked phase by phase on a real phone and on an Android emulator driven with adb (deep links, the accessibility tree from `uiautomator`, screenshots, airplane mode, dark mode, font scale 2.0, frame timing from `dumpsys gfxinfo`); `docs/BUILD_LOG.md` records each result and what couldn't be checked. Component tests are listed as future work.
+
+Testing offline cold starts in Expo Go needs one trick: in development Expo Go downloads the JavaScript from Metro at every launch, so airplane mode alone fails with "Failed to download remote update". `adb reverse tcp:8081 tcp:8081` and opening `exp://127.0.0.1:8081` keeps Metro reachable over adb while mfapi.in is not. A release build carries its bundle and doesn't have this problem.
 
 ## Trade-offs
 
