@@ -87,7 +87,7 @@ export default function ExploreScreen() {
         <View style={{ padding: spacing.lg, gap: spacing.md }}>
           {typedLength > 0 && typedLength < 3 && (
             <AppText tone="muted" variant="label">
-              Type at least 3 characters
+              Type at least 3 characters. Search matches whole words.
             </AppText>
           )}
           <AppText variant="heading" accessibilityRole="header">
@@ -116,7 +116,9 @@ export default function ExploreScreen() {
         return (
           <>
             {codeRow}
-            <ErrorState error={query.error} onRetry={() => query.refetch()} />
+            <View style={styles.centered}>
+              <ErrorState error={query.error} onRetry={() => query.refetch()} />
+            </View>
           </>
         );
       }
@@ -126,11 +128,13 @@ export default function ExploreScreen() {
     if (data.length === 0) {
       return (
         codeRow ?? (
-          <EmptyState
-            icon="search-outline"
-            title={`No schemes match “${normalized}”`}
-            body="Try the fund house (for example HDFC), a category (liquid, index) or fewer words."
-          />
+          <View style={styles.centered}>
+            <EmptyState
+              icon="search-outline"
+              title={`No schemes match “${normalized}”`}
+              body="Search matches whole words, so type “parag”, not “par”. You can also try a fund house (HDFC), a category (liquid, index) or fewer words."
+            />
+          </View>
         )
       );
     }
@@ -221,6 +225,7 @@ export default function ExploreScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  centered: { flex: 1, justifyContent: 'center' },
   field: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH, borderWidth: StyleSheet.hairlineWidth },
   input: { flex: 1, paddingVertical: 10 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },

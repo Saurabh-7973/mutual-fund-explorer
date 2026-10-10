@@ -104,3 +104,10 @@ _(Claude Code: add entries below this line.)_
 **Pre-built code changed:** `src/domain/search.ts` (additions above).
 
 **Checks:** `npm run check`: typecheck 0 errors; 16 suites, 144 tests passed. `npx expo export --platform android`: bundled cleanly.
+
+**Phone test feedback (user, 10 Oct 2026) and fixes**
+- "par" showed "No schemes match". Cause: mfapi.in search matches whole words, not prefixes (checked live: `par` 0, `para` 0, `parik` 0, `hdf` 0; `parag` 15, `flexi` 15, `hdfc` 15). Not fixable on the client without downloading the full scheme list, so the copy now says so: the hint reads "Type at least 3 characters. Search matches whole words." and the empty state says "Search matches whole words, so type “parag”, not “par”…".
+- The empty and error states sat at the top of the body; they are now centred vertically.
+- "parag parikh" with both filters leaves **4** plans, not the 3 the build plan expected: Flexi Cap, Liquid, ELSS Tax Saver and Conservative Hybrid (Direct Growth). The plan's figure predates the current data; the filter is correct.
+- Offline, a search typed earlier still shows results under the offline banner. Expected: search results stay in memory for a day (`staleTime`), so only a new, uncached query shows the offline error.
+- "Searching…" dimming not observed by the user (hard to catch by hand on a fast connection); left as is.
