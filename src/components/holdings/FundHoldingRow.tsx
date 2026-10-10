@@ -146,7 +146,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, column, 
         ]}
       >
         <View style={[styles.flex, { gap: 2 }]}>
-          <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
+          <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
             {label.title}
           </AppText>
           <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3}>
@@ -176,7 +176,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   flex: { flex: 1 },
-  title: { fontWeight: '600' },
   right: { alignItems: 'flex-end' },
   line: { flexDirection: 'row' },
 });

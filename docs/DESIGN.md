@@ -7,7 +7,9 @@ Every component below was decided by the data it shows, then checked against how
 ## Direction: patient money
 
 - **Palette:** a deep "banyan" green as the primary colour, ink text on a cool paper background, and saffron-gold only for the watch star. Gains and losses are muted, because long-term money shouldn't flash like a trading screen. Dark mode has its own tuned values, not an inverted palette. The colours are tokens in `src/theme/tokens.ts`; no screen hard-codes a colour.
-- **Type:** the system font with tabular figures, so numbers line up in columns. Each screen's largest element is the number that matters.
+- **Type scale** (system font, tabular figures so numbers line up): `display` 28 for a tab's title, `figure` 32 for the one number a screen is about, `title` 20 for a fund's name, `heading` 16 for section titles, `body` 15, `labelStrong` 13/600 for a fund's name in a list, `label` 13 for values and meta, `caption` 12 for dates and footnotes. No screen sets its own font size or weight.
+- **Chrome:** no separate header bar. Each tab draws a large title on the page with its one action on the right (Holdings: hide amounts); stacked screens use a header the colour of the page, without a shadow. The tab bar uses the surface colour with a soft pill behind the active icon, the pattern Android users know from Material 3, and clears the gesture bar.
+- **One selector style:** ranges, amounts, periods and holding views all use the same equal-width row with a soft pill on the choice, instead of a mix of bordered chips.
 - **Show the takeaway first, the detail on request.** Nothing is put on screen just because the data exists.
 
 ## Components
@@ -28,6 +30,11 @@ Every component below was decided by the data it shows, then checked against how
 | Sections | everything below the facts | collapsible, Returns open by default | Groww collapses everything | a closed section still states its takeaway ("3-year holds: +0.74% to +37.64% a year") |
 | Primary action | add a purchase | a sticky bar at the bottom | Groww's One-time / Start SIP bar | the label becomes "Add another purchase" when you hold the fund |
 | Header on scroll | the fund and its headline | name plus "+12.40% 3Y annualised" | Groww | — |
+| Asset allocation | current value by asset class, or by fund | one stacked bar with every slice named and its share printed; a switch between **Asset class** (first) and **Fund** | Groww shows equity/debt splits | asset class from AMFI's category, with the scheme name for index funds and ETFs filed under "Other"; colours run through the dataviz validator on both card surfaces (colour-blind separation passes); colour follows the class, so Equity is always the same blue |
+| Holdings list order | the figure in view | a sort arrow beside the column switch reverses it; funds without that figure stay last | a quick-sort row (a label plus a glyph showing what is sorted and which way) | — |
+| Your investment | value, return, XIRR, invested, today's change, units, each purchase | a header, then a three-cell strip (Invested · 1D · Units), then the purchases on a timeline | a holding card (header over a cell strip) and a history timeline | each purchase shows your average cost after it, and the timeline ends at today's NAV beside your average: a statement-style view no MF app we studied shows |
+| Returns periods | 1M, 3M, 6M, 1Y, 3Y, 5Y, 10Y, since start | as above | Groww (1M–All), Value Research (adds 3M and 10Y) | 10Y shows only when the history reaches back that far |
+| Empty watchlist | where to start | recently viewed funds with a star each, then collections | Groww's trending list with bookmark buttons | uses funds you've already looked at instead of a "trending" list we have no data for |
 | Explore idle state | where to start | recently viewed funds, then collections | Groww | each recent fund shows its NAV and today's move |
 
 ## What we deliberately left out

@@ -46,10 +46,10 @@ export function SegmentedRow<K extends string>({ options, selected, onSelect, ac
               ]}
             >
               <AppText
-                variant="label"
+                variant="labelStrong"
                 tone={isSelected ? 'primary' : 'muted'}
                 maxFontSizeMultiplier={1.3}
-                style={[styles.text, option.disabled && styles.disabled]}
+                style={option.disabled && styles.disabled}
               >
                 {option.label}
               </AppText>
@@ -65,6 +65,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
   cell: { flex: 1, minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   pill: { paddingHorizontal: 10, paddingVertical: 6 },
-  text: { fontWeight: '600' },
   disabled: { opacity: 0.35 },
 });

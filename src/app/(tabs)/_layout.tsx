@@ -26,7 +26,7 @@ function TabIcon({ focused, color, on, off }: { focused: boolean; color: ColorVa
 // `Tabs` from 'expo-router' itself is deprecated in SDK 57; the JS tab bar lives in 'expo-router/js-tabs'.
 // Each tab draws its own large title (ScreenHeader), so the navigator's header is off.
 export default function TabsLayout() {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
   // Edge-to-edge Android draws under the gesture bar, so the bar's height includes the bottom inset.
   const insets = useSafeAreaInsets();
   return (
@@ -35,7 +35,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+        tabBarLabelStyle: { fontSize: typography.caption.fontSize, fontWeight: '600', marginTop: 2 },
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,

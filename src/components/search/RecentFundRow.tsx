@@ -33,7 +33,7 @@ export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: Recen
       ]}
     >
       <View style={[styles.flex, { gap: 2 }]}>
-        <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
+        <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {label.title}
         </AppText>
         {meta !== '' && (
@@ -66,6 +66,5 @@ export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: Recen
 const styles = StyleSheet.create({
   row: { height: RECENT_ROW_HEIGHT, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
-  title: { fontWeight: '600' },
   right: { alignItems: 'flex-end' },
 });

@@ -37,7 +37,7 @@ export const SchemeRow = memo(function SchemeRow({ scheme }: SchemeRowProps) {
         }
         style={({ pressed }) => [styles.main, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
       >
-        <AppText variant="label" numberOfLines={2} maxFontSizeMultiplier={1.3} style={styles.title}>
+        <AppText variant="labelStrong" numberOfLines={2} maxFontSizeMultiplier={1.3}>
           {title}
         </AppText>
         <View style={[styles.meta, { gap: spacing.sm }]}>
@@ -61,6 +61,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   main: { flex: 1, justifyContent: 'center' },
-  title: { fontWeight: '600' },
   meta: { flexDirection: 'row', alignItems: 'center' },
 });

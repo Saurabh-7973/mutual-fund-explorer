@@ -130,7 +130,7 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         ]}
       >
         <View style={[styles.line, { gap: spacing.md }]}>
-          <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
+          <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
             {title}
           </AppText>
           {nav}
@@ -162,6 +162,5 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', alignItems: 'center' },
   // Keeps each line's height when a fund has no badges, change or fund house.
   minLine: { minHeight: 20 },
-  title: { flex: 1, fontWeight: '600' },
   flex: { flex: 1 },
 });

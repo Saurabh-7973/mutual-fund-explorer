@@ -294,3 +294,13 @@ The user asked for the best UI/UX possible, with every component decided by the 
 **Checks:** `npm run check` before every commit: 18 → 21 suites, 152 → 178 tests. Android export clean. Each screen checked on the emulator (light and dark), and the fund page on the user's phone over `adb reverse` (Wi-Fi to Metro was failing on the phone: "Cannot connect to Expo CLI").
 
 **Open:** `src/components/fund/LatestNavCard.tsx` is no longer used (the hero and key facts replaced it). Not deleted: CLAUDE.md asks for approval before deleting files.
+
+### UX pass, round 2 (11 Oct 2026)
+
+- **Header and tab bar** (user: "the bottom and the header look the worst"): both were React Navigation defaults, a white bar with a shadow on the tinted page. Tabs now draw a large title on the page (`ScreenHeader`), stacked screens use a page-coloured header with no shadow, and the tab bar uses the surface colour, a soft pill behind the active icon, and the bottom inset (the first try fixed its height and the labels collided with the gesture bar on edge-to-edge Android).
+- **Design patterns:** a holding card with a header over a strip of cells, a quick-sort row, and a holding history timeline. Applied as the three-cell strip and purchase timeline in "Your investment" (`purchaseTimeline`, tested) and a sort arrow on Holdings (`sortHoldings`, tested).
+- **Asset allocation by asset class** (`assetClassOf`, `allocationByAssetClass`, tested against real AMFI categories). A first rule read the category before the name, so "Bharat Bond ETF FOF" under "Other Scheme - Index Funds" counted as equity; the name is now read first for those. Chart colours come from the dataviz skill's reference palette and passed its validator on our light and dark card surfaces (light: contrast warning, covered by printed labels).
+- **Periods:** 3M and 10Y added to trailing returns and 3M to the chart (user asked for 1M/3M/6M; domain change made on that request, tests updated).
+- **Consistency:** `SegmentedRow` replaces bordered chip rows on the fund page; a `labelStrong` type token replaces six inline `fontWeight: '600'` overrides; header and tab labels read their sizes from tokens.
+- Also: an empty watchlist offers recently viewed funds to star in one tap.
+- Checks: `npm run check` 22 suites, 184 tests; Android export clean; rule greps clean. Unused after this pass and awaiting approval to delete: `src/components/fund/LatestNavCard.tsx`, `src/components/holdings/LotRow.tsx`.

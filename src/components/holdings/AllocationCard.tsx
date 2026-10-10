@@ -79,7 +79,7 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
                 { borderRadius: radius.pill, backgroundColor: view === option ? colors.surface : 'transparent' },
               ]}
             >
-              <AppText variant="caption" tone={view === option ? 'default' : 'muted'} style={styles.segmentText}>
+              <AppText variant="labelStrong" tone={view === option ? 'default' : 'muted'}>
                 {option === 'class' ? 'Asset class' : 'Fund'}
               </AppText>
             </Pressable>
@@ -136,7 +136,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   segment: { flexDirection: 'row', padding: 2 },
   segmentItem: { paddingHorizontal: 12, paddingVertical: 4 },
-  segmentText: { fontWeight: '600' },
   bar: { flexDirection: 'row', height: 12 },
   legend: { flexDirection: 'row', alignItems: 'center' },
   swatch: { width: 10, height: 10, borderRadius: 3 },
