@@ -23,44 +23,50 @@ export interface Palette {
   dangerSurface: string;
   info: string;
   infoSurface: string;
+  /** The watch star only. */
+  star: string;
 }
 
 export const palettes: { light: Palette; dark: Palette } = {
+  // "Patient money": a deep banyan green and ink on cool paper. Gains and losses are
+  // muted, because long-term money shouldn't flash like a trading screen.
   light: {
-    background: '#F6F7F9',
+    background: '#F2F5F1',
     surface: '#FFFFFF',
-    surfaceMuted: '#ECEEF2',
-    border: '#DDE1E7',
-    text: '#111418',
-    textMuted: '#5B6472',
-    primary: '#1F5FBF',
+    surfaceMuted: '#E6EBE5',
+    border: '#D5DCD3',
+    text: '#15211C',
+    textMuted: '#5A6A62',
+    primary: '#2F5D50',
     onPrimary: '#FFFFFF',
-    gain: '#12805C',
-    loss: '#C4314B',
-    warning: '#8A5A00',
-    warningSurface: '#FFF4D6',
-    danger: '#B42318',
-    dangerSurface: '#FDECEA',
-    info: '#1F5FBF',
-    infoSurface: '#E8F0FC',
+    gain: '#1E7650',
+    loss: '#B0473D',
+    warning: '#85580A',
+    warningSurface: '#FAF0D7',
+    danger: '#B2362D',
+    dangerSurface: '#FBE8E5',
+    info: '#2C5D7C',
+    infoSurface: '#E4EEF3',
+    star: '#C08A1E',
   },
   dark: {
-    background: '#0E1116',
-    surface: '#161B22',
-    surfaceMuted: '#222A33',
-    border: '#2D3640',
-    text: '#E8ECF1',
-    textMuted: '#9AA5B1',
-    primary: '#6EA8FE',
-    onPrimary: '#0E1116',
-    gain: '#3FB950',
-    loss: '#FF7B8A',
-    warning: '#E3B341',
-    warningSurface: '#3A2E10',
-    danger: '#FF8A80',
-    dangerSurface: '#3D1F1C',
-    info: '#6EA8FE',
-    infoSurface: '#172A45',
+    background: '#0D1311',
+    surface: '#151D1A',
+    surfaceMuted: '#1F2925',
+    border: '#2A3530',
+    text: '#E5ECE8',
+    textMuted: '#93A39A',
+    primary: '#83BCA7',
+    onPrimary: '#0D1311',
+    gain: '#5DBE8C',
+    loss: '#EE8A7E',
+    warning: '#E0B44C',
+    warningSurface: '#32290F',
+    danger: '#F08A80',
+    dangerSurface: '#3A1E1B',
+    info: '#8CB8D4',
+    infoSurface: '#16283A',
+    star: '#E3B04B',
   },
 };
 
@@ -72,7 +78,7 @@ export const radius = { sm: 6, md: 10, lg: 14, pill: 999 } as const;
 export const MIN_TOUCH = 44;
 
 export const typography = {
-  figure: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
+  figure: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   title: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
   heading: { fontSize: 16, lineHeight: 22, fontWeight: '600' },
   body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },

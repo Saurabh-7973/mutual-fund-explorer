@@ -6,7 +6,8 @@ import {
   SEARCH_PARAG_PARIKH,
   UNKNOWN_SCHEME,
 } from '../__fixtures__/mfapi';
-import { API_BASE_URL, fetchLatestNav, fetchNavHistory, getJson, searchSchemes } from '../client';
+import type { IsoDate } from '../../domain/types';
+import { API_BASE_URL, fetchLatestNav, fetchNavHistory, fetchNavRange, getJson, searchSchemes } from '../client';
 import { ApiError } from '../errors';
 
 type Handler = (url: string, init: RequestInit | undefined) => Promise<unknown>;
@@ -144,5 +145,26 @@ describe('endpoints', () => {
   it('returns no latest point for a scheme that has published no NAV', async () => {
     serve(() => reply(200, { ...LATEST_PPFAS_FLEXI_DIRECT, data: [] }));
     expect((await fetchLatestNav(122639)).point).toBeNull();
+  });
+});
+
+describe('fetchNavRange', () => {
+  it('asks for the date window and parses the rows', async () => {
+    serve(() => reply(200, HISTORY_PPFAS_FLEXI_DIRECT));
+    const range = await fetchNavRange(122639, '2026-09-26' as IsoDate, '2026-10-10' as IsoDate);
+    expect(requests[0]?.url).toBe(`${API_BASE_URL}/mf/122639?startDate=2026-09-26&endDate=2026-10-10`);
+    expect(range.points.length).toBeGreaterThan(0);
+  });
+
+  it('returns no points, not an error, when a real scheme has no NAV in the window', async () => {
+    serve(() =>
+      reply(200, {
+        meta: { scheme_code: 100121, scheme_name: 'HDFC Balanced Fund - Dividend Option' },
+        data: [],
+        status: 'SUCCESS',
+      }),
+    );
+    const range = await fetchNavRange(100121, '2026-09-26' as IsoDate, '2026-10-10' as IsoDate);
+    expect(range.points).toEqual([]);
   });
 });

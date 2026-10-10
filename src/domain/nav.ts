@@ -253,3 +253,14 @@ export function chartRangeLabel(range: ChartRange, points: readonly NavPoint[]):
   const first = points[0];
   return first === undefined ? 'all NAVs' : `since ${formatDate(first.date)}`;
 }
+
+/**
+ * The day's change for a list row: from the previous NAV to the latest one, using a
+ * short recent window plus the fresher /latest point (the history can lag by a day).
+ * Null when there aren't two NAVs, or when the change wouldn't end at the latest NAV.
+ */
+export function dayChange(recent: readonly NavPoint[], latest: NavPoint | null): NavChange | null {
+  const change = latestChange(mergeLatest(recent, latest));
+  if (change === null) return null;
+  return latest === null || change.to.date === latest.date ? change : null;
+}

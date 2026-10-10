@@ -6,6 +6,7 @@ import {
   GAP_WARNING_DAYS,
   buildSeries,
   chartRangeLabel,
+  dayChange,
   defaultChartRange,
   isStale,
   latestChange,
@@ -230,5 +231,26 @@ describe('chart range defaults and labels', () => {
     expect(chartRangeLabel('6M', series(['2025-01-01']))).toBe('6 months');
     expect(chartRangeLabel('ALL', series(['2013-05-28', '2026-10-09']))).toBe('since 28 May 2013');
     expect(chartRangeLabel('ALL', [])).toBe('all NAVs');
+  });
+});
+
+describe('dayChange', () => {
+  const p = (date: string, nav: string): NavPoint => ({ date: date as IsoDate, nav, value: Number(nav) });
+
+  it('uses /latest when the history lags a day', () => {
+    const change = dayChange([p('2026-10-07', '88.8389'), p('2026-10-08', '87.6555')], p('2026-10-09', '88.9258'));
+    expect(change?.from.date).toBe('2026-10-08');
+    expect(change?.to.date).toBe('2026-10-09');
+    expect(change?.diff).toBe(127_030_000n); // ₹1.2703 at NAV_SCALE
+  });
+
+  it('works when the window already holds the latest NAV', () => {
+    const latest = p('2026-10-09', '88.9258');
+    expect(dayChange([p('2026-10-08', '87.6555'), latest], latest)?.from.date).toBe('2026-10-08');
+  });
+
+  it('is null without two NAVs, or when the window ends after /latest', () => {
+    expect(dayChange([], p('2026-10-09', '88.9258'))).toBeNull();
+    expect(dayChange([p('2026-10-08', '87.6555'), p('2026-10-09', '88.9258')], p('2026-10-08', '87.6555'))).toBeNull();
   });
 });

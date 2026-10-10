@@ -1,4 +1,4 @@
-import type { NavHistory, NavPoint, SchemeMeta, SchemeSearchResult } from '../domain/types';
+import type { IsoDate, NavHistory, NavPoint, SchemeMeta, SchemeSearchResult } from '../domain/types';
 import { ApiError } from './errors';
 import { parseSchemeResponse, parseSearchResponse } from './parse';
 
@@ -69,6 +69,21 @@ export async function searchSchemes(query: string, signal?: AbortSignal): Promis
 
 export async function fetchNavHistory(schemeCode: number, signal?: AbortSignal): Promise<NavHistory> {
   const json = await getJson(`/mf/${schemeCode}`, { signal, timeoutMs: HISTORY_TIMEOUT_MS });
+  return parseSchemeResponse(json, schemeCode);
+}
+
+/**
+ * NAVs between two dates, inclusive (mfapi honours startDate/endDate; checked in Phase 0).
+ * A few rows instead of thousands: list rows use it for the day's change.
+ * A scheme with no NAV in the window (a closed one) returns no points, not an error.
+ */
+export async function fetchNavRange(
+  schemeCode: number,
+  from: IsoDate,
+  to: IsoDate,
+  signal?: AbortSignal,
+): Promise<NavHistory> {
+  const json = await getJson(`/mf/${schemeCode}?startDate=${from}&endDate=${to}`, { signal });
   return parseSchemeResponse(json, schemeCode);
 }
 

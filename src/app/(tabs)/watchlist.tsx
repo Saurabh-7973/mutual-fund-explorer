@@ -109,8 +109,8 @@ export default function WatchlistScreen() {
       <View style={{ padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
         {!online && <Banner tone="info" text="Offline: showing saved NAVs" />}
         <AppText variant="caption" tone="muted">
-          Latest NAVs from mfapi.in. A NAV is published after market close, so each date shows the business day
-          it's for.
+          Latest NAVs from mfapi.in, published after market close, so each date is the business day it's for.
+          Swipe left on a fund to remove it.
         </AppText>
       </View>
       <FlatList

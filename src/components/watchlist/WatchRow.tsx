@@ -1,23 +1,22 @@
 import { router } from 'expo-router';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { formatDate, todayInIndia } from '@/domain/dates';
-import { formatNav } from '@/domain/format';
+import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
 import { isStale } from '@/domain/nav';
 import { describeScheme } from '@/domain/schemeName';
-import { useLatestNav } from '@/query/hooks';
+import { useDayChange, useLatestNav } from '@/query/hooks';
 import type { WatchItem } from '@/store/portfolioSchema';
-import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { SchemeBadges } from '../search/SchemeBadges';
 import { AppText } from '../ui/AppText';
 import { Badge } from '../ui/Badge';
-import { IconButton } from '../ui/IconButton';
 import { Skeleton } from '../ui/Skeleton';
+import { SwipeRow } from '../ui/SwipeRow';
 
-export const WATCH_ROW_HEIGHT = 76;
+export const WATCH_ROW_HEIGHT = 92;
 
 export interface WatchRowProps {
   item: WatchItem;
@@ -25,8 +24,9 @@ export interface WatchRowProps {
 }
 
 /**
- * One watched fund with its latest NAV. Each row runs its own query, so one
- * failing scheme never blocks the others. The height never changes between states.
+ * One watched fund: latest NAV with its date and the day's change. Each row runs its
+ * own queries, so one failing scheme never blocks the others, and the height never
+ * changes between states. Swipe left to remove.
  */
 export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps) {
   const { colors, spacing } = useTheme();
@@ -34,22 +34,30 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
   const title = useMemo(() => describeScheme(schemeName).title, [schemeName]);
   const latest = useLatestNav(schemeCode);
   const point = latest.data?.point;
+  const change = useDayChange(schemeCode, point);
+  const fundHouse = latest.data?.meta.fundHouse ?? null;
+  const remove = useCallback(() => {
+    onRemove(schemeCode);
+    return true;
+  }, [onRemove, schemeCode]);
 
-  // Two lines, each split left | right, so every row lines up: title | NAV, then badges | date.
-  // A row without plan or option badges keeps its title on the first line.
-  let top;
-  let bottom;
+  // Three lines, each split left | right, so every row lines up:
+  // title | NAV, badges | day's change, fund house | as-of date.
+  let nav: ReactNode = null;
+  let middle: ReactNode = null;
+  let date: ReactNode = null;
   if (latest.data === undefined && latest.isLoading) {
-    top = <Skeleton width={72} height={16} />;
-    bottom = <Skeleton width={88} height={12} />;
+    nav = <Skeleton width={84} height={18} />;
+    middle = <Skeleton width={96} height={12} />;
+    date = <Skeleton width={88} height={12} />;
   } else if (latest.data === undefined) {
     // Failed, or paused offline with nothing saved.
-    top = (
+    nav = (
       <AppText variant="caption" tone="danger" maxFontSizeMultiplier={1.3}>
         Couldn't load NAV
       </AppText>
     );
-    bottom = (
+    middle = (
       <Pressable
         onPress={() => void latest.refetch()}
         accessibilityRole="button"
@@ -62,20 +70,38 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
       </Pressable>
     );
   } else if (point === null || point === undefined) {
-    top = (
+    nav = (
       <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
         No NAV published
       </AppText>
     );
-    bottom = null;
   } else {
     const stale = isStale(point.date, todayInIndia());
-    top = (
+    nav = (
       <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
         {formatNav(point.nav)}
       </AppText>
     );
-    bottom = (
+    if (change !== null) {
+      const direction = change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged';
+      const pct = change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths;
+      middle = (
+        <AppText
+          variant="label"
+          numeric
+          maxFontSizeMultiplier={1.3}
+          tone={direction === 'up' ? 'gain' : direction === 'down' ? 'loss' : 'muted'}
+          accessibilityLabel={
+            direction === 'unchanged'
+              ? `unchanged since ${formatDate(change.from.date)}`
+              : `${direction} ${formatPercentHundredths(pct, 'negative-only')} since ${formatDate(change.from.date)}`
+          }
+        >
+          {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+        </AppText>
+      );
+    }
+    date = (
       <View style={[styles.line, { gap: spacing.xs }]}>
         <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
           as of {formatDate(point.date)}
@@ -86,54 +112,56 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
   }
 
   return (
-    <View
-      style={[
-        styles.row,
-        { borderBottomColor: colors.border, paddingLeft: spacing.lg, paddingRight: spacing.md, gap: spacing.md },
-      ]}
-    >
+    <SwipeRow actionLabel="Remove" onAction={remove}>
       <Pressable
         accessibilityRole="button"
-        accessibilityHint="Opens the fund"
+        accessibilityHint="Opens the fund. Swipe left to remove."
         onPress={() =>
           router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })
         }
-        style={({ pressed }) => [styles.main, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [
+          styles.row,
+          {
+            borderBottomColor: colors.border,
+            paddingHorizontal: spacing.lg,
+            gap: spacing.xs,
+            backgroundColor: pressed ? colors.surfaceMuted : colors.background,
+          },
+        ]}
       >
         <View style={[styles.line, { gap: spacing.md }]}>
           <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
             {title}
           </AppText>
-          {top}
+          {nav}
         </View>
-        <View style={[styles.line, styles.bottomLine, { gap: spacing.md }]}>
+        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
           <View style={styles.flex}>
             <SchemeBadges name={schemeName} size="sm" />
           </View>
-          {bottom}
+          {middle}
+        </View>
+        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
+          <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+            {fundHouse ?? ''}
+          </AppText>
+          {date}
         </View>
       </Pressable>
-      <IconButton
-        name="close-circle-outline"
-        onPress={() => onRemove(schemeCode)}
-        accessibilityLabel={`Remove ${title} from watchlist`}
-      />
-    </View>
+    </SwipeRow>
   );
 });
 
 const styles = StyleSheet.create({
   row: {
     height: WATCH_ROW_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  main: { flex: 1, minHeight: MIN_TOUCH, justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center' },
-  // Keeps the second line's height when a fund has no badges and no date.
-  bottomLine: { minHeight: 22 },
+  // Keeps each line's height when a fund has no badges, change or fund house.
+  minLine: { minHeight: 20 },
   title: { flex: 1, fontWeight: '600' },
   flex: { flex: 1 },
 });

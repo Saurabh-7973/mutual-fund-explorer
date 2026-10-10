@@ -27,7 +27,7 @@ export function WatchToggle({ schemeCode, schemeName }: WatchToggleProps) {
   return (
     <IconButton
       name={watched ? 'star' : 'star-outline'}
-      color={watched ? colors.warning : colors.textMuted}
+      color={watched ? colors.star : colors.textMuted}
       onPress={toggle}
       selected={watched}
       accessibilityLabel={watched ? `Remove ${title} from watchlist` : `Add ${title} to watchlist`}
