@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { allocation, annualisedReturn, holdingsByFund, portfolioDayGain, sortLots, type EvaluatedLot } from '../holdings';
+import { allocation, annualisedReturn, holdingsByFund, portfolioDayGain, purchaseTimeline, sortHoldings, sortLots, type EvaluatedLot } from '../holdings';
 import { navChange } from '../nav';
 import type { IsoDate } from '../types';
 import { evaluateLot } from '../valuation';
@@ -109,5 +109,44 @@ describe('portfolioDayGain', () => {
     const stale = navChange({ ...prev, date: '2026-10-07' as IsoDate }, prev);
     expect(portfolioDayGain(funds, new Map([[122639, stale]]))).toBeNull();
     expect(portfolioDayGain(funds, new Map())).toBeNull();
+  });
+});
+
+describe('purchaseTimeline', () => {
+  const lot = (id: string, units: string, date: string, nav: string | null) => ({
+    id,
+    units,
+    purchaseDate: date as IsoDate,
+    applied: nav === null ? null : { navDate: date as IsoDate, nav },
+  });
+
+  it('orders purchases by date and keeps a running average cost per unit', () => {
+    const timeline = purchaseTimeline([
+      lot('b', '50', '2025-01-10', '120.0000'),
+      lot('a', '100', '2024-01-10', '90.0000'),
+      lot('c', '5', '2026-10-10', null),
+    ]);
+    expect(timeline.map((entry) => entry.id)).toEqual(['a', 'b', 'c']);
+    expect(timeline[0]?.averageNavAfter).toBe(9_000_000_000n); // ₹90 at 8 decimals
+    // (100 × 90 + 50 × 120) / 150 = 100
+    expect(timeline[1]?.averageNavAfter).toBe(10_000_000_000n);
+    // An unpriced purchase is listed but doesn't move the average.
+    expect(timeline[2]?.invested).toBeNull();
+    expect(timeline[2]?.averageNavAfter).toBe(10_000_000_000n);
+    expect(timeline[2]?.unitsAfter).toBe(1_500_000n);
+  });
+});
+
+describe('sortHoldings', () => {
+  const funds = holdingsByFund([
+    evaluated(1, 'Small Winner Fund - Direct Plan - Growth', '1', '2024-03-31', '40.0000'),
+    evaluated(2, 'Big Loser Fund - Direct Plan - Growth', '100', '2024-03-31', '120.0000'),
+    evaluated(3, 'Waiting Fund - Direct Plan - Growth', '5', null),
+  ]);
+
+  it('orders by value or by return, either way, with unvalued funds last', () => {
+    expect(sortHoldings(funds, 'value', 'desc').map((f) => f.schemeCode)).toEqual([2, 1, 3]);
+    expect(sortHoldings(funds, 'value', 'asc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
+    expect(sortHoldings(funds, 'returns', 'desc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
   });
 });

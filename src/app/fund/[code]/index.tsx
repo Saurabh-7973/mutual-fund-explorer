@@ -208,7 +208,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
 
         <KeyFacts meta={history.meta} last={last} first={first} skipped={history.skipped} />
 
-        <FundLots schemeCode={schemeCode} name={name} last={last} />
+        <FundLots schemeCode={schemeCode} last={last} />
 
         <Section
           title="Returns"

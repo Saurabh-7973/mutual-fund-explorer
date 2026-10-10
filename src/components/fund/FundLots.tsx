@@ -1,33 +1,36 @@
-import { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useMemo, type ReactNode } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import { VALUE_SCALE } from '@/domain/decimal';
-import { formatPercent, formatUnits } from '@/domain/format';
-import { holdingsByFund, sortLots, type EvaluatedLot } from '@/domain/holdings';
+import { formatDate } from '@/domain/dates';
+import { NAV_SCALE, VALUE_SCALE, toPlainString } from '@/domain/decimal';
+import { formatNav, formatPercent, formatUnits } from '@/domain/format';
+import { holdingsByFund, portfolioDayGain, purchaseTimeline, type TimelineEntry } from '@/domain/holdings';
 import type { NavPoint } from '@/domain/types';
 import { evaluateLot } from '@/domain/valuation';
-import type { HoldingLot } from '@/store/portfolioSchema';
+import { useDayChange } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
-import { LotRow } from '../holdings/LotRow';
 import { AppText } from '../ui/AppText';
 import { IconButton } from '../ui/IconButton';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
+import { SwipeRow } from '../ui/SwipeRow';
 
 export interface FundLotsProps {
   schemeCode: number;
-  name: string;
   last: NavPoint;
 }
 
+const navText = (scaled: bigint) => formatNav(toPlainString(scaled, NAV_SCALE));
+
 /**
- * "Your investment": shown first on the fund page when you hold the fund, because your
- * own numbers matter more than the fund's. Renders nothing when you don't.
+ * "Your investment", shown first when you hold the fund: the value and return, a strip of
+ * three figures, then every purchase on a timeline with your average cost after each one,
+ * ending at today's NAV. Renders nothing when you don't hold the fund.
  */
 export function FundLots({ schemeCode, last }: FundLotsProps) {
   const { colors, radius, spacing } = useTheme();
@@ -35,28 +38,26 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
   const removeLot = usePortfolioStore((s) => s.removeLot);
   const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
   const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
+  const change = useDayChange(schemeCode, last);
 
-  const evaluated = useMemo<(HoldingLot & EvaluatedLot)[]>(
-    () => sortLots(lots).map((lot) => ({ ...lot, status: evaluateLot(lot, last) })),
+  const fund = useMemo(
+    () => holdingsByFund(lots.map((lot) => ({ ...lot, status: evaluateLot(lot, last) })))[0],
     [lots, last],
   );
-  const fund = useMemo(() => holdingsByFund(evaluated)[0], [evaluated]);
+  const timeline = useMemo(() => purchaseTimeline(lots), [lots]);
+  const dayGain = useMemo(
+    () => (fund === undefined ? null : portfolioDayGain([fund], new Map([[schemeCode, change]]))),
+    [fund, schemeCode, change],
+  );
   if (fund === undefined) return null;
+  const average = timeline[timeline.length - 1]?.averageNavAfter ?? null;
 
   return (
     <View
-      style={[
-        styles.card,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: radius.lg,
-          paddingTop: spacing.lg,
-        },
-      ]}
+      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
     >
-      <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.md }}>
-        <View style={styles.header}>
+      <View style={{ padding: spacing.lg, paddingBottom: spacing.md, gap: spacing.xs }}>
+        <View style={styles.row}>
           <AppText variant="heading" accessibilityRole="header" style={styles.flex}>
             Your investment
           </AppText>
@@ -80,35 +81,183 @@ export function FundLots({ schemeCode, last }: FundLotsProps) {
                   numeric
                   accessibilityLabel={`XIRR ${formatPercent(fund.xirrPercent)} per year`}
                 >
-                  · XIRR {formatPercent(fund.xirrPercent)} p.a.
+                  · XIRR {formatPercent(fund.xirrPercent)} a year
                 </AppText>
               )}
             </View>
-            <View style={[styles.line, { gap: 4 }]}>
-              <AppText variant="caption" tone="muted">
-                Invested
-              </AppText>
-              <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="caption" tone="muted" />
-              <AppText variant="caption" tone="muted" numeric>
-                · {formatUnits(fund.units)} units
-              </AppText>
-            </View>
           </>
         ) : (
-          <AppText tone="muted">Awaiting the NAV for your purchase date.</AppText>
+          <AppText tone="muted">Waiting for the NAV of your purchase date.</AppText>
         )}
       </View>
-      {evaluated.map((lot) => (
-        <LotRow key={lot.id} lot={lot} status={lot.status} onRemove={removeLot} />
-      ))}
-      <View style={{ height: spacing.sm }} />
+
+      {fund.valuedCount > 0 && (
+        <View style={[styles.strip, { backgroundColor: colors.surfaceMuted }]}>
+          <Cell label="Invested">
+            <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="label" />
+          </Cell>
+          <Divider />
+          <Cell label="1D">
+            {dayGain !== null ? (
+              <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
+            ) : (
+              <AppText variant="label" tone="muted">
+                —
+              </AppText>
+            )}
+          </Cell>
+          <Divider />
+          <Cell label="Units">
+            <AppText variant="label" numeric>
+              {formatUnits(fund.units)}
+            </AppText>
+          </Cell>
+        </View>
+      )}
+
+      <View style={{ paddingVertical: spacing.md }}>
+        <AppText variant="label" tone="muted" style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.xs }}>
+          Purchases · swipe one to remove it
+        </AppText>
+        {timeline.map((entry, i) => (
+          <TimelineRow key={entry.id} entry={entry} first={i === 0} onRemove={removeLot} />
+        ))}
+        <TodayRow last={last} average={average} />
+      </View>
+    </View>
+  );
+}
+
+function Cell({ label, children }: { label: string; children: ReactNode }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.cell, { paddingVertical: spacing.md, gap: 2 }]}>
+      <AppText variant="caption" tone="muted">
+        {label}
+      </AppText>
+      {children}
+    </View>
+  );
+}
+
+function Divider() {
+  const { colors } = useTheme();
+  return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
+}
+
+/** The spine and its dot, drawn the same for every event so the eye follows one line down. */
+function Spine({ filled, first = false, last = false }: { filled: boolean; first?: boolean; last?: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.spine}>
+      <View
+        style={[styles.spineLine, { backgroundColor: colors.border, top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]}
+      />
+      <View
+        style={[
+          styles.dot,
+          { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface },
+        ]}
+      />
+    </View>
+  );
+}
+
+function TimelineRow({
+  entry,
+  first,
+  onRemove,
+}: {
+  entry: TimelineEntry;
+  first: boolean;
+  onRemove: (id: string) => void;
+}) {
+  const { colors, spacing } = useTheme();
+  const confirm = useCallback(
+    () =>
+      new Promise<boolean>((resolve) => {
+        Alert.alert(
+          'Remove this purchase?',
+          `${formatUnits(entry.units)} units bought ${formatDate(entry.purchaseDate)}. This can't be undone.`,
+          [
+            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+            {
+              text: 'Remove',
+              style: 'destructive',
+              onPress: () => {
+                onRemove(entry.id);
+                resolve(true);
+              },
+            },
+          ],
+        );
+      }),
+    [entry, onRemove],
+  );
+
+  return (
+    <SwipeRow actionLabel="Remove" onAction={confirm}>
+      <View style={[styles.event, { backgroundColor: colors.surface, paddingRight: spacing.lg, gap: spacing.md }]}>
+        <Spine filled={entry.nav !== null} first={first} />
+        <View style={[styles.flex, { paddingVertical: spacing.sm, gap: 2 }]}>
+          <View style={[styles.row, { gap: spacing.md }]}>
+            <AppText variant="label" numeric style={styles.flex}>
+              Bought {formatDate(entry.purchaseDate)}
+            </AppText>
+            {entry.invested !== null ? (
+              <PrivateAmount value={entry.invested} scale={VALUE_SCALE} variant="label" />
+            ) : (
+              <AppText variant="caption" tone="warning">
+                Awaiting NAV
+              </AppText>
+            )}
+          </View>
+          <AppText variant="caption" tone="muted" numeric>
+            {formatUnits(entry.units)} units
+            {entry.nav !== null ? ` at ${formatNav(entry.nav)}` : ''}
+            {entry.navDate !== null && entry.navDate !== entry.purchaseDate ? ` (NAV of ${formatDate(entry.navDate)})` : ''}
+          </AppText>
+          {entry.averageNavAfter !== null && entry.nav !== null && (
+            <AppText variant="caption" tone="muted" numeric>
+              Average cost now {navText(entry.averageNavAfter)}
+            </AppText>
+          )}
+        </View>
+      </View>
+    </SwipeRow>
+  );
+}
+
+/** The timeline ends at today: where the NAV is against what you paid on average. */
+function TodayRow({ last, average }: { last: NavPoint; average: bigint | null }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={[styles.event, { paddingRight: spacing.lg, gap: spacing.md }]}>
+      <Spine filled last />
+      <View style={[styles.flex, { paddingVertical: spacing.sm, gap: 2 }]}>
+        <AppText variant="label" numeric>
+          NAV {formatNav(last.nav)} on {formatDate(last.date)}
+        </AppText>
+        {average !== null && (
+          <AppText variant="caption" tone="muted" numeric>
+            Your average cost is {navText(average)} a unit
+          </AppText>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  row: { flexDirection: 'row', alignItems: 'center' },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
-  header: { flexDirection: 'row', alignItems: 'center' },
   flex: { flex: 1 },
+  strip: { flexDirection: 'row', alignItems: 'stretch' },
+  cell: { flex: 1, alignItems: 'center' },
+  divider: { width: StyleSheet.hairlineWidth, marginVertical: 10 },
+  event: { flexDirection: 'row', alignItems: 'stretch' },
+  spine: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  spineLine: { position: 'absolute', width: 2 },
+  dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
 });

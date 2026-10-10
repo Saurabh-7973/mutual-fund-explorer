@@ -1,5 +1,5 @@
 import { diffDays } from './dates';
-import { UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, toNumber } from './decimal';
+import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, toNumber } from './decimal';
 import { describeScheme } from './schemeName';
 import type { NavChange } from './nav';
 import type { AppliedNav, IsoDate } from './types';
@@ -189,4 +189,79 @@ export function portfolioDayGain(
   const before = current - amount;
   if (counted === 0 || before <= 0n) return null;
   return { amount, pctHundredths: divRound(amount * 10_000n, before) };
+}
+
+export interface TimelineEntry {
+  id: string;
+  purchaseDate: IsoDate;
+  /** Null while the purchase awaits its NAV. */
+  navDate: IsoDate | null;
+  nav: string | null;
+  /** This purchase's units, at UNITS_SCALE. */
+  units: bigint;
+  /** Rupees at VALUE_SCALE; null while awaiting a NAV. */
+  invested: bigint | null;
+  /** Units held after this purchase, priced ones only. */
+  unitsAfter: bigint;
+  /** Average cost per unit after this purchase, at NAV_SCALE; null until something is priced. */
+  averageNavAfter: bigint | null;
+}
+
+/**
+ * A fund's purchases in date order, each with the running average cost per unit, the way
+ * a statement shows a holding's history. Purchases awaiting a NAV appear but don't move
+ * the average.
+ */
+export function purchaseTimeline(
+  lots: readonly { id: string; units: string; purchaseDate: IsoDate; applied: AppliedNav | null }[],
+): TimelineEntry[] {
+  const ordered = [...lots].sort((a, b) =>
+    a.purchaseDate === b.purchaseDate ? a.id.localeCompare(b.id) : a.purchaseDate < b.purchaseDate ? -1 : 1,
+  );
+  let pricedUnits = 0n;
+  let pricedCost = 0n;
+  return ordered.map((lot) => {
+    const units = parseScaled(lot.units, UNITS_SCALE) ?? 0n;
+    const nav = lot.applied === null ? null : parseScaled(lot.applied.nav, NAV_SCALE);
+    let invested: bigint | null = null;
+    if (nav !== null && units > 0n) {
+      invested = units * nav;
+      pricedUnits += units;
+      pricedCost += invested;
+    }
+    return {
+      id: lot.id,
+      purchaseDate: lot.purchaseDate,
+      navDate: lot.applied?.navDate ?? null,
+      nav: lot.applied?.nav ?? null,
+      units,
+      invested,
+      unitsAfter: pricedUnits,
+      // cost (VALUE_SCALE) / units (UNITS_SCALE) leaves NAV_SCALE.
+      averageNavAfter: pricedUnits > 0n ? divRound(pricedCost, pricedUnits) : null,
+    };
+  });
+}
+
+export type HoldingSort = 'value' | 'returns' | 'xirr';
+export type SortDirection = 'desc' | 'asc';
+
+/**
+ * Funds ordered by the figure the list is showing. Funds without that figure (nothing valued
+ * yet, or XIRR under a year) go last either way, so the order never hides them in the middle.
+ */
+export function sortHoldings(funds: readonly FundHolding[], by: HoldingSort, direction: SortDirection): FundHolding[] {
+  const key = (fund: FundHolding): number | null => {
+    if (fund.valuedCount === 0) return null;
+    if (by === 'value') return toNumber(fund.current, VALUE_SCALE);
+    if (by === 'returns') return fund.returnHundredths === null ? null : Number(fund.returnHundredths);
+    return fund.xirrPercent;
+  };
+  const sign = direction === 'desc' ? -1 : 1;
+  return [...funds].sort((a, b) => {
+    const ka = key(a);
+    const kb = key(b);
+    if (ka === null || kb === null) return ka === kb ? a.schemeCode - b.schemeCode : ka === null ? 1 : -1;
+    return ka === kb ? a.schemeCode - b.schemeCode : (ka - kb) * sign;
+  });
 }

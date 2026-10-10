@@ -27,6 +27,8 @@ import {
   annualisedReturn,
   holdingsByFund,
   portfolioDayGain,
+  sortHoldings,
+  type SortDirection,
   type EvaluatedLot,
   type FundHolding,
 } from '@/domain/holdings';
@@ -53,6 +55,7 @@ export default function HoldingsScreen() {
   // The summary is the list header; its height feeds getItemLayout so row offsets stay exact.
   const [headerHeight, setHeaderHeight] = useState(0);
   const [column, setColumn] = useState<HoldingColumn>('value');
+  const [direction, setDirection] = useState<SortDirection>('desc');
   const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
   const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
 
@@ -77,7 +80,7 @@ export default function HoldingsScreen() {
       navState.set(lot.schemeCode, 'ready');
     }
   }
-  const funds = holdingsByFund(evaluated);
+  const funds = sortHoldings(holdingsByFund(evaluated), column, direction);
   const changes = new Map<number, NavChange | null>(
     codes.map((code, i) => {
       const points = recents[i]?.data?.points;
@@ -281,18 +284,28 @@ export default function HoldingsScreen() {
         <AppText variant="caption" tone="muted" style={styles.flex}>
           Swipe left on a fund to remove it
         </AppText>
-        <Pressable
-          onPress={() => setColumn(nextColumn.key)}
-          accessibilityRole="button"
-          accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
-          hitSlop={12}
-          style={[styles.inline, { gap: spacing.xs }]}
-        >
-          <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
-          <AppText variant="label" tone="primary">
-            {columnLabel}
-          </AppText>
-        </Pressable>
+        <View style={[styles.inline, { gap: spacing.md }]}>
+          <Pressable
+            onPress={() => setColumn(nextColumn.key)}
+            accessibilityRole="button"
+            accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
+            hitSlop={12}
+            style={[styles.inline, { gap: spacing.xs }]}
+          >
+            <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
+            <AppText variant="label" tone="primary">
+              {columnLabel}
+            </AppText>
+          </Pressable>
+          {/* The glyph says both what the list is sorted by (the column shown) and which way. */}
+          <IconButton
+            name={direction === 'desc' ? 'arrow-down' : 'arrow-up'}
+            size={16}
+            color={colors.primary}
+            onPress={() => setDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
+            accessibilityLabel={`Sorted by ${columnLabel}, ${direction === 'desc' ? 'highest first' : 'lowest first'}. Reverse order`}
+          />
+        </View>
       </View>
     </View>
   );
