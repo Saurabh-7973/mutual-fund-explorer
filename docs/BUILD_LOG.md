@@ -70,3 +70,20 @@ _(Claude Code: add entries below this line.)_
 - The first setup attempt ran from `~/Documents`, where the ZIP wasn't; unzip failed but `git init` still ran, leaving a stray, commit-less repo at `~/Documents/.git`. The user deleted it. The project's own repo was never affected.
 - Shell blocks in `README.md`, `CLAUDE.md` and `docs/RUNBOOK.md` no longer carry inline `#` comments, because zsh (the default macOS shell) doesn't treat `#` as a comment when pasted interactively. Commands with notes became tables; the runbook's setup steps became one `&&` chain so nothing runs in the wrong folder if a step fails.
 - **For `AI_CONTEXT.md` (carry over):** an AI-written setup guide put inline `#` comments in shell blocks meant for pasting. In an interactive zsh session `#` isn't a comment (`interactivecomments` is off), so the comment text became arguments, and the guide's separate lines let `git init` run in the wrong folder after `unzip` failed. Lesson: give pasteable commands with no inline comments, and chain dependent steps with `&&`.
+
+---
+
+## Phase 1: UI kit (10 Oct 2026, Claude Code)
+
+**Built:** `src/components/ui/` `AppText`, `Card`, `Badge`, `Chip`, `Button`, `IconButton`, `Skeleton` + `SkeletonRows`, `EmptyState`, `ErrorState`, `Banner`, `SignedAmount`, `SignedPercent`, `UndoToast`, and `icons.ts` (the shared `IoniconName` type). `src/components/search/` `SchemeBadges`, `WatchToggle`.
+
+**Decisions**
+- The gain/loss/no-change rule for signed values became a pure function, `src/domain/signed.ts` (`changeDirection`, `spokenChange`), with 3 tests, instead of living in the components. It judges the sign on the value already rounded for display (paise for amounts), so a sub-paisa amount is "no change", never a green "+₹0.00".
+- `UndoToast` uses the surface colour with a border and Android elevation. A dark bar (text colour) would have put the primary-coloured Undo button on near-black in light mode, which fails contrast; an iOS shadow would need a hard-coded colour. It applies only the side safe-area insets: inside a tab screen the content already ends above the tab bar, so adding the bottom inset would float it too high.
+- `Chip` is 36 pt high with vertical `hitSlop` to reach 44. `IconButton` computes its `hitSlop` from the icon size so the target is at least 44 × 44.
+- `Skeleton` follows the reduce-motion setting live (`reduceMotionChanged`), not only at mount.
+- `WatchToggle` selects a boolean (`watchlist.some(...)`), so it needs no `useShallow` and re-renders only when its own state flips.
+
+**Pre-built code changed:** none.
+
+**Checks:** `npm run check`: typecheck 0 errors; 16 suites, 143 tests passed. Nothing is routed yet, so no device test.
