@@ -6,16 +6,18 @@ The build plan is `docs/BUILD_PROMPT.md`. Work through it one phase at a time.
 
 ## Commands
 
-```bash
-npm install
-npm run typecheck          # tsc --noEmit, must report 0 errors
-npm test                   # Jest (jest-expo); all suites must pass
-npm run check              # typecheck + tests; run after every phase
-npx expo start             # dev server; scan the QR code with Expo Go
-npx expo install --check   # dependency versions match SDK 57
-npx expo-doctor            # project health
-npx expo export --platform android   # bundles the app; catches import errors that tsc misses
-```
+| Command | What it does |
+|---|---|
+| `npm install` | Installs dependencies |
+| `npm run typecheck` | `tsc --noEmit`; must report 0 errors |
+| `npm test` | Jest (jest-expo); all suites must pass |
+| `npm run check` | Typecheck, then tests; run after every phase |
+| `npx expo start` | Dev server; scan the QR code with Expo Go |
+| `npx expo install --check` | Dependency versions match SDK 57 |
+| `npx expo-doctor` | Project health |
+| `npx expo export --platform android` | Bundles the app; catches import errors that tsc misses |
+
+Shell blocks in this repo's docs carry no inline `#` comments: zsh, the default macOS shell, doesn't treat `#` as a comment when you paste into it.
 
 ## Layers (keep them separate)
 

@@ -23,11 +23,11 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 
 ## Checks
 
-```bash
-npm run typecheck   # TypeScript, strict
-npm test            # Jest: 140+ tests on dates, money, NAV rules, parsing, the API client and the store
-npm run check       # both
-```
+| Command | What it does |
+|---|---|
+| `npm run typecheck` | TypeScript, strict |
+| `npm test` | Jest: 140+ tests on dates, money, NAV rules, parsing, the API client and the store |
+| `npm run check` | Both |
 
 ## Features
 

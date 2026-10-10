@@ -64,4 +64,9 @@ _(Claude Code: add entries below this line.)_
    ```
    Broad queries also return exactly 15 (`parag parikh` 15, `hdfc` 15, `fund` 15). **Answer: search caps results at 15.** Phase 2 shows the "Showing the first 15 matches" footer.
 
-**Expo Go (step 7):** not verifiable from the terminal. Needs a manual run of `npx expo start` and a scan with Expo Go (SDK 57) to confirm the Explore, Watchlist and Holdings placeholders render. Status: pending the user's check on a phone.
+**Expo Go (step 7):** done. The user ran `npx expo start`, opened the app in Expo Go (SDK 57) on their phone and saw the Explore, Watchlist and Holdings tabs with their placeholders.
+
+**Clean-up after Phase 0**
+- The first setup attempt ran from `~/Documents`, where the ZIP wasn't; unzip failed but `git init` still ran, leaving a stray, commit-less repo at `~/Documents/.git`. The user deleted it. The project's own repo was never affected.
+- Shell blocks in `README.md`, `CLAUDE.md` and `docs/RUNBOOK.md` no longer carry inline `#` comments, because zsh (the default macOS shell) doesn't treat `#` as a comment when pasted interactively. Commands with notes became tables; the runbook's setup steps became one `&&` chain so nothing runs in the wrong folder if a step fails.
+- **For `AI_CONTEXT.md` (carry over):** an AI-written setup guide put inline `#` comments in shell blocks meant for pasting. In an interactive zsh session `#` isn't a comment (`interactivecomments` is off), so the comment text became arguments, and the guide's separate lines let `git init` run in the wrong folder after `unzip` failed. Lesson: give pasteable commands with no inline comments, and chain dependent steps with `&&`.

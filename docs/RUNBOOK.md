@@ -4,22 +4,27 @@ How to drive `docs/BUILD_PROMPT.md` with Claude Code and review each phase. Abou
 
 ## 1. One-time setup
 
+Check Node first: it must be ^20.19.4, ^22.13.0 or ^24.3.0 (22 LTS recommended).
+
 ```bash
-# Node: ^20.19.4, ^22.13.0 or ^24.3.0 (22 LTS recommended)
 node -v
-
-# Claude Code, if it isn't installed yet (needs a Pro, Max, Team, Enterprise or Console account)
-curl -fsSL https://claude.ai/install.sh | bash          # macOS, Linux, WSL
-# irm https://claude.ai/install.ps1 | iex               # Windows PowerShell
-claude --version
-
-# The project
-unzip mutual-fund-explorer.zip                         # Windows: Expand-Archive mutual-fund-explorer.zip .
-cd mutual-fund-explorer
-git init
-git add -A
-git commit -m "Starter: verified domain core, API client, store, query layer, chart, date field"
 ```
+
+If Claude Code isn't installed yet (it needs a Pro, Max, Team, Enterprise or Console account), install it. On macOS, Linux or WSL:
+
+```bash
+curl -fsSL https://claude.ai/install.sh | bash
+```
+
+On Windows PowerShell, use `irm https://claude.ai/install.ps1 | iex` instead. Then check it with `claude --version`.
+
+Unzip and commit the starter as one chain, so nothing runs in the wrong folder if a step fails. Run it from the folder that holds the ZIP (on Windows, unzip with `Expand-Archive mutual-fund-explorer.zip .` instead):
+
+```bash
+unzip mutual-fund-explorer.zip && cd mutual-fund-explorer && git init && git add -A && git commit -m "Starter: verified domain core, API client, store, query layer, chart, date field"
+```
+
+Paste shell commands without inline `#` comments: zsh, the default macOS shell, doesn't treat `#` as a comment in an interactive session.
 
 On your phone, install **Expo Go** from the Play Store or App Store. Keep the phone and the computer on the same Wi-Fi.
 
@@ -52,11 +57,11 @@ Do Phases 1 and 2. Run npm run check after each, commit each separately, then st
 1. Read the diff: `git show --stat HEAD`, then open the screen files. You'll be asked about this code, so read it.
 2. Run `npm run check` yourself.
 3. Do the "On a phone" steps listed for that phase in `docs/BUILD_PROMPT.md`.
-4. Check the rules held:
+4. Check the rules held. The first command should print nothing (or only changes explained in BUILD_LOG); the second and third should find nothing, because money and dates go through `src/domain` and colours live in `src/theme`:
    ```bash
-   git diff HEAD~1 --stat -- src/domain src/api src/store src/query   # should be empty, or explained in BUILD_LOG
-   grep -rnE "parseFloat|toFixed\(|Intl\.NumberFormat|new Date\('" src/app src/components   # should find nothing
-   grep -rnE "#[0-9A-Fa-f]{6}" src/app src/components   # colours belong in src/theme only
+   git diff HEAD~1 --stat -- src/domain src/api src/store src/query
+   grep -rnE "parseFloat|toFixed\(|Intl\.NumberFormat|new Date\('" src/app src/components
+   grep -rnE "#[0-9A-Fa-f]{6}" src/app src/components
    ```
 5. Change one small thing yourself (a label, a spacing token) so you've touched every part of the code before the interview.
 
