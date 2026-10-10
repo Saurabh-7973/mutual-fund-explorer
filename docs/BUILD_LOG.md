@@ -35,3 +35,33 @@ One entry per phase: what was decided, what went wrong, and what was changed and
 ## Phase 0
 
 _(Claude Code: add entries below this line.)_
+
+### Phase 0: verify the starter (10 Oct 2026, Claude Code)
+
+**Results**
+- Node `v24.13.1` (inside the supported `^24.3.0` range). `npm install`: 831 packages added, no errors. npm audit reports 64 advisories (15 moderate, 49 high) in transitive dev/build tooling; left alone, since `npm audit fix --force` would move packages off the SDK 57 versions.
+- `npx expo install --check`: "Dependencies are up to date". No `--fix` needed.
+- `npx expo-doctor` (1.20.4): 21/21 checks passed, no issues.
+- `npm run typecheck`: 0 errors.
+- `npm test` (jest-expo): 15 suites, 140 tests passed. The jest preset warning did not appear, so `@react-native/jest-preset` was not added.
+- Extra check: `npx expo export --platform android` bundled cleanly (one 4.1 MB Hermes bundle), so Metro resolves every import.
+
+**Fixes:** none. No pre-built file changed. The only new file is `package-lock.json` from the first real install; it is committed so installs are reproducible.
+
+**API checks**
+
+1. History with a date range:
+   ```
+   $ curl -s 'https://api.mfapi.in/mf/122639?startDate=2026-09-01&endDate=2026-09-30' | head -c 400
+   {"meta":{"fund_house":"PPFAS Mutual Fund","scheme_type":"Open Ended Schemes","scheme_category":"Equity Scheme - Flexi Cap Fund","scheme_code":122639,"scheme_name":"Parag Parikh Flexi Cap Fund - Direct Plan - Growth","isin_growth":"INF879O01027","isin_div_reinvestment":null},"data":[{"date":"30-09-2026","nav":"88.83550"},{"date":"29-09-2026","nav":"88.71880"},{"date":"28-09-2026","nav":"88.97700"},
+   ```
+   Follow-up count: the ranged call returned 21 rows, 30-09-2026 down to 01-09-2026; the unranged call returned 3,289 rows, 09-10-2026 down to 28-05-2013. **Answer: the endpoint honours date ranges.** The app still fetches full history and doesn't depend on this.
+
+2. Search result count:
+   ```
+   $ curl -s 'https://api.mfapi.in/mf/search?q=nifty%2050%20index' | python3 -c "import json,sys; print(len(json.load(sys.stdin)))"
+   15
+   ```
+   Broad queries also return exactly 15 (`parag parikh` 15, `hdfc` 15, `fund` 15). **Answer: search caps results at 15.** Phase 2 shows the "Showing the first 15 matches" footer.
+
+**Expo Go (step 7):** not verifiable from the terminal. Needs a manual run of `npx expo start` and a scan with Expo Go (SDK 57) to confirm the Explore, Watchlist and Holdings placeholders render. Status: pending the user's check on a phone.
