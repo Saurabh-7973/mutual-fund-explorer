@@ -58,3 +58,11 @@ export function parseSchemeCode(value: string | readonly string[] | undefined): 
 export function schemeCodeInQuery(normalized: string): number | null {
   return /^\d{4,9}$/.test(normalized) ? parseSchemeCode(normalized) : null;
 }
+
+/** mfapi.in returns at most 15 search results (checked live in Phase 0). */
+export const SEARCH_RESULT_CAP = 15;
+
+/** A full page of results means there may be more matches the API didn't return. */
+export function mayBeTruncated(resultCount: number): boolean {
+  return resultCount >= SEARCH_RESULT_CAP;
+}

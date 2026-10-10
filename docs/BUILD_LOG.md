@@ -87,3 +87,20 @@ _(Claude Code: add entries below this line.)_
 **Pre-built code changed:** none.
 
 **Checks:** `npm run check`: typecheck 0 errors; 16 suites, 143 tests passed. Nothing is routed yet, so no device test.
+
+---
+
+## Phase 2: Explore (10 Oct 2026, Claude Code)
+
+**Built:** `src/app/(tabs)/index.tsx` (search screen) and `src/components/search/SchemeRow.tsx` (memoised, fixed 76 pt, star beside the pressable area).
+
+**Decisions**
+- Added `SEARCH_RESULT_CAP = 15` and `mayBeTruncated(count)` to `src/domain/search.ts` (with a test) from the Phase 0 finding, rather than a magic 15 in the screen. Additive only; no existing function changed.
+- Offline: TanStack Query pauses a new search instead of failing it, so `isLoading` and `isError` are both false. The screen treats a paused fetch with no data as the error state (`describeError` gives the offline copy, with Retry). With `keepPreviousData`, a paused search would otherwise show the old results dimmed under "Searching…" forever, so placeholder data from a paused fetch is dropped too.
+- The "Type at least 3 characters" hint shows only for 1–2 typed characters, not during the 300 ms debounce after typing a longer query.
+- Scheme title in rows uses the `label` size (semi-bold) so two lines plus the badge row fit 76 pt at the 1.3× font cap.
+- The "Open scheme code" row appears above the skeleton, error, and results; when it shows, an empty result list shows nothing else.
+
+**Pre-built code changed:** `src/domain/search.ts` (additions above).
+
+**Checks:** `npm run check`: typecheck 0 errors; 16 suites, 144 tests passed. `npx expo export --platform android`: bundled cleanly.

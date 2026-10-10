@@ -1,7 +1,14 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { SEARCH_PARAG_PARIKH } from '../../api/__fixtures__/mfapi';
-import { filterSchemes, isSearchable, normalizeQuery, parseSchemeCode, schemeCodeInQuery } from '../search';
+import {
+  filterSchemes,
+  isSearchable,
+  mayBeTruncated,
+  normalizeQuery,
+  parseSchemeCode,
+  schemeCodeInQuery,
+} from '../search';
 
 describe('normalizeQuery', () => {
   it('trims, collapses spaces and lowercases', () => {
@@ -53,5 +60,13 @@ describe('scheme codes', () => {
     expect(schemeCodeInQuery('122639')).toBe(122639);
     expect(schemeCodeInQuery('123')).toBeNull();
     expect(schemeCodeInQuery('nifty 50')).toBeNull();
+  });
+});
+
+describe('mayBeTruncated', () => {
+  it('flags a full page of 15 results only', () => {
+    expect(mayBeTruncated(15)).toBe(true);
+    expect(mayBeTruncated(14)).toBe(false);
+    expect(mayBeTruncated(0)).toBe(false);
   });
 });
