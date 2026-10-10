@@ -27,10 +27,10 @@ export const NavRowView = memo(function NavRowView({ row }: { row: NavRow }) {
       }`}
       style={[styles.row, { borderBottomColor: colors.border, paddingHorizontal: spacing.lg, gap: spacing.sm }]}
     >
-      <AppText variant="label" numeric maxFontSizeMultiplier={1.3} style={styles.date}>
+      <AppText variant="label" numeric numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.date}>
         {formatDate(row.date)}
       </AppText>
-      <AppText variant="label" numeric maxFontSizeMultiplier={1.3} style={styles.nav}>
+      <AppText variant="label" numeric numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.nav}>
         {formatNav(row.nav)}
       </AppText>
       <AppText
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   header: { flexDirection: 'row', paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth },
-  date: { width: 96 },
+  date: { width: 116 },
   nav: { width: 92, textAlign: 'right' },
   change: { flex: 1, textAlign: 'right' },
   gap: { flex: 1, fontStyle: 'italic' },

@@ -221,3 +221,36 @@ _(Claude Code: add entries below this line.)_
 - Remove → dialog "Remove holding? 10 units of Parag Parikh Flexi Cap Fund, bought 10 Oct 2026. This can't be undone." → Remove deleted the lot and the note.
 - Airplane mode, force-stop, relaunch (adb-tunnelled Metro): the remaining lot is still valued from the saved NAV with the same figures.
 - Not checked: the "Couldn't load latest NAV" row state (needs a fund whose NAV was never cached, offline).
+
+---
+
+## Phase 7: Hardening pass (10 Oct 2026, Claude Code, emulator via adb)
+
+Every item was driven on the Android emulator (Expo Go, SDK 57) with adb: deep links (`exp://127.0.0.1:8081/--/<route>`), `uiautomator dump` for text and accessibility labels, screenshots, airplane mode, `cmd uimode night`, and `settings put system font_scale`.
+
+**Checked and passing**
+- States: 152469 (launched Feb 2024) shows 3Y and 5Y chips disabled and "—" for 3Y/5Y returns; 99999999 → "No NAV data for this scheme"; `fund/abc` → "That link doesn't point to a scheme" + Go to Explore; 100121 → stale banner (01 Jun 2018).
+- Reconnect: airplane mode on, opened an uncached fund (118989) → "You're offline" + Retry; airplane mode off → the fund loaded about 4 s later with no tap (NetInfo → `onlineManager`).
+- Persistence and offline: watchlist and holdings survive a force-stop and relaunch in airplane mode, valued from saved NAVs (Phases 5 and 6).
+- Formatting: a lot of 1,254.3219 units bought at the 27 Oct 2025 high (₹95.7732) shows −₹8,588.84, −7.15% with the true minus sign; totals ₹1,22,695.72 / ₹1,29,521.33 / −₹6,825.61 −5.27% with Indian grouping; no p.a. figure under a year (347 days). Figures as rendered by the app.
+- Accessibility tree: gains and losses read "gain of ₹1,763.24", "loss of 7.15%"; chips and the star expose `selected`; the chart reads "NAV down 4.55% from ₹93.1663 on 09 Oct 2025 to ₹88.9258 on 09 Oct 2026"; returns read "1 month: down 0.52% absolute"; every icon button has a label.
+- Dark mode: all screens readable, no hard-coded colours (grep clean).
+- Performance: HDFC Flexi Cap Regular Growth (101762), 5,052 NAVs. Eight fast flings: no blank rows in any frame. `dumpsys gfxinfo` over ten flings: median frame 17 ms, 95th percentile 30 ms, 9% janky. That's a debug JS bundle on an emulator; a release build on a phone should do better.
+- Console: no JavaScript warnings or errors in the device log for the whole session. Metro's terminal output wasn't visible to me.
+
+**Found and fixed**
+1. At the largest font size (2.0), Holdings rows overflowed their fixed height: `SignedAmount`/`SignedPercent` ignored the 1.3 font cap, and the stacked layout outgrew the row, clipping the title. The signed components now accept `maxFontSizeMultiplier`; `LotRow` is four left | right lines (title | value, badges | gain, units · date | return · p.a., NAV used | as-of date) at 148 pt. At 2.0 it fits; only the units line truncates with an ellipsis when a p.a. figure shares its line.
+2. NAV list: the 96 pt date column wrapped "30 Sep / 2026" at 1.3× and clipped it. Now 116 pt, one line.
+3. Returns card: "—not enough history" had no space; added the row gap.
+4. Watchlist alignment (user's earlier note): rows with no plan/option badges (e.g. Dynamic Asset Allocation) had their title vertically centred while others sat on the first line. `WatchRow` is now two left | right lines (title | NAV, badges | as-of date + Stale), with a minimum height for the second line, so all rows line up.
+5. The holding row's "p.a." now reads "+7.05% per year" to a screen reader instead of "· +7.05% p.a.".
+
+**Not verified on the emulator (and why)**
+- Timeout copy under a slow network: the emulator's `network delay`/`speed` settings had no effect on the API 36 image's Wi-Fi (a search still returned normally). The 15 s/20 s timeout and its "taking too long" copy are covered by `client.test.ts` and `errors.test.ts`.
+- Foreground refetch after minutes in the background: latest NAVs are fresh for 15 minutes, so this needs a long wait; not run.
+- "Awaiting NAV" lots resolving: needs tomorrow's NAV to be published.
+- Holdings "Couldn't load latest NAV" row: needs a fund whose latest NAV was never cached, opened offline.
+- TalkBack speech itself: labels verified through the accessibility tree, not by listening.
+- Typing speed vs requests: the 300 ms debounce is in `useDebouncedValue`; requests weren't counted.
+
+**Checks:** `npm run check`: typecheck 0 errors; 17 suites, 148 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.

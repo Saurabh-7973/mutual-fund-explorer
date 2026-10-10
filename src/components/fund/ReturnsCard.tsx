@@ -27,7 +27,7 @@ export function ReturnsCard({ points }: { points: NavPoint[] }) {
               key={row.key}
               accessible
               accessibilityLabel={`${row.label}: not enough history`}
-              style={[styles.row, { borderTopColor: colors.border, paddingTop: spacing.sm }]}
+              style={[styles.row, { borderTopColor: colors.border, paddingTop: spacing.sm, gap: spacing.sm }]}
             >
               <AppText style={styles.label}>{row.label}</AppText>
               <AppText tone="muted">—</AppText>

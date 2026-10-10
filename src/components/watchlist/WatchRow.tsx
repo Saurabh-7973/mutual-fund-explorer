@@ -35,74 +35,83 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
   const latest = useLatestNav(schemeCode);
   const point = latest.data?.point;
 
-  let right;
+  // Two lines, each split left | right, so every row lines up: title | NAV, then badges | date.
+  // A row without plan or option badges keeps its title on the first line.
+  let top;
+  let bottom;
   if (latest.data === undefined && latest.isLoading) {
-    right = (
-      <View style={[styles.right, { gap: spacing.xs }]}>
-        <Skeleton width={72} height={16} />
-        <Skeleton width={88} height={12} />
-      </View>
-    );
+    top = <Skeleton width={72} height={16} />;
+    bottom = <Skeleton width={88} height={12} />;
   } else if (latest.data === undefined) {
     // Failed, or paused offline with nothing saved.
-    right = (
-      <View style={[styles.right, { gap: 2 }]}>
-        <AppText variant="caption" tone="danger" maxFontSizeMultiplier={1.3}>
-          Couldn't load NAV
+    top = (
+      <AppText variant="caption" tone="danger" maxFontSizeMultiplier={1.3}>
+        Couldn't load NAV
+      </AppText>
+    );
+    bottom = (
+      <Pressable
+        onPress={() => void latest.refetch()}
+        accessibilityRole="button"
+        accessibilityLabel={`Retry loading the NAV for ${title}`}
+        hitSlop={12}
+      >
+        <AppText variant="label" tone="primary" maxFontSizeMultiplier={1.3}>
+          Retry
         </AppText>
-        <Pressable
-          onPress={() => void latest.refetch()}
-          accessibilityRole="button"
-          accessibilityLabel={`Retry loading the NAV for ${title}`}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <AppText variant="label" tone="primary" maxFontSizeMultiplier={1.3}>
-            Retry
-          </AppText>
-        </Pressable>
-      </View>
+      </Pressable>
     );
   } else if (point === null || point === undefined) {
-    right = (
-      <View style={styles.right}>
-        <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
-          No NAV published
-        </AppText>
-      </View>
+    top = (
+      <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+        No NAV published
+      </AppText>
     );
+    bottom = null;
   } else {
     const stale = isStale(point.date, todayInIndia());
-    right = (
-      <View style={[styles.right, { gap: 2 }]}>
-        <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
-          {formatNav(point.nav)}
+    top = (
+      <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
+        {formatNav(point.nav)}
+      </AppText>
+    );
+    bottom = (
+      <View style={[styles.line, { gap: spacing.xs }]}>
+        <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
+          as of {formatDate(point.date)}
         </AppText>
-        {/* The badge sits beside the date it qualifies, keeping the row two lines tall. */}
-        <View style={[styles.dateLine, { gap: spacing.xs }]}>
-          <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-            as of {formatDate(point.date)}
-          </AppText>
-          {stale && <Badge label="Stale" tone="warning" />}
-        </View>
+        {stale && <Badge label="Stale" tone="warning" />}
       </View>
     );
   }
 
   return (
-    <View style={[styles.row, { borderBottomColor: colors.border, paddingLeft: spacing.lg, paddingRight: spacing.md, gap: spacing.md }]}>
+    <View
+      style={[
+        styles.row,
+        { borderBottomColor: colors.border, paddingLeft: spacing.lg, paddingRight: spacing.md, gap: spacing.md },
+      ]}
+    >
       <Pressable
         accessibilityRole="button"
         accessibilityHint="Opens the fund"
-        onPress={() => router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })}
-        style={({ pressed }) => [styles.main, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
+        onPress={() =>
+          router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })
+        }
+        style={({ pressed }) => [styles.main, { gap: spacing.xs, opacity: pressed ? 0.6 : 1 }]}
       >
-        <View style={[styles.left, { gap: spacing.xs }]}>
+        <View style={[styles.line, { gap: spacing.md }]}>
           <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
             {title}
           </AppText>
-          <SchemeBadges name={schemeName} size="sm" />
+          {top}
         </View>
-        {right}
+        <View style={[styles.line, styles.bottomLine, { gap: spacing.md }]}>
+          <View style={styles.flex}>
+            <SchemeBadges name={schemeName} size="sm" />
+          </View>
+          {bottom}
+        </View>
       </Pressable>
       <IconButton
         name="close-circle-outline"
@@ -121,9 +130,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  main: { flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH },
-  left: { flex: 1 },
-  title: { fontWeight: '600' },
-  right: { alignItems: 'flex-end' },
-  dateLine: { flexDirection: 'row', alignItems: 'center' },
+  main: { flex: 1, minHeight: MIN_TOUCH, justifyContent: 'center' },
+  line: { flexDirection: 'row', alignItems: 'center' },
+  // Keeps the second line's height when a fund has no badges and no date.
+  bottomLine: { minHeight: 22 },
+  title: { flex: 1, fontWeight: '600' },
+  flex: { flex: 1 },
 });
