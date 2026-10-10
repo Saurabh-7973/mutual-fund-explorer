@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, TextInput, View, type ListRenderItem } from 'react-native';
 
 import { SchemeRow, SCHEME_ROW_HEIGHT } from '@/components/search/SchemeRow';
@@ -20,6 +20,7 @@ import {
 } from '@/domain/search';
 import type { SchemeSearchResult } from '@/domain/types';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { useOnline } from '@/hooks/useOnline';
 import { useSchemeSearch } from '@/query/hooks';
 import { MIN_TOUCH } from '@/theme/tokens';
@@ -41,6 +42,7 @@ export default function ExploreScreen() {
   const debounced = useDebouncedValue(text, 300);
   const { query, normalized, enabled } = useSchemeSearch(debounced);
   const online = useOnline();
+  const keyboard = useKeyboardOverlap();
 
   // The Watchlist empty state links here with a suggested query.
   useEffect(() => {
@@ -62,6 +64,21 @@ export default function ExploreScreen() {
     setDirectOnly(false);
     setGrowthOnly(false);
   }, []);
+
+  // Filters belong to one search session: emptying the field starts over.
+  useEffect(() => {
+    if (text.trim() === '') clearFilters();
+  }, [text, clearFilters]);
+
+  const centered = (child: ReactNode) => (
+    <View
+      ref={keyboard.ref}
+      onLayout={keyboard.onLayout}
+      style={[styles.centered, { paddingBottom: keyboard.overlap }]}
+    >
+      {child}
+    </View>
+  );
 
   const codeRow =
     enabled && codeInQuery !== null ? (
@@ -116,9 +133,7 @@ export default function ExploreScreen() {
         return (
           <>
             {codeRow}
-            <View style={styles.centered}>
-              <ErrorState error={query.error} onRetry={() => query.refetch()} />
-            </View>
+            {centered(<ErrorState error={query.error} onRetry={() => query.refetch()} />)}
           </>
         );
       }
@@ -128,13 +143,13 @@ export default function ExploreScreen() {
     if (data.length === 0) {
       return (
         codeRow ?? (
-          <View style={styles.centered}>
+          centered(
             <EmptyState
               icon="search-outline"
               title={`No schemes match “${normalized}”`}
               body="Search matches whole words, so type “parag”, not “par”. You can also try a fund house (HDFC), a category (liquid, index) or fewer words."
-            />
-          </View>
+            />,
+          )
         )
       );
     }
