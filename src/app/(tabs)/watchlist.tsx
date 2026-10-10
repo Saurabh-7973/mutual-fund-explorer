@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View, type ListRenderItem } from 'react-native';
 
+import { WatchToggle } from '@/components/search/WatchToggle';
 import { AppText } from '@/components/ui/AppText';
 import { Banner } from '@/components/ui/Banner';
 import { Chip } from '@/components/ui/Chip';
@@ -16,6 +17,7 @@ import { useOnline } from '@/hooks/useOnline';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import type { WatchItem } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
@@ -33,6 +35,7 @@ export default function WatchlistScreen() {
   const unwatch = usePortfolioStore((s) => s.unwatch);
   const undoUnwatch = usePortfolioStore((s) => s.undoUnwatch);
   const online = useOnline();
+  const recentlyViewed = usePreferencesStore((s) => s.recentlyViewed);
   const queryClient = useQueryClient();
   useRefreshOnFocus('nav-latest');
 
@@ -88,6 +91,22 @@ export default function WatchlistScreen() {
     return (
       <View style={[styles.flex, styles.centered, { backgroundColor: colors.background }]}>
         <EmptyState icon="star-outline" title="Your watchlist is empty" body="Tap ☆ on any fund to follow its latest NAV here.">
+          {recentlyViewed.length > 0 && (
+            // One-tap adds from funds you've already looked at.
+            <View style={[styles.recent, { gap: spacing.xs, marginBottom: spacing.md }]}>
+              <AppText variant="label" tone="muted">
+                Recently viewed
+              </AppText>
+              {recentlyViewed.slice(0, 4).map((fund) => (
+                <View key={fund.schemeCode} style={[styles.recentRow, { borderBottomColor: colors.border }]}>
+                  <AppText variant="label" numberOfLines={1} style={styles.flex}>
+                    {describeScheme(fund.schemeName).title}
+                  </AppText>
+                  <WatchToggle schemeCode={fund.schemeCode} schemeName={fund.schemeName} />
+                </View>
+              ))}
+            </View>
+          )}
           <View style={[styles.wrap, { gap: spacing.sm }]}>
             {SEARCH_SUGGESTIONS.map((item) => (
               <Chip
@@ -131,4 +150,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
+  recent: { alignSelf: 'stretch' },
+  recentRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
 });
