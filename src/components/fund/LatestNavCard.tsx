@@ -19,9 +19,11 @@ export interface LatestNavCardProps {
   skipped: number;
   schemeCode: number;
   name: string;
+  /** False when the fund is already held: "Your investment" offers "Add another purchase" instead. */
+  showAdd?: boolean;
 }
 
-export function LatestNavCard({ points, last, skipped, schemeCode, name }: LatestNavCardProps) {
+export function LatestNavCard({ points, last, skipped, schemeCode, name, showAdd = true }: LatestNavCardProps) {
   const { spacing } = useTheme();
   const change = useMemo(() => latestChange(points), [points]);
   const stale = isStale(last.date, todayInIndia());
@@ -71,13 +73,15 @@ export function LatestNavCard({ points, last, skipped, schemeCode, name }: Lates
           {skipped} malformed or duplicate rows in the source data were skipped.
         </AppText>
       )}
-      <View style={{ marginTop: spacing.xs }}>
-        <Button
-          label="Add a holding"
-          icon="add"
-          onPress={() => router.push({ pathname: '/add-holding', params: { code: String(schemeCode), name } })}
-        />
-      </View>
+      {showAdd && (
+        <View style={{ marginTop: spacing.xs }}>
+          <Button
+            label="Add a holding"
+            icon="add"
+            onPress={() => router.push({ pathname: '/add-holding', params: { code: String(schemeCode), name } })}
+          />
+        </View>
+      )}
     </Card>
   );
 }

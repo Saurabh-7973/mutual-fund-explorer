@@ -10,6 +10,8 @@ import { FundTitle } from '@/components/fund/FundTitle';
 import { LatestNavCard } from '@/components/fund/LatestNavCard';
 import { NavChart } from '@/components/fund/NavChart';
 import { NavRowView } from '@/components/fund/NavRows';
+import { ConsistencyCard } from '@/components/fund/ConsistencyCard';
+import { InvestReplayCard } from '@/components/fund/InvestReplayCard';
 import { ReturnsCard } from '@/components/fund/ReturnsCard';
 import { WatchToggle } from '@/components/search/WatchToggle';
 import { AppText } from '@/components/ui/AppText';
@@ -30,6 +32,7 @@ import {
 import { describeScheme } from '@/domain/schemeName';
 import { parseSchemeCode } from '@/domain/search';
 import { useFundSeries } from '@/query/hooks';
+import { usePortfolioStore } from '@/store/portfolioStore';
 import { useTheme } from '@/theme/useTheme';
 
 const RECENT_NAV_COUNT = 5;
@@ -103,6 +106,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
     [points],
   );
   const first = points[0];
+  const held = usePortfolioStore((s) => s.lots.some((lot) => lot.schemeCode === schemeCode));
 
   const { history: historyQuery, latest: latestQuery } = series;
   const onRefresh = useCallback(async () => {
@@ -137,7 +141,16 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
         <FundTitle name={name} schemeCode={schemeCode} meta={history.meta} />
       </View>
 
-      <LatestNavCard points={points} last={last} skipped={history.skipped} schemeCode={schemeCode} name={name} />
+      <FundLots schemeCode={schemeCode} name={name} last={last} />
+
+      <LatestNavCard
+        points={points}
+        last={last}
+        skipped={history.skipped}
+        schemeCode={schemeCode}
+        name={name}
+        showAdd={!held}
+      />
 
       <View style={{ gap: spacing.md }}>
         <View style={[styles.wrap, { gap: spacing.sm }]}>
@@ -156,7 +169,9 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
 
       <ReturnsCard points={points} />
 
-      <FundLots schemeCode={schemeCode} name={name} last={last} />
+      <InvestReplayCard points={points} />
+
+      <ConsistencyCard points={points} />
 
       <Card style={[styles.flush, { gap: spacing.sm }]}>
         <AppText variant="heading" accessibilityRole="header" style={{ paddingHorizontal: spacing.lg }}>

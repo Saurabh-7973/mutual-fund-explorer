@@ -20,21 +20,27 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Explore',
-          tabBarIcon: ({ color, size }) => <Ionicons name="search" color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'search' : 'search-outline'} color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="watchlist"
         options={{
           title: 'Watchlist',
-          tabBarIcon: ({ color, size }) => <Ionicons name="star-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'star' : 'star-outline'} color={color} size={size} />
+          ),
         }}
       />
       <Tabs.Screen
         name="holdings"
         options={{
           title: 'Holdings',
-          tabBarIcon: ({ color, size }) => <Ionicons name="briefcase-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} color={color} size={size} />
+          ),
         }}
       />
     </Tabs>
