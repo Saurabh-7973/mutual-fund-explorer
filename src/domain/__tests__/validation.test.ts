@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { describePurchaseDate, validateUnits } from '../validation';
+import { describePurchaseDate, validateSipAmount, validateUnits } from '../validation';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -57,5 +57,23 @@ describe('describePurchaseDate', () => {
     const gap = describePurchaseDate({ kind: 'matched', gapDays: 12, point: point('2026-01-20', '11') });
     expect(gap.tone).toBe('warning');
     expect(gap.text).toContain('12 days later');
+  });
+});
+
+describe('validateSipAmount', () => {
+  const error = (raw: string) => {
+    const check = validateSipAmount(raw);
+    return check.ok ? null : check.error;
+  };
+  it('accepts whole rupees, with or without a ₹ sign', () => {
+    expect(validateSipAmount(' 5000 ')).toEqual({ ok: true, rupees: 5000 });
+    expect(validateSipAmount('₹ 2500')).toEqual({ ok: true, rupees: 2500 });
+  });
+  it('explains what is wrong', () => {
+    expect(error('')).toBe('Enter the monthly amount.');
+    expect(error('5,000')).toBe('Enter digits only, without commas (for example 5000).');
+    expect(error('500.50')).toBe('Enter whole rupees, such as 5000.');
+    expect(error('50')).toBe('A SIP is at least ₹100 a month.');
+    expect(error('2000000')).toBe('That is more than ₹10 lakh a month. Check the amount.');
   });
 });

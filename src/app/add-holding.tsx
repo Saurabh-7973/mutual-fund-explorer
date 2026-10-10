@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View
 
 import { fundDisplayName } from '@/components/fund/FundGate';
 import { DateField } from '@/components/form/DateField';
+import { SipForm } from '@/components/form/SipForm';
 import { SchemeBadges } from '@/components/search/SchemeBadges';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +13,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
+import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { formatDate, todayInIndia } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
 import { formatInr, formatNav } from '@/domain/format';
@@ -57,6 +59,7 @@ function AddHoldingForm({ schemeCode, paramName }: { schemeCode: number; paramNa
   const [unitsTouched, setUnitsTouched] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState<IsoDate | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [mode, setMode] = useState<'once' | 'sip'>('once');
 
   const units = validateUnits(unitsText);
   // Raw history points plus the /latest point separately: never the merged series.
@@ -116,98 +119,129 @@ function AddHoldingForm({ schemeCode, paramName }: { schemeCode: number; paramNa
           <SchemeBadges name={name} />
         </View>
 
-        <View style={{ gap: spacing.xs }}>
-          <AppText variant="label">Units</AppText>
-          <TextInput
-            value={unitsText}
-            onChangeText={setUnitsText}
-            onBlur={() => setUnitsTouched(true)}
-            keyboardType="decimal-pad"
-            inputMode="decimal"
-            placeholder="e.g. 125.432"
-            placeholderTextColor={colors.textMuted}
-            accessibilityLabel="Units"
-            style={[
-              typography.body,
-              styles.input,
-              {
-                color: colors.text,
-                backgroundColor: colors.surface,
-                borderColor: showUnitsError ? colors.danger : colors.border,
-                borderRadius: radius.md,
-                paddingHorizontal: spacing.md,
-              },
-            ]}
-          />
-          {showUnitsError ? (
-            <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
-              {units.error}
+        <SegmentedRow
+          accessibilityLabel="What to add"
+          options={[
+            { key: 'once', label: 'One purchase' },
+            { key: 'sip', label: 'Monthly SIP' },
+          ]}
+          selected={mode}
+          onSelect={setMode}
+        />
+
+        {mode === 'sip' ? (
+          history.data !== undefined && points !== null ? (
+            <SipForm
+              schemeCode={schemeCode}
+              schemeName={name}
+              historyPoints={history.data.points}
+              latestPoint={latest.data?.point ?? null}
+              points={points}
+              today={today}
+            />
+          ) : history.isLoading ? (
+            <AppText variant="caption" tone="muted">
+              Loading NAV history to price your instalments…
             </AppText>
           ) : (
+            <ErrorState compact error={history.error} onRetry={() => void history.refetch()} />
+          )
+        ) : (
+          <>
+            <View style={{ gap: spacing.xs }}>
+              <AppText variant="label">Units</AppText>
+              <TextInput
+                value={unitsText}
+                onChangeText={setUnitsText}
+                onBlur={() => setUnitsTouched(true)}
+                keyboardType="decimal-pad"
+                inputMode="decimal"
+                placeholder="e.g. 125.432"
+                placeholderTextColor={colors.textMuted}
+                accessibilityLabel="Units"
+                style={[
+                  typography.body,
+                  styles.input,
+                  {
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                    borderColor: showUnitsError ? colors.danger : colors.border,
+                    borderRadius: radius.md,
+                    paddingHorizontal: spacing.md,
+                  },
+                ]}
+              />
+              {showUnitsError ? (
+                <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
+                  {units.error}
+                </AppText>
+              ) : (
+                <AppText variant="caption" tone="muted">
+                  Up to 4 decimals, exactly as on your statement.
+                </AppText>
+              )}
+            </View>
+
+            <View style={{ gap: spacing.xs }}>
+              <DateField
+                label="Purchase date"
+                value={purchaseDate}
+                onChange={setPurchaseDate}
+                minimumDate={history.data?.points[0]?.date ?? null}
+                maximumDate={today}
+                message={dateMessage}
+                disabled={!history.data}
+              />
+              {history.data === undefined &&
+                (history.isLoading ? (
+                  <AppText variant="caption" tone="muted">
+                    Loading NAV history to price your purchase…
+                  </AppText>
+                ) : (
+                  // Failed, or paused while offline.
+                  <ErrorState compact error={history.error} onRetry={() => void history.refetch()} />
+                ))}
+            </View>
+
             <AppText variant="caption" tone="muted">
-              Up to 4 decimals, exactly as on your statement.
+              Use the allotment date from your account statement. A purchase made after the 3 pm cut-off gets the next
+              business day's NAV.
             </AppText>
-          )}
-        </View>
 
-        <View style={{ gap: spacing.xs }}>
-          <DateField
-            label="Purchase date"
-            value={purchaseDate}
-            onChange={setPurchaseDate}
-            minimumDate={history.data?.points[0]?.date ?? null}
-            maximumDate={today}
-            message={dateMessage}
-            disabled={!history.data}
-          />
-          {history.data === undefined &&
-            (history.isLoading ? (
-              <AppText variant="caption" tone="muted">
-                Loading NAV history to price your purchase…
-              </AppText>
-            ) : (
-              // Failed, or paused while offline.
-              <ErrorState compact error={history.error} onRetry={() => void history.refetch()} />
-            ))}
-        </View>
-
-        <AppText variant="caption" tone="muted">
-          Use the allotment date from your account statement. A purchase made after the 3 pm cut-off gets the next
-          business day's NAV.
-        </AppText>
-
-        {units.ok && resolution?.kind === 'matched' && (
-          <Card style={{ gap: spacing.sm }}>
-            <AppText variant="label" numeric>
-              Priced at {formatNav(resolution.point.nav)} (NAV of {formatDate(resolution.point.date)})
-            </AppText>
-            {preview !== null && (
-              <>
-                <Row label="Invested">
-                  <AppText numeric>{formatInr(preview.invested, VALUE_SCALE)}</AppText>
-                </Row>
-                <Row label={`Value as of ${formatDate(preview.latestDate)}`}>
-                  <AppText numeric>{formatInr(preview.current, VALUE_SCALE)}</AppText>
-                </Row>
-                <Row label="Gain">
-                  <View style={[styles.inline, { gap: spacing.sm }]}>
-                    <SignedAmount value={preview.gain} scale={VALUE_SCALE} />
-                    <SignedPercent hundredths={preview.returnHundredths} />
-                  </View>
-                </Row>
-              </>
+            {units.ok && resolution?.kind === 'matched' && (
+              <Card style={{ gap: spacing.sm }}>
+                <AppText variant="label" numeric>
+                  Priced at {formatNav(resolution.point.nav)} (NAV of {formatDate(resolution.point.date)})
+                </AppText>
+                {preview !== null && (
+                  <>
+                    <Row label="Invested">
+                      <AppText numeric>{formatInr(preview.invested, VALUE_SCALE)}</AppText>
+                    </Row>
+                    <Row label={`Value as of ${formatDate(preview.latestDate)}`}>
+                      <AppText numeric>{formatInr(preview.current, VALUE_SCALE)}</AppText>
+                    </Row>
+                    <Row label="Gain">
+                      <View style={[styles.inline, { gap: spacing.sm }]}>
+                        <SignedAmount value={preview.gain} scale={VALUE_SCALE} />
+                        <SignedPercent hundredths={preview.returnHundredths} />
+                      </View>
+                    </Row>
+                  </>
+                )}
+              </Card>
             )}
-          </Card>
-        )}
-        {units.ok && resolution?.kind === 'pending' && purchaseDate !== null && (
-          <Card>
-            <AppText variant="label">
-              Saved as Awaiting NAV. It will be valued once the NAV for {formatDate(purchaseDate)} is published.
-            </AppText>
-          </Card>
-        )}
+            {units.ok && resolution?.kind === 'pending' && purchaseDate !== null && (
+              <Card>
+                <AppText variant="label">
+                  Saved as Awaiting NAV. It will be valued once the NAV for {formatDate(purchaseDate)} is published.
+                </AppText>
+              </Card>
+            )}
 
-        <Button label="Save" onPress={save} disabled={submitted && !canSave} />
+            <Button label="Save" onPress={save} disabled={submitted && !canSave} />
+          </>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );

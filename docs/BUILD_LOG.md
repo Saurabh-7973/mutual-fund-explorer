@@ -304,3 +304,10 @@ The user asked for the best UI/UX possible, with every component decided by the 
 - **Consistency:** `SegmentedRow` replaces bordered chip rows on the fund page; a `labelStrong` type token replaces six inline `fontWeight: '600'` overrides; header and tab labels read their sizes from tokens.
 - Also: an empty watchlist offers recently viewed funds to star in one tap.
 - Checks: `npm run check` 22 suites, 184 tests; Android export clean; rule greps clean. Unused after this pass and awaiting approval to delete: `src/components/fund/LatestNavCard.tsx`, `src/components/holdings/LotRow.tsx`.
+
+### Persona-driven pass (11 Oct 2026)
+
+- `docs/PERSONAS.md`: six investors, beginner to expert, and what each found.
+- Riya (beginner): glossary behind an ⓘ wherever a term appears (`src/domain/glossary.ts`, `Term`, `InfoSheet`).
+- Arjun (SIP investor): "Monthly SIP" mode in Add holding adds every instalment up to today in one go (`planSip`, `validateSipAmount`, tested). Checked on the emulator: ₹5,000 from 10 Jan 2022 in HDFC Mid Cap → 57 instalments, XIRR +15.67%; 10 Oct 2026 left out with a note (NAV not yet published). The preview shows the amount actually paid (₹2,85,000), because units rounded to 4 decimals × NAV came to ₹2,84,999.97.
+- Open: the SIP preview's gain is a subtraction in the component (`current − paid`); move it into `src/domain/sip.ts`. Not yet done: Meena's/Vikram's maximum drawdown (glossary entry exists), and a device pass of this round. Unused files awaiting approval to delete: `LatestNavCard.tsx`, `LotRow.tsx`.

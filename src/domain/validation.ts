@@ -68,3 +68,20 @@ export function describePurchaseDate(resolution: PurchaseNavResolution): { tone:
     }
   }
 }
+
+/** A SIP amount: whole rupees, as SIP mandates are set. */
+export const MIN_SIP_AMOUNT = 100;
+export const MAX_SIP_AMOUNT = 10_00_000;
+
+export type SipAmountCheck = { ok: true; rupees: number } | { ok: false; error: string };
+
+export function validateSipAmount(raw: string): SipAmountCheck {
+  const text = raw.trim().replace(/^₹\s*/, '');
+  if (text === '') return { ok: false, error: 'Enter the monthly amount.' };
+  if (text.includes(',')) return { ok: false, error: 'Enter digits only, without commas (for example 5000).' };
+  if (!/^\d+$/.test(text)) return { ok: false, error: 'Enter whole rupees, such as 5000.' };
+  const rupees = Number(text);
+  if (rupees < MIN_SIP_AMOUNT) return { ok: false, error: `A SIP is at least ₹${MIN_SIP_AMOUNT} a month.` };
+  if (rupees > MAX_SIP_AMOUNT) return { ok: false, error: 'That is more than ₹10 lakh a month. Check the amount.' };
+  return { ok: true, rupees };
+}
