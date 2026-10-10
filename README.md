@@ -29,6 +29,18 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 | `npm test` | Jest: 150+ tests on dates, money, NAV rules, parsing, the API client and the store |
 | `npm run check` | Both |
 
+## Screenshots
+
+Android emulator, light mode, Expo Go (SDK 57).
+
+| Explore | Fund | Your investment | Returns |
+|---|---|---|---|
+| ![Explore](docs/screenshots/01-explore.png) | ![Fund page](docs/screenshots/02-fund.png) | ![Your investment](docs/screenshots/03-your-investment.png) | ![Returns](docs/screenshots/04-returns.png) |
+
+| Consistency and worst fall | Watchlist | Holdings | Compare |
+|---|---|---|---|
+| ![Consistency](docs/screenshots/05-consistency.png) | ![Watchlist](docs/screenshots/06-watchlist.png) | ![Holdings](docs/screenshots/07-holdings.png) | ![Compare](docs/screenshots/08-compare.png) |
+
 ## Features
 
 - **Explore:** recently viewed funds with their NAV and today's move; search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
@@ -85,6 +97,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 - **Search matches whole words, up to 15 results.** That's how mfapi.in's search works: "parag" finds Parag Parikh funds, "par" finds nothing. The app tells you to type full words, and to add words when 15 results come back.
 - **Returns are NAV-based.** IDCW payouts aren't added back, and exit loads, stamp duty and taxes aren't modelled.
 - **Units use a dot for decimals.** Commas are rejected rather than guessed, because "1,254" could be a thousands separator.
+- **A SIP added in one go shows "invested" as units × NAV.** Units are kept to 4 decimals, so a ₹5,000 instalment can show as ₹4,999.99; the SIP preview shows the rupees actually paid. Recording the paid amount per purchase would need a change to the saved data format.
 - **Totals are summed exactly, then rounded**, so they can differ from the sum of the rounded rows by a paisa.
 - Mobile only: web isn't a target.
 
