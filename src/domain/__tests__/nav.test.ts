@@ -5,13 +5,15 @@ import { parseSchemeResponse } from '../../api/parse';
 import {
   GAP_WARNING_DAYS,
   buildSeries,
+  chartRangeLabel,
+  defaultChartRange,
   isStale,
   latestChange,
   lowerBound,
   mergeLatest,
+  navListItems,
   navOnOrAfter,
   navOnOrBefore,
-  navListItems,
   navRowsNewestFirst,
   rangeCovered,
   resolvePurchaseNav,
@@ -212,5 +214,21 @@ describe('sliceRange', () => {
 
   it('returns everything for the full range', () => {
     expect(sliceRange(daily, null)).toHaveLength(400);
+  });
+});
+
+describe('chart range defaults and labels', () => {
+  const series = (dates: string[]): NavPoint[] =>
+    dates.map((date) => ({ date: date as IsoDate, nav: '10.0000', value: 10 }));
+
+  it('opens on 1Y when the history covers a year, otherwise All', () => {
+    expect(defaultChartRange(series(['2025-01-01', '2026-10-09']))).toBe('1Y');
+    expect(defaultChartRange(series(['2026-03-01', '2026-10-09']))).toBe('ALL');
+  });
+
+  it('reads ranges as words, and All as the first NAV date', () => {
+    expect(chartRangeLabel('6M', series(['2025-01-01']))).toBe('6 months');
+    expect(chartRangeLabel('ALL', series(['2013-05-28', '2026-10-09']))).toBe('since 28 May 2013');
+    expect(chartRangeLabel('ALL', [])).toBe('all NAVs');
   });
 });

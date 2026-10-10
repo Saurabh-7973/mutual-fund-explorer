@@ -122,3 +122,22 @@ _(Claude Code: add entries below this line.)_
 - **Domain rule changed (user-approved): `MIN_QUERY_LENGTH` 3 → 2.** With whole-word matching, a two-letter fund house couldn't be searched at all. Checked live: `q=jm` returns 15 (JM Financial schemes), `q=ab` 9 (Birla "Series AB" plans), `q=a` 0. Test updated (`j` no, `JM` yes); the screen's hint now reads the constant.
 - Process correction: commit `178ca49` ran only the type check, not the tests, "to save resources". From now on `npm run check` runs before every commit, including small fixes; it takes seconds.
 - Checks: `npm run check`: typecheck 0 errors; 16 suites, 144 tests passed.
+
+---
+
+## Phase 3: Fund screen and NAV history list (10 Oct 2026, Claude Code)
+
+**Built**
+- `src/app/fund/[code]/index.tsx`: title block, latest NAV card (change since the previous NAV, stale banner, skipped-rows note, "Add a holding"), range chips + `NavChart`, trailing returns, this fund's holdings, the 5 most recent NAVs with "See all <n> NAVs", and the source note. Gesture Handler `ScrollView` with pull to refresh (history and latest together). Star in the header.
+- `src/app/fund/[code]/navs.tsx`: title, "<n> NAVs from … to …", a fixed Date | NAV | Change header outside the list, then a `FlatList` of NAV and gap rows at one fixed height (48), `getItemLayout`, 25-item batches, `windowSize` 11, clipped subviews on Android.
+- `src/components/fund/`: `FundGate` (loading, not found, error/offline, no NAV; shared by both screens instead of copy-pasting), `InvalidSchemeLink`, `fundDisplayName`, `FundTitle`, `LatestNavCard`, `ReturnsCard`, `FundLots`, `NavRows` (`NavRowView`, `GapRowView`, `NavHeaderRow`; the fund screen's recent NAVs reuse the list's row).
+
+**Decisions**
+- Added `defaultChartRange(points)` and `chartRangeLabel(range, points)` to `src/domain/nav.ts` with 2 tests, rather than writing the "1Y if covered, else All" rule and the label words in the screen. Additive only.
+- The screen parses the code first and renders a separate inner component only for a valid code, so `useFundSeries` is never called with a bad code and no hook runs conditionally.
+- `FundGate` treats "no data and not loading" as the error state, which covers a history fetch paused offline (same lesson as Explore in Phase 2).
+- Screen-reader labels: the NAV change reads "NAV up ₹0.43, 0.49%, since …"; each return row reads "1 year: up 12.34% per year" (or "absolute"); each NAV row reads date, NAV and direction. Colour is never the only signal.
+
+**Pre-built code changed:** `src/domain/nav.ts` (additions above).
+
+**Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: bundled cleanly. Rule greps (`parseFloat|toFixed(|Intl.NumberFormat|new Date('` and hex colours in `src/app` and `src/components`): nothing found.

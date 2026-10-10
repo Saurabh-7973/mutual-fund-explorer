@@ -1,5 +1,5 @@
 import { NAV_SCALE, divRound, parseScaled } from './decimal';
-import { addMonths, diffDays } from './dates';
+import { addMonths, diffDays, formatDate } from './dates';
 import type { IsoDate, NavPoint } from './types';
 
 /**
@@ -232,4 +232,24 @@ export function sliceRange(points: readonly NavPoint[], months: number | null): 
   const atIndex = points[index];
   const startIndex = atIndex !== undefined && atIndex.date === start ? index : Math.max(0, index - 1);
   return points.slice(startIndex);
+}
+
+/** The range a fund screen opens on: 1 year when the history covers it, otherwise all of it. */
+export function defaultChartRange(points: readonly NavPoint[]): ChartRange {
+  return rangeCovered(points, 12) ? '1Y' : 'ALL';
+}
+
+const RANGE_WORDS: Record<Exclude<ChartRange, 'ALL'>, string> = {
+  '1M': '1 month',
+  '6M': '6 months',
+  '1Y': '1 year',
+  '3Y': '3 years',
+  '5Y': '5 years',
+};
+
+/** How a range reads in a sentence: "1 year", or "since 28 May 2013" for All. */
+export function chartRangeLabel(range: ChartRange, points: readonly NavPoint[]): string {
+  if (range !== 'ALL') return RANGE_WORDS[range];
+  const first = points[0];
+  return first === undefined ? 'all NAVs' : `since ${formatDate(first.date)}`;
 }
