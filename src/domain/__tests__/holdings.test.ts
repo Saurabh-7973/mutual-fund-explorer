@@ -2,7 +2,8 @@ import { describe, expect, it } from '@jest/globals';
 
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { allocation, annualisedReturn, holdingsByFund, sortLots, type EvaluatedLot } from '../holdings';
+import { allocation, annualisedReturn, holdingsByFund, portfolioDayGain, sortLots, type EvaluatedLot } from '../holdings';
+import { navChange } from '../nav';
 import type { IsoDate } from '../types';
 import { evaluateLot } from '../valuation';
 
@@ -88,5 +89,25 @@ describe('allocation', () => {
 
   it('is empty when nothing is valued', () => {
     expect(allocation(holdingsByFund([evaluated(1, PPFAS, '10', null)]))).toEqual([]);
+  });
+});
+
+describe('portfolioDayGain', () => {
+  const prev = { date: '2026-10-08' as IsoDate, nav: '87.6555', value: 87.6555 };
+  const change = navChange(prev, LATEST);
+
+  it('multiplies valued units by the NAV move and compares with yesterday', () => {
+    const funds = holdingsByFund([evaluated(122639, PPFAS, '125.432', '2024-03-31'), evaluated(122639, PPFAS, '10', null)]);
+    const gain = portfolioDayGain(funds, new Map([[122639, change]]));
+    // 125.432 × ₹1.2703 = ₹159.34 (pending units don't count)
+    expect(formatInr(gain?.amount ?? 0n, VALUE_SCALE, 'always')).toBe('+₹159.34');
+    expect(gain?.pctHundredths).toBe(145n);
+  });
+
+  it('skips a fund whose move ends on a different NAV than its value', () => {
+    const funds = holdingsByFund([evaluated(122639, PPFAS, '125.432', '2024-03-31')]);
+    const stale = navChange({ ...prev, date: '2026-10-07' as IsoDate }, prev);
+    expect(portfolioDayGain(funds, new Map([[122639, stale]]))).toBeNull();
+    expect(portfolioDayGain(funds, new Map())).toBeNull();
   });
 });

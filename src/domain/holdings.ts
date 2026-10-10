@@ -1,6 +1,7 @@
 import { diffDays } from './dates';
 import { UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, toNumber } from './decimal';
 import { describeScheme } from './schemeName';
+import type { NavChange } from './nav';
 import type { AppliedNav, IsoDate } from './types';
 import type { LotStatus } from './valuation';
 import { xirrPercent, type CashFlow } from './xirr';
@@ -43,6 +44,8 @@ export interface FundHolding {
   unavailableCount: number;
   /** All units held, priced or not, at UNITS_SCALE. */
   units: bigint;
+  /** Units of the valued lots only: what the current value is made of. */
+  valuedUnits: bigint;
   invested: bigint;
   current: bigint;
   gain: bigint;
@@ -86,6 +89,7 @@ export function holdingsByFund(lots: readonly EvaluatedLot[]): FundHolding[] {
   const funds: FundHolding[] = [];
   for (const [schemeCode, group] of groups) {
     let units = 0n;
+    let valuedUnits = 0n;
     let invested = 0n;
     let current = 0n;
     let valuedCount = 0;
@@ -98,6 +102,7 @@ export function holdingsByFund(lots: readonly EvaluatedLot[]): FundHolding[] {
       else if (lot.status.status === 'unavailable') unavailableCount++;
       else {
         valuedCount++;
+        valuedUnits += lot.status.valuation.units;
         invested += lot.status.valuation.invested;
         current += lot.status.valuation.current;
         const date = lot.status.valuation.latestDate;
@@ -113,6 +118,7 @@ export function holdingsByFund(lots: readonly EvaluatedLot[]): FundHolding[] {
       pendingCount,
       unavailableCount,
       units,
+      valuedUnits,
       invested,
       current,
       gain,
@@ -152,4 +158,35 @@ export function allocation(funds: readonly FundHolding[], maxSlices = 4): Alloca
     slices.push({ schemeCode: null, label: `${valued.length - shown.length} other funds`, shareHundredths: share(rest) });
   }
   return slices;
+}
+
+export interface DayGain {
+  /** Rupees at VALUE_SCALE. */
+  amount: bigint;
+  /** Against yesterday's value, in hundredths of a percent. */
+  pctHundredths: bigint;
+}
+
+/**
+ * Today's change in the portfolio: each fund's valued units times its latest NAV move.
+ * A fund counts only when its move ends on the NAV its value uses, so the day's figure
+ * and the current value always describe the same NAVs. Null when no fund qualifies.
+ */
+export function portfolioDayGain(
+  funds: readonly FundHolding[],
+  changes: ReadonlyMap<number, NavChange | null>,
+): DayGain | null {
+  let amount = 0n;
+  let current = 0n;
+  let counted = 0;
+  for (const fund of funds) {
+    const change = changes.get(fund.schemeCode);
+    if (change === null || change === undefined || fund.valuedUnits === 0n || change.to.date !== fund.latestDate) continue;
+    amount += fund.valuedUnits * change.diff;
+    current += fund.current;
+    counted++;
+  }
+  const before = current - amount;
+  if (counted === 0 || before <= 0n) return null;
+  return { amount, pctHundredths: divRound(amount * 10_000n, before) };
 }

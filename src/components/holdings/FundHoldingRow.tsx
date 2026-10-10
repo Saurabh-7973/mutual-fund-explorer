@@ -2,86 +2,71 @@ import { router } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { formatDate } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
-import { formatInr, formatPercent, formatUnits } from '@/domain/format';
+import { formatPercent } from '@/domain/format';
 import type { FundHolding } from '@/domain/holdings';
 import { describeScheme } from '@/domain/schemeName';
 import { useTheme } from '@/theme/useTheme';
 
-import { SchemeBadges } from '../search/SchemeBadges';
 import { AppText } from '../ui/AppText';
-import { Badge } from '../ui/Badge';
+import { PrivateAmount } from '../ui/PrivateAmount';
 import { Skeleton } from '../ui/Skeleton';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
 
-export const FUND_HOLDING_ROW_HEIGHT = 112;
+export const FUND_HOLDING_ROW_HEIGHT = 76;
+
+/** What the right-hand column shows; one at a time keeps rows quiet (switched above the list). */
+export type HoldingColumn = 'value' | 'returns' | 'xirr';
+
+export const HOLDING_COLUMNS = [
+  { key: 'value', label: 'Current (invested)' },
+  { key: 'returns', label: 'Returns (%)' },
+  { key: 'xirr', label: 'XIRR' },
+] as const satisfies readonly { key: HoldingColumn; label: string }[];
 
 export type FundRowNav = 'ready' | 'loading' | 'failed';
 
 export interface FundHoldingRowProps {
   fund: FundHolding;
   nav: FundRowNav;
+  column: HoldingColumn;
   onRetry: (schemeCode: number) => void;
   /** Resolves true when the user confirmed and the lots were removed. */
   onRemove: (fund: FundHolding) => Promise<boolean>;
 }
 
 /**
- * One fund in the portfolio: value and return on the right, what you hold on the left.
- * Tap for the fund and its purchases; swipe left to remove all of them.
+ * One fund in the portfolio, kept to two lines: the fund and what you hold on the left,
+ * one chosen figure on the right. Tap for the fund page and its purchases; swipe to remove.
  */
-export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, onRetry, onRemove }: FundHoldingRowProps) {
+export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, column, onRetry, onRemove }: FundHoldingRowProps) {
   const { colors, spacing } = useTheme();
-  const title = useMemo(() => describeScheme(fund.schemeName).title, [fund.schemeName]);
+  const label = useMemo(() => describeScheme(fund.schemeName), [fund.schemeName]);
   const remove = useCallback(() => onRemove(fund), [onRemove, fund]);
-  const purchases = `${fund.lotCount} ${fund.lotCount === 1 ? 'purchase' : 'purchases'}`;
 
-  let value = null;
-  let gain = null;
-  let ret = null;
-  if (fund.valuedCount > 0) {
-    value = (
-      <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
-        {formatInr(fund.current, VALUE_SCALE)}
-      </AppText>
-    );
-    gain = (
-      <View style={[styles.line, { gap: spacing.xs }]}>
-        <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="label" maxFontSizeMultiplier={1.3} />
-        {fund.returnHundredths !== null && (
-          <SignedPercent hundredths={fund.returnHundredths} variant="label" maxFontSizeMultiplier={1.3} />
-        )}
-      </View>
-    );
-    ret =
-      fund.xirrPercent !== null ? (
-        <AppText
-          variant="caption"
-          tone="muted"
-          numeric
-          maxFontSizeMultiplier={1.3}
-          accessibilityLabel={`XIRR ${formatPercent(fund.xirrPercent)} per year`}
-        >
-          XIRR {formatPercent(fund.xirrPercent)} p.a.
-        </AppText>
-      ) : null;
-  } else if (nav === 'loading') {
-    value = <Skeleton width={96} height={18} />;
-    gain = <Skeleton width={110} height={14} />;
-  } else if (nav === 'failed') {
-    value = (
+  const meta = [label.plan, label.option, `${fund.lotCount} ${fund.lotCount === 1 ? 'purchase' : 'purchases'}`]
+    .filter((part): part is string => part !== null)
+    .join(' · ');
+  const waiting = fund.pendingCount > 0 ? `${fund.pendingCount} awaiting NAV` : null;
+
+  let primary;
+  let secondary = null;
+  if (fund.valuedCount === 0 && nav === 'loading') {
+    primary = <Skeleton width={96} height={18} />;
+    secondary = <Skeleton width={72} height={12} />;
+  } else if (fund.valuedCount === 0 && nav === 'failed') {
+    primary = (
       <AppText variant="caption" tone="danger" maxFontSizeMultiplier={1.3}>
-        Couldn't load latest NAV
+        Couldn't load NAV
       </AppText>
     );
-    gain = (
+    secondary = (
       <Pressable
         onPress={() => onRetry(fund.schemeCode)}
         accessibilityRole="button"
-        accessibilityLabel={`Retry loading the latest NAV for ${title}`}
+        accessibilityLabel={`Retry loading the NAV for ${label.title}`}
         hitSlop={12}
       >
         <AppText variant="label" tone="primary" maxFontSizeMultiplier={1.3}>
@@ -89,20 +74,64 @@ export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, onRetry,
         </AppText>
       </Pressable>
     );
+  } else if (fund.valuedCount === 0) {
+    primary = (
+      <AppText variant="label" tone="warning" maxFontSizeMultiplier={1.3}>
+        Awaiting NAV
+      </AppText>
+    );
+  } else if (column === 'value') {
+    primary = (
+      <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} />
+    );
+    secondary = (
+      <View style={styles.line}>
+        <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+          (
+        </AppText>
+        <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="caption" tone="muted" maxFontSizeMultiplier={1.3} />
+        <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+          )
+        </AppText>
+      </View>
+    );
+  } else if (column === 'returns') {
+    primary = (
+      <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} private />
+    );
+    secondary =
+      fund.returnHundredths !== null ? (
+        <SignedPercent hundredths={fund.returnHundredths} variant="caption" maxFontSizeMultiplier={1.3} />
+      ) : null;
   } else {
-    value = <Badge label="Awaiting NAV" tone="warning" />;
+    primary =
+      fund.xirrPercent !== null ? (
+        <AppText
+          variant="heading"
+          numeric
+          maxFontSizeMultiplier={1.3}
+          tone={fund.xirrPercent > 0 ? 'gain' : fund.xirrPercent < 0 ? 'loss' : 'muted'}
+          accessibilityLabel={`XIRR ${formatPercent(fund.xirrPercent)} per year`}
+        >
+          {formatPercent(fund.xirrPercent)}
+        </AppText>
+      ) : (
+        <AppText variant="heading" tone="muted" maxFontSizeMultiplier={1.3}>
+          —
+        </AppText>
+      );
+    secondary = (
+      <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+        {fund.xirrPercent !== null ? 'a year' : 'after 1 year'}
+      </AppText>
+    );
   }
-
-  const waiting =
-    fund.pendingCount > 0 ? `${fund.pendingCount} awaiting NAV` : fund.unavailableCount > 0 && fund.valuedCount > 0
-      ? `${fund.unavailableCount} not loaded`
-      : null;
 
   return (
     <SwipeRow actionLabel="Remove" onAction={remove}>
       <Pressable
         accessibilityRole="button"
-        accessibilityHint="Opens the fund and its purchases. Swipe left to remove."
+        accessibilityHint="Opens the fund and your purchases. Swipe left to remove."
         onPress={() =>
           router.push({ pathname: '/fund/[code]', params: { code: String(fund.schemeCode), name: fund.schemeName } })
         }
@@ -111,38 +140,27 @@ export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, onRetry,
           {
             borderBottomColor: colors.border,
             paddingHorizontal: spacing.lg,
-            gap: spacing.xs,
+            gap: spacing.md,
             backgroundColor: pressed ? colors.surfaceMuted : colors.background,
           },
         ]}
       >
-        <View style={[styles.line, { gap: spacing.md }]}>
+        <View style={[styles.flex, { gap: 2 }]}>
           <AppText variant="label" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.title}>
-            {title}
+            {label.title}
           </AppText>
-          {value}
-        </View>
-        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-          <View style={styles.flex}>
-            <SchemeBadges name={fund.schemeName} size="sm" />
-          </View>
-          {gain}
-        </View>
-        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-          <AppText variant="caption" numeric numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-            {formatUnits(fund.units)} units · {purchases}
+          <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+            {meta}
+            {waiting !== null && (
+              <AppText variant="caption" tone="warning" maxFontSizeMultiplier={1.3}>
+                {` · ${waiting}`}
+              </AppText>
+            )}
           </AppText>
-          {ret}
         </View>
-        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-          <AppText variant="caption" tone="warning" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-            {waiting ?? ''}
-          </AppText>
-          {fund.latestDate !== null && (
-            <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-              as of {formatDate(fund.latestDate)}
-            </AppText>
-          )}
+        <View style={[styles.right, { gap: 2 }]}>
+          {primary}
+          {secondary}
         </View>
       </Pressable>
     </SwipeRow>
@@ -152,12 +170,13 @@ export const FundHoldingRow = memo(function FundHoldingRow({ fund, nav, onRetry,
 const styles = StyleSheet.create({
   row: {
     height: FUND_HOLDING_ROW_HEIGHT,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
-  line: { flexDirection: 'row', alignItems: 'center' },
-  minLine: { minHeight: 18 },
-  title: { flex: 1, fontWeight: '600' },
   flex: { flex: 1 },
+  title: { fontWeight: '600' },
+  right: { alignItems: 'flex-end' },
+  line: { flexDirection: 'row' },
 });

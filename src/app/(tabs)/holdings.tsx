@@ -1,30 +1,48 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Alert, FlatList, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 
 import { AllocationBar } from '@/components/holdings/AllocationBar';
-import { FUND_HOLDING_ROW_HEIGHT, FundHoldingRow, type FundRowNav } from '@/components/holdings/FundHoldingRow';
+import {
+  FUND_HOLDING_ROW_HEIGHT,
+  FundHoldingRow,
+  HOLDING_COLUMNS,
+  type FundRowNav,
+  type HoldingColumn,
+} from '@/components/holdings/FundHoldingRow';
 import { AppText } from '@/components/ui/AppText';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { IconButton } from '@/components/ui/IconButton';
+import { PrivateAmount } from '@/components/ui/PrivateAmount';
 import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
 import { formatAsOf } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
-import { formatInr, formatPercent } from '@/domain/format';
-import { allocation, annualisedReturn, holdingsByFund, type EvaluatedLot, type FundHolding } from '@/domain/holdings';
+import { formatPercent } from '@/domain/format';
+import {
+  allocation,
+  annualisedReturn,
+  holdingsByFund,
+  portfolioDayGain,
+  type EvaluatedLot,
+  type FundHolding,
+} from '@/domain/holdings';
+import { dayChange, type NavChange } from '@/domain/nav';
 import { describeScheme } from '@/domain/schemeName';
 import { evaluateLot, summarize, type LotStatus } from '@/domain/valuation';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
-import { latestNavQuery, queryKeys } from '@/query/hooks';
+import { latestNavQuery, queryKeys, recentNavQuery } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
 const keyExtractor = (fund: FundHolding) => String(fund.schemeCode);
 
 export default function HoldingsScreen() {
-  const { colors, spacing } = useTheme();
+  const { colors, radius, spacing } = useTheme();
   const lots = usePortfolioStore((s) => s.lots);
   const hydrated = usePortfolioStore((s) => s.hydrated);
   const removeLot = usePortfolioStore((s) => s.removeLot);
@@ -34,10 +52,15 @@ export default function HoldingsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   // The summary is the list header; its height feeds getItemLayout so row offsets stay exact.
   const [headerHeight, setHeaderHeight] = useState(0);
+  const [column, setColumn] = useState<HoldingColumn>('value');
+  const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
+  const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
 
   const codes = useMemo(() => [...new Set(lots.map((lot) => lot.schemeCode))], [lots]);
   const results = useQueries({ queries: codes.map((code) => latestNavQuery(code)) });
   const byCode = new Map(codes.map((code, i) => [code, results[i]]));
+  // Two weeks of NAVs per fund: enough for today's change (persisted with the latest NAV).
+  const recents = useQueries({ queries: codes.map((code) => recentNavQuery(code)) });
 
   // Lots are few and the maths is cheap, so this runs on every render.
   const evaluated: EvaluatedLot[] = [];
@@ -55,6 +78,13 @@ export default function HoldingsScreen() {
     }
   }
   const funds = holdingsByFund(evaluated);
+  const changes = new Map<number, NavChange | null>(
+    codes.map((code, i) => {
+      const points = recents[i]?.data?.points;
+      return [code, points === undefined ? null : dayChange(points, byCode.get(code)?.data?.point ?? null)];
+    }),
+  );
+  const dayGain = portfolioDayGain(funds, changes);
   const totals = summarize(statuses);
   const xirr = annualisedReturn(evaluated);
   const slices = allocation(funds);
@@ -106,9 +136,15 @@ export default function HoldingsScreen() {
   );
   const renderItem = useCallback<ListRenderItem<FundHolding>>(
     ({ item }) => (
-      <FundHoldingRow fund={item} nav={navState.get(item.schemeCode) ?? 'loading'} onRetry={onRetry} onRemove={onRemove} />
+      <FundHoldingRow
+        fund={item}
+        nav={navState.get(item.schemeCode) ?? 'loading'}
+        column={column}
+        onRetry={onRetry}
+        onRemove={onRemove}
+      />
     ),
-    [navState, onRetry, onRemove],
+    [navState, column, onRetry, onRemove],
   );
 
   if (!hydrated) {
@@ -132,85 +168,131 @@ export default function HoldingsScreen() {
     );
   }
 
+  const columnIndex = HOLDING_COLUMNS.findIndex((c) => c.key === column);
+  const nextColumn = HOLDING_COLUMNS[(columnIndex + 1) % HOLDING_COLUMNS.length] ?? HOLDING_COLUMNS[0];
+  const columnLabel = HOLDING_COLUMNS[columnIndex]?.label ?? '';
+
   const summary = (
-    <View
-      onLayout={onHeaderLayout}
-      style={[
-        styles.summary,
-        { backgroundColor: colors.surface, borderBottomColor: colors.border, padding: spacing.lg, gap: spacing.md },
-      ]}
-    >
-      <View style={{ gap: spacing.xs }}>
-        <AppText variant="label" tone="muted">
-          Current value
-        </AppText>
+    <View onLayout={onHeaderLayout}>
+      <View
+        style={[
+          styles.summary,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderRadius: radius.lg,
+            margin: spacing.lg,
+            padding: spacing.lg,
+          },
+        ]}
+      >
+        <View style={styles.headerRow}>
+          <AppText variant="label" tone="muted" style={styles.flex}>
+            {funds.length === 1 ? '1 fund' : `${funds.length} funds`} · current value
+          </AppText>
+          <IconButton
+            name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
+            onPress={toggleHideAmounts}
+            selected={hideAmounts}
+            accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
+          />
+        </View>
         {anyFirstLoad ? (
           // Never show partial totals while a fund's latest NAV is still on its first load.
-          <View accessible accessibilityLabel="Loading totals" style={{ gap: spacing.sm }}>
+          <View accessible accessibilityLabel="Loading totals" style={{ gap: spacing.sm, marginTop: spacing.xs }}>
             <Skeleton width={200} height={34} />
             <Skeleton width={240} height={16} />
           </View>
         ) : (
-          <AppText variant="figure" numeric>
-            {formatInr(totals.current, VALUE_SCALE)}
-          </AppText>
+          <>
+            <PrivateAmount value={totals.current} scale={VALUE_SCALE} variant="figure" />
+            <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
+            <View style={{ gap: spacing.sm }}>
+              <Row label="1D returns">
+                {dayGain !== null ? (
+                  <View style={[styles.inline, { gap: spacing.xs }]}>
+                    <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
+                    <SignedPercent hundredths={dayGain.pctHundredths} variant="label" />
+                  </View>
+                ) : (
+                  <AppText variant="label" tone="muted">
+                    —
+                  </AppText>
+                )}
+              </Row>
+              <Row label="Total returns">
+                <View style={[styles.inline, { gap: spacing.xs }]}>
+                  <SignedAmount value={totals.gain} scale={VALUE_SCALE} variant="label" private />
+                  {totals.returnHundredths !== null && (
+                    <SignedPercent hundredths={totals.returnHundredths} variant="label" />
+                  )}
+                </View>
+              </Row>
+              <Row label="Invested">
+                <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="label" />
+              </Row>
+              <Row label="XIRR">
+                {xirr !== null ? (
+                  <AppText
+                    variant="label"
+                    numeric
+                    tone={xirr > 0 ? 'gain' : xirr < 0 ? 'loss' : 'muted'}
+                    accessibilityLabel={`${formatPercent(xirr)} per year`}
+                  >
+                    {formatPercent(xirr)} a year
+                  </AppText>
+                ) : (
+                  <AppText variant="label" tone="muted">
+                    after your first year
+                  </AppText>
+                )}
+              </Row>
+            </View>
+            {slices.length > 1 && (
+              <>
+                <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
+                <AllocationBar slices={slices} />
+              </>
+            )}
+          </>
         )}
+        <View style={{ gap: 2, marginTop: spacing.md }}>
+          {totals.oldestNavDate !== null && (
+            <AppText variant="caption" tone="muted">
+              {formatAsOf(totals.oldestNavDate, totals.newestNavDate)}
+            </AppText>
+          )}
+          {excluded > 0 && (
+            <AppText variant="caption" tone="warning">
+              {[
+                totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
+                totals.unavailableCount > 0 ? `${totals.unavailableCount} not loaded` : null,
+              ]
+                .filter((part): part is string => part !== null)
+                .join(' and ')}{' '}
+              {excluded === 1 ? "isn't" : "aren't"} in these totals.
+            </AppText>
+          )}
+        </View>
       </View>
 
-      {!anyFirstLoad && (
-        <View style={[styles.stats, { gap: spacing.lg }]}>
-          <Stat label="Invested">
-            <AppText variant="heading" numeric>
-              {formatInr(totals.invested, VALUE_SCALE)}
-            </AppText>
-          </Stat>
-          <Stat label="Returns">
-            <View style={[styles.inline, { gap: spacing.xs }]}>
-              <SignedAmount value={totals.gain} scale={VALUE_SCALE} variant="heading" />
-            </View>
-            {totals.returnHundredths !== null && <SignedPercent hundredths={totals.returnHundredths} variant="label" />}
-          </Stat>
-          <Stat label="XIRR">
-            {xirr !== null ? (
-              <AppText
-                variant="heading"
-                numeric
-                tone={xirr > 0 ? 'gain' : xirr < 0 ? 'loss' : 'muted'}
-                accessibilityLabel={`${formatPercent(xirr)} per year`}
-              >
-                {formatPercent(xirr)}
-              </AppText>
-            ) : (
-              <AppText variant="heading" tone="muted">
-                —
-              </AppText>
-            )}
-            <AppText variant="caption" tone="muted">
-              {xirr !== null ? 'a year' : 'after 1 year'}
-            </AppText>
-          </Stat>
-        </View>
-      )}
-
-      {!anyFirstLoad && <AllocationBar slices={slices} />}
-
-      <View style={{ gap: 2 }}>
-        {totals.oldestNavDate !== null && (
-          <AppText variant="caption" tone="muted">
-            {formatAsOf(totals.oldestNavDate, totals.newestNavDate)}
+      {/* One figure per row keeps the list calm; this switches which one. */}
+      <View style={[styles.listHeader, { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}>
+        <AppText variant="caption" tone="muted" style={styles.flex}>
+          Swipe left on a fund to remove it
+        </AppText>
+        <Pressable
+          onPress={() => setColumn(nextColumn.key)}
+          accessibilityRole="button"
+          accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
+          hitSlop={12}
+          style={[styles.inline, { gap: spacing.xs }]}
+        >
+          <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
+          <AppText variant="label" tone="primary">
+            {columnLabel}
           </AppText>
-        )}
-        {excluded > 0 && (
-          <AppText variant="caption" tone="warning">
-            {[
-              totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
-              totals.unavailableCount > 0 ? `${totals.unavailableCount} not loaded` : null,
-            ]
-              .filter((part): part is string => part !== null)
-              .join(' and ')}{' '}
-            {excluded === 1 ? "isn't" : "aren't"} in these totals.
-          </AppText>
-        )}
+        </Pressable>
       </View>
     </View>
   );
@@ -243,10 +325,10 @@ export default function HoldingsScreen() {
   );
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
+function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <View style={styles.stat}>
-      <AppText variant="caption" tone="muted">
+    <View style={styles.kv}>
+      <AppText variant="label" tone="muted" style={styles.flex}>
         {label}
       </AppText>
       {children}
@@ -257,8 +339,10 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { justifyContent: 'center' },
-  summary: { borderBottomWidth: StyleSheet.hairlineWidth },
-  stats: { flexDirection: 'row', flexWrap: 'wrap' },
-  stat: { gap: 2, minWidth: 92 },
-  inline: { flexDirection: 'row', alignItems: 'baseline' },
+  summary: { borderWidth: StyleSheet.hairlineWidth },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  rule: { borderTopWidth: 1, borderStyle: 'dashed' },
+  kv: { flexDirection: 'row', alignItems: 'center', minHeight: 22 },
+  inline: { flexDirection: 'row', alignItems: 'center' },
+  listHeader: { flexDirection: 'row', alignItems: 'center' },
 });

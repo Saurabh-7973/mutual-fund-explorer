@@ -4,17 +4,20 @@ import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { VALUE_SCALE } from '@/domain/decimal';
-import { formatInr, formatPercent, formatUnits } from '@/domain/format';
+import { formatPercent, formatUnits } from '@/domain/format';
 import { holdingsByFund, sortLots, type EvaluatedLot } from '@/domain/holdings';
 import type { NavPoint } from '@/domain/types';
 import { evaluateLot } from '@/domain/valuation';
 import type { HoldingLot } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
 import { LotRow } from '../holdings/LotRow';
 import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
+import { IconButton } from '../ui/IconButton';
+import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 
@@ -32,6 +35,8 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
   const { colors, radius, spacing } = useTheme();
   const lots = usePortfolioStore(useShallow((s) => s.lots.filter((lot) => lot.schemeCode === schemeCode)));
   const removeLot = usePortfolioStore((s) => s.removeLot);
+  const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
+  const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
 
   const evaluated = useMemo<(HoldingLot & EvaluatedLot)[]>(
     () => sortLots(lots).map((lot) => ({ ...lot, status: evaluateLot(lot, last) })),
@@ -48,16 +53,22 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
       ]}
     >
       <View style={{ paddingHorizontal: spacing.lg, gap: spacing.sm, paddingBottom: spacing.md }}>
-        <AppText variant="heading" accessibilityRole="header">
-          Your investment
-        </AppText>
+        <View style={styles.header}>
+          <AppText variant="heading" accessibilityRole="header" style={styles.flex}>
+            Your investment
+          </AppText>
+          <IconButton
+            name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
+            onPress={toggleHideAmounts}
+            selected={hideAmounts}
+            accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
+          />
+        </View>
         {fund.valuedCount > 0 ? (
           <>
-            <AppText variant="figure" numeric>
-              {formatInr(fund.current, VALUE_SCALE)}
-            </AppText>
+            <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="figure" />
             <View style={[styles.line, { gap: spacing.sm }]}>
-              <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="label" />
+              <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="label" private />
               {fund.returnHundredths !== null && <SignedPercent hundredths={fund.returnHundredths} variant="label" />}
               {fund.xirrPercent !== null && (
                 <AppText
@@ -70,9 +81,15 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
                 </AppText>
               )}
             </View>
-            <AppText variant="caption" tone="muted" numeric>
-              Invested {formatInr(fund.invested, VALUE_SCALE)} · {formatUnits(fund.units)} units
-            </AppText>
+            <View style={[styles.line, { gap: 4 }]}>
+              <AppText variant="caption" tone="muted">
+                Invested
+              </AppText>
+              <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="caption" tone="muted" />
+              <AppText variant="caption" tone="muted" numeric>
+                · {formatUnits(fund.units)} units
+              </AppText>
+            </View>
           </>
         ) : (
           <AppText tone="muted">Awaiting the NAV for your purchase date.</AppText>
@@ -96,4 +113,6 @@ export function FundLots({ schemeCode, name, last }: FundLotsProps) {
 const styles = StyleSheet.create({
   card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
+  header: { flexDirection: 'row', alignItems: 'center' },
+  flex: { flex: 1 },
 });

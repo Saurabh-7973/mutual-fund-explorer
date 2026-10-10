@@ -3,13 +3,14 @@ import { Alert, StyleSheet, View } from 'react-native';
 
 import { formatDate } from '@/domain/dates';
 import { UNITS_SCALE, VALUE_SCALE, parseScaled } from '@/domain/decimal';
-import { formatInr, formatNav, formatUnits } from '@/domain/format';
+import { formatNav, formatUnits } from '@/domain/format';
 import type { LotStatus } from '@/domain/valuation';
 import type { HoldingLot } from '@/store/portfolioSchema';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
 import { Badge } from '../ui/Badge';
+import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
 
@@ -68,9 +69,7 @@ export const LotRow = memo(function LotRow({ lot, status, onRemove }: LotRowProp
             {formatDate(lot.purchaseDate)}
           </AppText>
           {status.status === 'valued' ? (
-            <AppText variant="label" numeric>
-              {formatInr(status.valuation.current, VALUE_SCALE)}
-            </AppText>
+            <PrivateAmount value={status.valuation.current} scale={VALUE_SCALE} variant="label" />
           ) : status.status === 'pending' ? (
             <Badge label="Awaiting NAV" tone="warning" />
           ) : null}
