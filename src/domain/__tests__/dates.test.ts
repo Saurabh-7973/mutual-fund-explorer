@@ -7,12 +7,13 @@ import {
   diffDays,
   formatAsOf,
   formatDate,
+  formatDuration,
   formatMonthYear,
   fromLocalDate,
   parseApiDate,
   parseIsoDate,
-  toLocalDate,
   todayInIndia,
+  toLocalDate,
 } from '../dates';
 import type { IsoDate } from '../types';
 
@@ -93,5 +94,15 @@ describe('display formatting', () => {
   it('round-trips through local Date objects used by native pickers', () => {
     expect(fromLocalDate(toLocalDate(d('2024-02-29')))).toBe('2024-02-29');
     expect(fromLocalDate(toLocalDate(d('2026-01-01')))).toBe('2026-01-01');
+  });
+});
+
+describe('formatDuration', () => {
+  it('reads like speech', () => {
+    expect(formatDuration(3)).toBe('1 month');
+    expect(formatDuration(231)).toBe('8 months');
+    expect(formatDuration(365)).toBe('1 year');
+    expect(formatDuration(430)).toBe('1 year 2 months');
+    expect(formatDuration(1100)).toBe('3 years');
   });
 });

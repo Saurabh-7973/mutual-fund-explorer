@@ -145,3 +145,12 @@ export function toLocalDate(date: IsoDate): Date {
 export function fromLocalDate(value: Date): IsoDate {
   return toIsoDate(value.getFullYear(), value.getMonth() + 1, value.getDate());
 }
+
+/** A span of days as people say it: "5 months", "1 year 2 months" (never less than a month). */
+export function formatDuration(days: number): string {
+  const months = Math.max(1, Math.round(days / 30.44));
+  if (months < 12) return `${months} ${months === 1 ? 'month' : 'months'}`;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  return `${years} ${years === 1 ? 'year' : 'years'}${rest > 0 ? ` ${rest} ${rest === 1 ? 'month' : 'months'}` : ''}`;
+}

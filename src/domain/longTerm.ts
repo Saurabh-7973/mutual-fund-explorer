@@ -144,3 +144,41 @@ export function rollingReturns(points: readonly NavPoint[], years: number): Roll
     through,
   };
 }
+
+export interface Drawdown {
+  /** The fall from the peak to the trough, as a negative percentage. */
+  percent: number;
+  peak: NavPoint;
+  trough: NavPoint;
+  /** First NAV back at or above the peak; null if it hasn't recovered yet. */
+  recovered: NavPoint | null;
+  /** Calendar days from the trough to the recovery, or to the latest NAV while still below. */
+  daysToRecover: number;
+}
+
+/**
+ * The worst fall in the NAV: the largest drop from a high point to a later low, and when
+ * (if) the NAV got back to that high. How much patience the fund has demanded before.
+ * Null with fewer than two NAVs or when the NAV never fell.
+ */
+export function maxDrawdown(points: readonly NavPoint[]): Drawdown | null {
+  let peak = points[0];
+  if (peak === undefined) return null;
+  let worst: { peak: NavPoint; trough: NavPoint; ratio: number } | null = null;
+  for (const point of points) {
+    if (point.value > peak.value) peak = point;
+    const ratio = point.value / peak.value;
+    if (ratio < 1 && (worst === null || ratio < worst.ratio)) worst = { peak, trough: point, ratio };
+  }
+  if (worst === null) return null;
+  const { peak: high, trough, ratio } = worst;
+  const after = points.find((p) => p.date > trough.date && p.value >= high.value) ?? null;
+  const last = points[points.length - 1] ?? trough;
+  return {
+    percent: (ratio - 1) * 100,
+    peak: high,
+    trough,
+    recovered: after,
+    daysToRecover: diffDays(trough.date, (after ?? last).date),
+  };
+}

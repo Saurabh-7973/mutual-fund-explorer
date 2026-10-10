@@ -28,7 +28,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, formatMonthYear } from '@/domain/dates';
 import { formatInrCompact, formatPercent } from '@/domain/format';
 import { VALUE_SCALE } from '@/domain/decimal';
-import { replayInvestment, rollingReturns } from '@/domain/longTerm';
+import { maxDrawdown, replayInvestment, rollingReturns } from '@/domain/longTerm';
 import { headlineReturn, trailingReturns } from '@/domain/returns';
 import {
   CHART_RANGES,
@@ -149,6 +149,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
     [points],
   );
   const rolling = useMemo(() => rollingReturns(points, 3), [points]);
+  const drawdown = useMemo(() => maxDrawdown(points), [points]);
   const insets = useSafeAreaInsets();
   const coverage = useMemo(
     () => new Map(CHART_RANGES.map((item) => [item.key, rangeCovered(points, item.months)])),
@@ -247,6 +248,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
             summary={
               <AppText variant="label" tone="muted" numeric>
                 3-year holds: {formatPercent(rolling.worst)} to {formatPercent(rolling.best)} a year
+                {drawdown !== null ? ` · worst fall ${formatPercent(drawdown.percent)}` : ''}
               </AppText>
             }
           >

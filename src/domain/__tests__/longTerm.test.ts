@@ -3,7 +3,7 @@ import { describe, expect, it } from '@jest/globals';
 import { addDays } from '../dates';
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { replayInvestment, rollingReturns } from '../longTerm';
+import { maxDrawdown, replayInvestment, rollingReturns } from '../longTerm';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -73,5 +73,34 @@ describe('rollingReturns', () => {
 
   it('is null when the history is shorter than one window', () => {
     expect(rollingReturns(series('2026-01-01', 200, () => '10.0000'), 1)).toBeNull();
+  });
+});
+
+describe('maxDrawdown', () => {
+  const p = (date: string, value: number): NavPoint => ({ date: date as IsoDate, nav: value.toFixed(4), value });
+
+  it('finds the deepest fall from a high and when it was recovered', () => {
+    const points = [
+      p('2020-01-01', 10),
+      p('2020-02-01', 12), // peak
+      p('2020-03-24', 7.2), // trough: −40%
+      p('2020-06-01', 10),
+      p('2020-11-10', 12.5), // back above 12
+      p('2021-01-01', 11), // a smaller fall later
+    ];
+    const dd = maxDrawdown(points);
+    expect(dd?.percent).toBeCloseTo(-40, 6);
+    expect(dd?.peak.date).toBe('2020-02-01');
+    expect(dd?.trough.date).toBe('2020-03-24');
+    expect(dd?.recovered?.date).toBe('2020-11-10');
+    expect(dd?.daysToRecover).toBe(231);
+  });
+
+  it('reports an unrecovered fall up to the latest NAV, and nothing for a rising series', () => {
+    const falling = [p('2025-01-01', 10), p('2025-06-01', 8), p('2025-09-01', 9)];
+    expect(maxDrawdown(falling)?.recovered).toBeNull();
+    expect(maxDrawdown(falling)?.daysToRecover).toBe(92);
+    expect(maxDrawdown([p('2025-01-01', 10), p('2025-02-01', 11)])).toBeNull();
+    expect(maxDrawdown([])).toBeNull();
   });
 });

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { formatMonthYear } from '@/domain/dates';
-import { formatPercent, groupIndian } from '@/domain/format';
-import { rollingReturns } from '@/domain/longTerm';
+import { formatDate, formatDuration, formatMonthYear } from '@/domain/dates';
+import { formatNav, formatPercent, groupIndian } from '@/domain/format';
+import { maxDrawdown, rollingReturns } from '@/domain/longTerm';
 import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
@@ -21,6 +21,7 @@ const HOLDS = [3, 5] as const;
 export function Consistency({ points }: { points: NavPoint[] }) {
   const { colors, radius, spacing } = useTheme();
   const summaries = useMemo(() => HOLDS.map((years) => rollingReturns(points, years)), [points]);
+  const drawdown = useMemo(() => maxDrawdown(points), [points]);
   const available = HOLDS.filter((_, i) => summaries[i] !== null);
   const [years, setYears] = useState<number | null>(null);
   const chosenYears = years ?? available[0] ?? null;
@@ -67,7 +68,12 @@ export function Consistency({ points }: { points: NavPoint[] }) {
             ]}
           />
           <View style={[styles.zero, { left: at(0), backgroundColor: colors.textMuted }]} />
-          <View style={[styles.median, { left: at(summary.median), backgroundColor: colors.primary, borderColor: colors.surface }]} />
+          <View
+            style={[
+              styles.median,
+              { left: at(summary.median), backgroundColor: colors.primary, borderColor: colors.surface },
+            ]}
+          />
         </View>
         <View style={styles.legend}>
           <Figure label="Worst" value={summary.worst} align="flex-start" />
@@ -81,16 +87,51 @@ export function Consistency({ points }: { points: NavPoint[] }) {
           ? `No ${chosenYears}-year holding period lost money.`
           : `${lossPct}% of ${chosenYears}-year holding periods ended below where they started.`}
       </AppText>
+      {drawdown !== null && (
+        <View
+          style={[
+            styles.fall,
+            { borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: spacing.xs },
+          ]}
+        >
+          <Term term="drawdown" label="Worst fall" variant="labelStrong" tone="default" />
+          <AppText
+            variant="figure"
+            numeric
+            tone="loss"
+            accessibilityLabel={`Worst fall: down ${formatPercent(Math.abs(drawdown.percent), 'negative-only')}`}
+          >
+            {formatPercent(drawdown.percent)}
+          </AppText>
+          <AppText variant="caption" tone="muted" numeric>
+            From {formatNav(drawdown.peak.nav)} on {formatDate(drawdown.peak.date)} to {formatNav(drawdown.trough.nav)}{' '}
+            on {formatDate(drawdown.trough.date)}.
+          </AppText>
+          <AppText variant="label" numeric>
+            {drawdown.recovered !== null
+              ? `Back above the old high by ${formatDate(drawdown.recovered.date)}, ${formatDuration(drawdown.daysToRecover)} after the low.`
+              : `Not back to that high yet: ${formatDuration(drawdown.daysToRecover)} since the low.`}
+          </AppText>
+        </View>
+      )}
       <AppText variant="caption" tone="muted">
         Yearly (CAGR) returns over {groupIndian(String(summary.windows))} holding periods ending between{' '}
-        {formatMonthYear(summary.from)} and {formatMonthYear(summary.through)}, from NAVs only. Past returns don't predict
-        future ones.
+        {formatMonthYear(summary.from)} and {formatMonthYear(summary.through)}, from NAVs only. Past returns don't
+        predict future ones.
       </AppText>
     </>
   );
 }
 
-function Figure({ label, value, align }: { label: string; value: number; align: 'flex-start' | 'center' | 'flex-end' }) {
+function Figure({
+  label,
+  value,
+  align,
+}: {
+  label: string;
+  value: number;
+  align: 'flex-start' | 'center' | 'flex-end';
+}) {
   return (
     <View style={[styles.figure, { alignItems: align }]}>
       <AppText variant="label" numeric tone={value > 0 ? 'gain' : value < 0 ? 'loss' : 'muted'}>
@@ -111,4 +152,5 @@ const styles = StyleSheet.create({
   median: { position: 'absolute', width: 14, height: 14, marginLeft: -7, borderRadius: 7, borderWidth: 2 },
   legend: { flexDirection: 'row' },
   figure: { flex: 1 },
+  fall: { borderWidth: StyleSheet.hairlineWidth },
 });
