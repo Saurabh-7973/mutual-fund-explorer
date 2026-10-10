@@ -194,3 +194,30 @@ _(Claude Code: add entries below this line.)_
 - The user's emulator showed Expo Go's "Something went wrong" after relaunching in airplane mode. Error log: `java.io.IOException: Failed to download remote update`. Not an app bug: in development, Expo Go downloads the app's JavaScript from Metro on the Mac at every cold start, and airplane mode cuts that link too. A release build carries its bundle and wouldn't hit this.
 - Way to test offline cold starts in Expo Go: `adb reverse tcp:8081 tcp:8081`, then open `exp://127.0.0.1:8081`. The bundle comes over the adb tunnel, which airplane mode doesn't cut, while mfapi.in stays unreachable (`ping: unknown host api.mfapi.in`). Note that Expo Go keeps AsyncStorage per project URL, so data saved under the LAN URL isn't visible under `127.0.0.1`; set up test data under the same URL.
 - Results, driven with adb on the emulator: starred 122639, 100121 and 152469 online. Airplane mode on, force-stopped Expo Go, relaunched → Watchlist showed all three with saved NAVs and dates, "Offline: showing saved NAVs", and 100121's "Stale" badge on the same line as "as of 01 Jun 2018". **Step 7 passes.** Remove then Undo restored the fund to its position (step 4). A first Undo attempt arrived after the 5-second timer and correctly did nothing.
+
+**User feedback:** the Stale badge should follow the date, not precede it. Now "as of 01 Jun 2018 [Stale]" (`2fdd449`).
+
+---
+
+## Phase 6: Holdings (10 Oct 2026, Claude Code)
+
+**Built:** `src/app/(tabs)/holdings.tsx` and `src/components/holdings/LotRow.tsx` (memoised, fixed 132 pt). New pure rule `sortLots` in `src/domain/holdings.ts` (fund title, then plan/option, then purchase date), with 2 tests, rather than sorting in the screen.
+
+**Decisions**
+- One `useQueries` over the unique scheme codes (`latestNavQuery`), kept in a `Map`. Per lot: no applied NAV → pending; no latest data → unavailable (the row shows skeletons on first load, otherwise "Couldn't load latest NAV" + Retry for that scheme only); else `evaluateLot`. `summarize` gives the totals. While any lot's NAV is on its first load the summary shows skeleton figures, never partial totals.
+- The summary card is the list header, so its measured height (`onLayout`) is added to `getItemLayout` offsets; `extraData` carries the row states so rows update when NAVs arrive although the lots array doesn't change.
+- The remove button's label names the lot ("Remove holding: <title>, bought <date>") rather than the plan's bare "Remove holding", so a screen reader can tell lots apart. Confirmation uses `Alert.alert` with the plan's copy.
+- Holdings has no offline banner (the plan doesn't ask for one); values simply use the saved NAVs with their "as of" date.
+
+**Pre-built code changed:** none (new file `src/domain/holdings.ts`).
+
+**Checks:** `npm run check`: typecheck 0 errors; 17 suites, 148 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.
+
+**Emulator test (Claude Code, adb-driven, Phases 4 and 6)**
+- Add holding, units messages after leaving the field: `0` and `-1` → "Units must be greater than zero."; `1.23456` → "at most 4 decimal places"; `1,000` → "without commas"; `abc` and `.` → "Enter a number such as 125.432." All correct. Observation: closing the keyboard with Android's back button doesn't blur the field, so the message appears only on tapping elsewhere or Save (per the plan's "once touched" rule).
+- Dates for 122639: Sat 3 Oct and Fri 2 Oct 2026 → "No NAV on that day, so the next one applies: 05 Oct 2026", priced ₹88.7620. Today (10 Oct) → "Awaiting NAV". 31 Mar 2024 → "Priced at the NAV of 31 Mar 2024", ₹74.8685.
+- Preview for 125.432 units on 31 Mar 2024, as rendered by the app: Invested ₹9,390.91, Value as of 09 Oct 2026 ₹11,154.14, Gain +₹1,763.24, +18.78% (matching `valuation.test.ts`).
+- Holdings with that lot plus 10 units dated today: totals ₹11,154.14 / ₹9,390.91 / +₹1,763.24 +18.78%, "as of 09 Oct 2026", "1 awaiting NAV isn't included in these totals." The valued row shows +7.05% p.a. (held over a year); the pending row shows "Awaiting NAV for 10 Oct 2026".
+- Remove → dialog "Remove holding? 10 units of Parag Parikh Flexi Cap Fund, bought 10 Oct 2026. This can't be undone." → Remove deleted the lot and the note.
+- Airplane mode, force-stop, relaunch (adb-tunnelled Metro): the remaining lot is still valued from the saved NAV with the same figures.
+- Not checked: the "Couldn't load latest NAV" row state (needs a fund whose NAV was never cached, offline).
