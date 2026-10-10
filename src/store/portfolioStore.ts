@@ -41,6 +41,8 @@ export interface PortfolioState extends PortfolioData {
   removeLot: (id: string) => void;
   /** Prices an "Awaiting NAV" lot once its NAV is published. */
   resolveLot: (id: string, applied: AppliedNav) => void;
+  /** Replaces everything with restored data (validated again here, whatever the caller did). */
+  replaceAll: (data: PortfolioData) => void;
 }
 
 export const usePortfolioStore = create<PortfolioState>()(
@@ -61,6 +63,7 @@ export const usePortfolioStore = create<PortfolioState>()(
       addLot: (lot) => set((state) => addLot(state, lot)),
       removeLot: (id) => set((state) => removeLot(state, id)),
       resolveLot: (id, applied) => set((state) => resolveLot(state, id, applied)),
+      replaceAll: (data) => set(sanitizePortfolio(data)),
     }),
     {
       name: PORTFOLIO_STORAGE_KEY,

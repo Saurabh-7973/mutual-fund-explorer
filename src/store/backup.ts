@@ -1,0 +1,66 @@
+import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, parseScaled, rescale, toPlainString } from '../domain/decimal';
+import { sanitizePortfolio, type HoldingLot, type PortfolioData } from './portfolioSchema';
+
+/**
+ * Moving your data off the phone and back. A backup is plain JSON the user can share to
+ * themselves; restoring runs it through the same validation as every app launch, so a
+ * damaged or hand-edited backup can never put bad rows into the store.
+ */
+
+export const BACKUP_APP = 'mutual-fund-explorer';
+export const BACKUP_VERSION = 1;
+
+export function makeBackup(data: PortfolioData, exportedAt: string): string {
+  return JSON.stringify(
+    { app: BACKUP_APP, version: BACKUP_VERSION, exportedAt, watchlist: data.watchlist, lots: data.lots },
+    null,
+    1,
+  );
+}
+
+export type BackupCheck =
+  | { ok: true; data: PortfolioData; dropped: number; exportedAt: string | null }
+  | { ok: false; error: string };
+
+export function readBackup(text: string): BackupCheck {
+  let json: unknown;
+  try {
+    json = JSON.parse(text.trim());
+  } catch {
+    return { ok: false, error: "That isn't a backup from this app. Paste the whole text you shared, from { to }." };
+  }
+  if (typeof json !== 'object' || json === null || (json as { app?: unknown }).app !== BACKUP_APP) {
+    return { ok: false, error: "That isn't a backup from this app." };
+  }
+  const raw = json as { watchlist?: unknown; lots?: unknown; exportedAt?: unknown };
+  const data = sanitizePortfolio(raw);
+  const given =
+    (Array.isArray(raw.watchlist) ? raw.watchlist.length : 0) + (Array.isArray(raw.lots) ? raw.lots.length : 0);
+  const kept = data.watchlist.length + data.lots.length;
+  if (kept === 0) return { ok: false, error: 'The backup has no funds or purchases in it.' };
+  return { ok: true, data, dropped: given - kept, exportedAt: typeof raw.exportedAt === 'string' ? raw.exportedAt : null };
+}
+
+function csvCell(value: string): string {
+  return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+}
+
+/** Every purchase as a spreadsheet row; amounts in plain rupees with two decimals. */
+export function holdingsCsv(lots: readonly HoldingLot[]): string {
+  const header = ['Fund', 'Scheme code', 'Purchase date', 'Units', 'NAV applied', 'NAV date', 'Invested (INR)'];
+  const rows = lots.map((lot) => {
+    const units = parseScaled(lot.units, UNITS_SCALE);
+    const nav = lot.applied === null ? null : parseScaled(lot.applied.nav, NAV_SCALE);
+    const invested = units !== null && nav !== null ? toPlainString(rescale(units * nav, VALUE_SCALE, 2), 2) : '';
+    return [
+      lot.schemeName,
+      String(lot.schemeCode),
+      lot.purchaseDate,
+      lot.units,
+      lot.applied?.nav ?? '',
+      lot.applied?.navDate ?? '',
+      invested,
+    ];
+  });
+  return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\n');
+}

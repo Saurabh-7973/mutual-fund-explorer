@@ -22,6 +22,7 @@ import {
   type HoldingColumn,
 } from '@/components/holdings/FundHoldingRow';
 import { AppText } from '@/components/ui/AppText';
+import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PrivateAmount } from '@/components/ui/PrivateAmount';
@@ -186,7 +187,9 @@ export default function HoldingsScreen() {
             title="No holdings yet"
             body="Record a purchase from any fund's page to see its value and return here."
             action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
-          />
+          >
+            <Button label="Restore from a backup" variant="ghost" onPress={() => router.push('/backup')} />
+          </EmptyState>
         </View>
       </View>
     );
@@ -352,6 +355,12 @@ export default function HoldingsScreen() {
             <AppText variant="caption" tone="muted">
               Your holdings are saved on this phone, nowhere else.
             </AppText>
+            <Button
+              label="Back up or restore your data"
+              variant="ghost"
+              icon="cloud-upload-outline"
+              onPress={() => router.push('/backup')}
+            />
           </View>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}

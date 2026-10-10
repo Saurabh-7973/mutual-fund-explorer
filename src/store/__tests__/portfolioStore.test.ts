@@ -67,6 +67,12 @@ describe('portfolio store', () => {
     expect(saved.state).not.toHaveProperty('hydrated');
   });
 
+  it('replaces everything on restore, validating what it is given', () => {
+    usePortfolioStore.getState().addLot(lot('old'));
+    usePortfolioStore.getState().replaceAll({ watchlist: [], lots: [lot('new'), lot('bad', 'abc')] });
+    expect(usePortfolioStore.getState().lots.map((item) => item.id)).toEqual(['new']);
+  });
+
   it('drops corrupt saved rows on rehydrate and still marks itself hydrated', async () => {
     usePortfolioStore.setState({ hydrated: false });
     await AsyncStorage.setItem(
