@@ -32,9 +32,12 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 ## Features
 
 - **Explore:** recently viewed funds with their NAV and today's move; search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
-- **Fund screen:** the 3-year annualised return and today's move up front, a chart with 1M to All ranges and touch scrubbing, key facts, your own investment in the fund, then collapsible sections that state their takeaway while closed: trailing returns as a bar chart, "If you had invested" (a monthly SIP or one-time investment replayed on the fund's real NAVs), "How consistent were returns?" (worst, typical and best 3- and 5-year holding periods), and the full NAV history list.
+- **Fund screen:** the 3-year annualised return and today's move up front, a chart with 1M to All ranges and touch scrubbing, key facts, your own investment (value, return, XIRR, and every purchase on a timeline with your average cost after each), then collapsible sections that state their takeaway while closed: trailing returns from 1M to 10Y as a bar chart, "If you had invested" (a monthly SIP or one-time investment replayed on the fund's real NAVs), "How consistent were returns?" (worst, typical and best 3- and 5-year holding periods, plus the worst fall and how long it took to recover), and the full NAV history.
+- **Compare:** two funds on one chart as the growth of ₹10,000 from the same day, and a side-by-side table of returns, consistency and worst fall.
 - **Watchlist:** each fund's latest NAV with its date and today's change, a Stale flag for NAVs over 7 days old, pull to refresh, swipe to remove with Undo, and offline display from the saved cache.
-- **Holdings:** one row per fund with value, returns or XIRR (switchable); a summary with today's change, total return, invested, XIRR across purchases and an allocation bar; an eye toggle that hides rupee amounts; record purchases by units and date; remove with confirmation.
+- **Holdings:** one row per fund with value, returns or XIRR (switchable, sortable); a summary with today's change, total return, invested, XIRR across purchases, and allocation by asset class or by fund; an eye toggle that hides rupee amounts.
+- **Adding purchases:** one purchase by units and date, or a monthly SIP in one go (amount and start date; every instalment priced at its first NAV on or after the date). The app's own calendar jumps by year and greys out dates outside the fund's data.
+- **For newcomers:** a plain-language explanation behind an ⓘ wherever a term like NAV, XIRR, CAGR, IDCW or Direct appears.
 
 Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md).
 
@@ -62,13 +65,14 @@ Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md
 src/
   app/          routes (Expo Router): (tabs)/index, watchlist, holdings; fund/[code]/index, navs; add-holding
   components/   ui/, search/, fund/, form/, watchlist/, holdings/
-  domain/       pure rules: dates, decimal, format, nav, returns, valuation, validation, chart, search, signed, holdings
+  domain/       pure rules: dates, calendar, decimal, format, nav, returns, longTerm, xirr, sip, compare, holdings,
+                assetClass, valuation, validation, chart, search, signed, glossary
   api/          mfapi.in client, response parsing, typed errors, real-payload fixtures
   query/        TanStack Query client, keys, options, data hooks, persistence
   store/        Zustand portfolio store and its pure transitions
   hooks/        debounce, connectivity, refresh on focus, pending-lot resolver
   theme/        tokens and useTheme
-docs/           ARCHITECTURE.md, BUILD_PROMPT.md, BUILD_LOG.md, RUNBOOK.md
+docs/           ARCHITECTURE.md, DESIGN.md, PERSONAS.md, BUILD_PROMPT.md, BUILD_LOG.md, RUNBOOK.md
 AI_CONTEXT.md   how AI tools were used and directed
 ```
 

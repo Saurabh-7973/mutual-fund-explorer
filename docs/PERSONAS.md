@@ -45,3 +45,4 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 - *"Show me the drawdown and recovery, not just CAGR."* → The maximum drawdown above.
 - *"I want the ISIN and code without hunting."* → Key facts show the code, the footnote the ISIN; both are selectable text.
 - *"Ten-year return?"* → Added 3M and 10Y periods in the earlier pass.
+- *"Let me put two funds side by side."* → **Compare:** growth of ₹10,000 from the same day on one axis, and a table with returns next to risk. Parag Parikh Flexi Cap against HDFC Mid Cap over 3 years: ₹14,206 against ₹15,561, but a worst fall of −31.20% against −39.51%, and 4% of the mid cap's 3-year holds lost money.
