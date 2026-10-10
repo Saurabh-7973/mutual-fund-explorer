@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 
 import { RecentFundRow } from '@/components/search/RecentFundRow';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { SchemeRow, SCHEME_ROW_HEIGHT } from '@/components/search/SchemeRow';
 import { AppText } from '@/components/ui/AppText';
 import { Banner } from '@/components/ui/Banner';
@@ -233,7 +234,8 @@ export default function ExploreScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <View style={{ padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
+      <ScreenHeader title="Explore" subtitle="Indian mutual funds, NAVs from AMFI" />
+      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
         <View
           style={[
             styles.field,

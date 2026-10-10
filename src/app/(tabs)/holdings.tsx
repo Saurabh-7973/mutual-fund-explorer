@@ -2,7 +2,16 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
+import {
+  Alert,
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type ListRenderItem,
+} from 'react-native';
 
 import { AllocationBar } from '@/components/holdings/AllocationBar';
 import {
@@ -16,6 +25,7 @@ import { AppText } from '@/components/ui/AppText';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PrivateAmount } from '@/components/ui/PrivateAmount';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
@@ -152,7 +162,8 @@ export default function HoldingsScreen() {
 
   if (!hydrated) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background, paddingTop: spacing.md }]}>
+      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+        <ScreenHeader title="Holdings" />
         <SkeletonRows rowHeight={FUND_HOLDING_ROW_HEIGHT} count={4} />
       </View>
     );
@@ -160,13 +171,16 @@ export default function HoldingsScreen() {
 
   if (lots.length === 0) {
     return (
-      <View style={[styles.flex, styles.centered, { backgroundColor: colors.background }]}>
-        <EmptyState
-          icon="briefcase-outline"
-          title="No holdings yet"
-          body="Record a purchase from any fund's page to see its value and return here."
-          action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
-        />
+      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+        <ScreenHeader title="Holdings" />
+        <View style={[styles.flex, styles.centered]}>
+          <EmptyState
+            icon="briefcase-outline"
+            title="No holdings yet"
+            body="Record a purchase from any fund's page to see its value and return here."
+            action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
+          />
+        </View>
       </View>
     );
   }
@@ -193,12 +207,6 @@ export default function HoldingsScreen() {
           <AppText variant="label" tone="muted" style={styles.flex}>
             {funds.length === 1 ? '1 fund' : `${funds.length} funds`} · current value
           </AppText>
-          <IconButton
-            name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
-            onPress={toggleHideAmounts}
-            selected={hideAmounts}
-            accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
-          />
         </View>
         {anyFirstLoad ? (
           // Never show partial totals while a fund's latest NAV is still on its first load.
@@ -312,6 +320,18 @@ export default function HoldingsScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <ScreenHeader
+        title="Holdings"
+        right={
+          <IconButton
+            name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
+            size={24}
+            onPress={toggleHideAmounts}
+            selected={hideAmounts}
+            accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
+          />
+        }
+      />
       <FlatList
         data={funds}
         renderItem={renderItem}
@@ -323,9 +343,9 @@ export default function HoldingsScreen() {
         ListFooterComponent={
           <View style={{ padding: spacing.lg, gap: spacing.sm }}>
             <AppText variant="caption" tone="muted">
-              Values use each fund's latest published NAV. Returns are absolute; XIRR is the yearly rate across purchases
-              made on different dates, shown once your oldest purchase is a year old. Totals are summed before rounding,
-              so they can differ from the rows by a paisa.
+              Values use each fund's latest published NAV. Returns are absolute; XIRR is the yearly rate across
+              purchases made on different dates, shown once your oldest purchase is a year old. Totals are summed before
+              rounding, so they can differ from the rows by a paisa.
             </AppText>
             <AppText variant="caption" tone="muted">
               Your holdings are saved on this phone, nowhere else.

@@ -5,6 +5,7 @@ import { FlatList, RefreshControl, StyleSheet, View, type ListRenderItem } from 
 
 import { WatchToggle } from '@/components/search/WatchToggle';
 import { AppText } from '@/components/ui/AppText';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Banner } from '@/components/ui/Banner';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -81,7 +82,8 @@ export default function WatchlistScreen() {
 
   if (!hydrated) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background, paddingTop: spacing.md }]}>
+      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+        <ScreenHeader title="Watchlist" />
         <SkeletonRows rowHeight={WATCH_ROW_HEIGHT} />
       </View>
     );
@@ -89,34 +91,41 @@ export default function WatchlistScreen() {
 
   if (watchlist.length === 0) {
     return (
-      <View style={[styles.flex, styles.centered, { backgroundColor: colors.background }]}>
-        <EmptyState icon="star-outline" title="Your watchlist is empty" body="Tap ☆ on any fund to follow its latest NAV here.">
-          {recentlyViewed.length > 0 && (
-            // One-tap adds from funds you've already looked at.
-            <View style={[styles.recent, { gap: spacing.xs, marginBottom: spacing.md }]}>
-              <AppText variant="label" tone="muted">
-                Recently viewed
-              </AppText>
-              {recentlyViewed.slice(0, 4).map((fund) => (
-                <View key={fund.schemeCode} style={[styles.recentRow, { borderBottomColor: colors.border }]}>
-                  <AppText variant="label" numberOfLines={1} style={styles.flex}>
-                    {describeScheme(fund.schemeName).title}
-                  </AppText>
-                  <WatchToggle schemeCode={fund.schemeCode} schemeName={fund.schemeName} />
-                </View>
+      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+        <ScreenHeader title="Watchlist" />
+        <View style={[styles.flex, styles.centered]}>
+          <EmptyState
+            icon="star-outline"
+            title="Your watchlist is empty"
+            body="Tap ☆ on any fund to follow its latest NAV here."
+          >
+            {recentlyViewed.length > 0 && (
+              // One-tap adds from funds you've already looked at.
+              <View style={[styles.recent, { gap: spacing.xs, marginBottom: spacing.md }]}>
+                <AppText variant="label" tone="muted">
+                  Recently viewed
+                </AppText>
+                {recentlyViewed.slice(0, 4).map((fund) => (
+                  <View key={fund.schemeCode} style={[styles.recentRow, { borderBottomColor: colors.border }]}>
+                    <AppText variant="label" numberOfLines={1} style={styles.flex}>
+                      {describeScheme(fund.schemeName).title}
+                    </AppText>
+                    <WatchToggle schemeCode={fund.schemeCode} schemeName={fund.schemeName} />
+                  </View>
+                ))}
+              </View>
+            )}
+            <View style={[styles.wrap, { gap: spacing.sm }]}>
+              {SEARCH_SUGGESTIONS.map((item) => (
+                <Chip
+                  key={item.query}
+                  label={item.label}
+                  onPress={() => router.navigate({ pathname: '/', params: { q: item.query } })}
+                />
               ))}
             </View>
-          )}
-          <View style={[styles.wrap, { gap: spacing.sm }]}>
-            {SEARCH_SUGGESTIONS.map((item) => (
-              <Chip
-                key={item.query}
-                label={item.label}
-                onPress={() => router.navigate({ pathname: '/', params: { q: item.query } })}
-              />
-            ))}
-          </View>
-        </EmptyState>
+          </EmptyState>
+        </View>
         {toast}
       </View>
     );
@@ -124,12 +133,15 @@ export default function WatchlistScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
+      <ScreenHeader
+        title="Watchlist"
+        subtitle={`${watchlist.length} ${watchlist.length === 1 ? 'fund' : 'funds'} · swipe left to remove`}
+      />
       {/* Outside the list, so getItemLayout offsets stay exact. */}
-      <View style={{ padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
+      <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
         {!online && <Banner tone="info" text="Offline: showing saved NAVs" />}
         <AppText variant="caption" tone="muted">
-          Latest NAVs from mfapi.in, published after market close, so each date is the business day it's for.
-          Swipe left on a fund to remove it.
+          NAVs are published after market close, so each date is the business day it's for.
         </AppText>
       </View>
       <FlatList

@@ -37,7 +37,16 @@ export default function RootLayout() {
       <QueryProvider>
         <ThemeProvider value={navigationTheme}>
           <BackgroundTasks />
-          <Stack screenOptions={{ headerBackButtonDisplayMode: 'minimal' }}>
+          <Stack
+            screenOptions={{
+              headerBackButtonDisplayMode: 'minimal',
+              // Headers sit on the page colour with no shadow, so a screen reads as one surface.
+              headerStyle: { backgroundColor: theme.colors.background },
+              headerShadowVisible: false,
+              headerTintColor: theme.colors.text,
+              headerTitleStyle: { fontSize: 17, fontWeight: '600' },
+            }}
+          >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="fund/[code]/index" options={{ title: '' }} />
             <Stack.Screen name="fund/[code]/navs" options={{ title: 'NAV history' }} />

@@ -25,6 +25,8 @@ export interface Palette {
   infoSurface: string;
   /** The watch star only. */
   star: string;
+  /** A soft tint of primary: the active tab's pill and selected chips. */
+  primarySoft: string;
 }
 
 export const palettes: { light: Palette; dark: Palette } = {
@@ -48,6 +50,7 @@ export const palettes: { light: Palette; dark: Palette } = {
     info: '#2C5D7C',
     infoSurface: '#E4EEF3',
     star: '#C08A1E',
+    primarySoft: '#DCE9E3',
   },
   dark: {
     background: '#0D1311',
@@ -67,6 +70,7 @@ export const palettes: { light: Palette; dark: Palette } = {
     info: '#8CB8D4',
     infoSurface: '#16283A',
     star: '#E3B04B',
+    primarySoft: '#1E3A31',
   },
 };
 
@@ -78,6 +82,8 @@ export const radius = { sm: 6, md: 10, lg: 14, pill: 999 } as const;
 export const MIN_TOUCH = 44;
 
 export const typography = {
+  /** A tab's large title. */
+  display: { fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: -0.3 },
   figure: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
   title: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
   heading: { fontSize: 16, lineHeight: 22, fontWeight: '600' },
