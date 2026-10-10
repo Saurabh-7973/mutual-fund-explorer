@@ -79,10 +79,10 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         </AppText>
         {/* The badge sits beside the date it qualifies, keeping the row two lines tall. */}
         <View style={[styles.dateLine, { gap: spacing.xs }]}>
-          {stale && <Badge label="Stale" tone="warning" />}
           <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
             as of {formatDate(point.date)}
           </AppText>
+          {stale && <Badge label="Stale" tone="warning" />}
         </View>
       </View>
     );
