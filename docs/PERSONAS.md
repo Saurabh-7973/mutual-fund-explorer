@@ -23,9 +23,13 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 ### Arjun (SIP investor)
 - *"I have 48 instalments. Am I supposed to type 48 purchases?"* The add-holding form took one purchase at a time. → **Add a SIP in one go:** monthly amount, start date and day; the app prices every instalment at its first NAV on or after the date, the same rule as a single purchase.
 - *"Which of my SIPs is dragging?"* → Holdings already sorts by XIRR; with SIPs entered in one go, the XIRR is meaningful.
+- *"The preview says ₹2,84,999.97 invested, but I paid ₹2,85,000."* Units are rounded to 4 decimals, so units × NAV fell 3 paise short. → The SIP preview shows the rupees actually paid and the gain against them (`sipGain`).
+- *"My fund page is a 57-row list now."* → The purchase timeline shows the latest 4 and "Show 53 earlier purchases".
+- *"The date picker looks like a different app, and scrolling back to 2022 takes forever."* → The app's own calendar: tap the month to jump to a year; dates outside the fund's data are greyed out.
 
 ### Meena (near retirement)
-- *"How badly can this fall?"* Returns were shown, risk was not. → **Worst fall (maximum drawdown):** how far the NAV fell from a peak, when, and how long it took to recover. Shown in the consistency section.
+- *"How badly can this fall?"* Returns were shown, risk was not. → **Worst fall (maximum drawdown):** how far the NAV fell from a peak, when, and how long it took to recover, in the consistency section and its collapsed summary. For Parag Parikh Flexi Cap: −31.20% from 13 Feb to 24 Mar 2020, back above the old high by 7 Jul 2020.
+- *"The text in the calendar is too small / too big for the circles."* → Calendar text is capped at 1.3× like every fixed-size cell.
 - *"My IDCW fund's returns look low."* → Already footnoted (NAV-based, IDCW payouts not added back); the glossary repeats it in plain words.
 
 ### Farhan (privacy-first, offline)
@@ -33,6 +37,9 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 
 ### Kavya (screen reader)
 - Swipe-to-remove has a matching accessibility action; gains and losses are spoken as "gain of" and "loss of"; the chart has a spoken summary. → Checked that new controls (selectors, sections, glossary terms) announce role and state.
+
+### Everyone
+- *"There's no back arrow on the fund page until I scroll."* (found by the user) → A header title that rendered nothing also hid the back button; fixed.
 
 ### Vikram (expert)
 - *"Show me the drawdown and recovery, not just CAGR."* → The maximum drawdown above.
