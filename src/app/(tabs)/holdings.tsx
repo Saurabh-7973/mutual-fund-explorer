@@ -13,7 +13,7 @@ import {
   type ListRenderItem,
 } from 'react-native';
 
-import { AllocationBar } from '@/components/holdings/AllocationBar';
+import { AllocationCard } from '@/components/holdings/AllocationCard';
 import {
   FUND_HOLDING_ROW_HEIGHT,
   FundHoldingRow,
@@ -34,6 +34,7 @@ import { VALUE_SCALE } from '@/domain/decimal';
 import { formatPercent } from '@/domain/format';
 import {
   allocation,
+  allocationByAssetClass,
   annualisedReturn,
   holdingsByFund,
   portfolioDayGain,
@@ -43,6 +44,7 @@ import {
   type FundHolding,
 } from '@/domain/holdings';
 import { dayChange, type NavChange } from '@/domain/nav';
+import { assetClassOf } from '@/domain/assetClass';
 import { describeScheme } from '@/domain/schemeName';
 import { evaluateLot, summarize, type LotStatus } from '@/domain/valuation';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
@@ -101,6 +103,9 @@ export default function HoldingsScreen() {
   const totals = summarize(statuses);
   const xirr = annualisedReturn(evaluated);
   const slices = allocation(funds);
+  const classSlices = allocationByAssetClass(funds, (fund) =>
+    assetClassOf(byCode.get(fund.schemeCode)?.data?.meta.schemeCategory ?? null, fund.schemeName),
+  );
   const anyFirstLoad = [...navState.values()].includes('loading');
   const excluded = totals.pendingCount + totals.unavailableCount;
 
@@ -259,12 +264,8 @@ export default function HoldingsScreen() {
                 )}
               </Row>
             </View>
-            {slices.length > 1 && (
-              <>
-                <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
-                <AllocationBar slices={slices} />
-              </>
-            )}
+            <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
+            <AllocationCard byClass={classSlices} byFund={slices} />
           </>
         )}
         <View style={{ gap: 2, marginTop: spacing.md }}>

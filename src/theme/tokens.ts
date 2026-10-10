@@ -27,6 +27,13 @@ export interface Palette {
   star: string;
   /** A soft tint of primary: the active tab's pill and selected chips. */
   primarySoft: string;
+  /**
+   * Categorical chart colours, in fixed order, validated for colour-blind separation on the
+   * card surface (dataviz validator, both modes). Always shown with text labels.
+   */
+  chart: readonly [string, string, string, string];
+  /** The "Other" slice: neutral, never a fifth hue. */
+  chartOther: string;
 }
 
 export const palettes: { light: Palette; dark: Palette } = {
@@ -51,6 +58,8 @@ export const palettes: { light: Palette; dark: Palette } = {
     infoSurface: '#E4EEF3',
     star: '#C08A1E',
     primarySoft: '#DCE9E3',
+    chart: ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100'],
+    chartOther: '#A3ADA7',
   },
   dark: {
     background: '#0D1311',
@@ -71,6 +80,8 @@ export const palettes: { light: Palette; dark: Palette } = {
     infoSurface: '#16283A',
     star: '#E3B04B',
     primarySoft: '#1E3A31',
+    chart: ['#3987E5', '#D95926', '#199E70', '#C98500'],
+    chartOther: '#5B6862',
   },
 };
 

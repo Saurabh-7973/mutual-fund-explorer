@@ -1,3 +1,4 @@
+import { ASSET_CLASSES, type AssetClass } from './assetClass';
 import { diffDays } from './dates';
 import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, toNumber } from './decimal';
 import { describeScheme } from './schemeName';
@@ -263,5 +264,38 @@ export function sortHoldings(funds: readonly FundHolding[], by: HoldingSort, dir
     const kb = key(b);
     if (ka === null || kb === null) return ka === kb ? a.schemeCode - b.schemeCode : ka === null ? 1 : -1;
     return ka === kb ? a.schemeCode - b.schemeCode : (ka - kb) * sign;
+  });
+}
+
+export interface AssetClassSlice {
+  assetClass: AssetClass;
+  /** Rupees at VALUE_SCALE. */
+  current: bigint;
+  shareHundredths: bigint;
+  fundCount: number;
+}
+
+/** Current value by asset class, in the fixed class order (so colours never move), empty classes left out. */
+export function allocationByAssetClass(
+  funds: readonly FundHolding[],
+  classOf: (fund: FundHolding) => AssetClass,
+): AssetClassSlice[] {
+  const totals = new Map<AssetClass, { current: bigint; fundCount: number }>();
+  let total = 0n;
+  for (const fund of funds) {
+    if (fund.current <= 0n) continue;
+    const cls = classOf(fund);
+    const entry = totals.get(cls) ?? { current: 0n, fundCount: 0 };
+    entry.current += fund.current;
+    entry.fundCount++;
+    totals.set(cls, entry);
+    total += fund.current;
+  }
+  if (total === 0n) return [];
+  return ASSET_CLASSES.flatMap((assetClass) => {
+    const entry = totals.get(assetClass);
+    return entry === undefined
+      ? []
+      : [{ assetClass, current: entry.current, fundCount: entry.fundCount, shareHundredths: divRound(entry.current * 10_000n, total) }];
   });
 }

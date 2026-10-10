@@ -2,7 +2,18 @@ import { describe, expect, it } from '@jest/globals';
 
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
-import { allocation, annualisedReturn, holdingsByFund, portfolioDayGain, purchaseTimeline, sortHoldings, sortLots, type EvaluatedLot } from '../holdings';
+import {
+  allocation,
+  annualisedReturn,
+  holdingsByFund,
+  portfolioDayGain,
+  purchaseTimeline,
+  sortHoldings,
+  sortLots,
+  allocationByAssetClass,
+  type EvaluatedLot,
+} from '../holdings';
+import { assetClassOf } from '../assetClass';
 import { navChange } from '../nav';
 import type { IsoDate } from '../types';
 import { evaluateLot } from '../valuation';
@@ -34,7 +45,13 @@ describe('sortLots', () => {
 const PPFAS = 'Parag Parikh Flexi Cap Fund - Direct Plan - Growth';
 const LATEST = { date: '2026-10-09' as IsoDate, nav: '88.9258', value: 88.9258 };
 
-function evaluated(schemeCode: number, schemeName: string, units: string, navDate: string | null, nav = '74.8685'): EvaluatedLot {
+function evaluated(
+  schemeCode: number,
+  schemeName: string,
+  units: string,
+  navDate: string | null,
+  nav = '74.8685',
+): EvaluatedLot {
   const applied = navDate === null ? null : { navDate: navDate as IsoDate, nav };
   return { schemeCode, schemeName, units, applied, status: evaluateLot({ units, applied }, LATEST) };
 }
@@ -97,7 +114,10 @@ describe('portfolioDayGain', () => {
   const change = navChange(prev, LATEST);
 
   it('multiplies valued units by the NAV move and compares with yesterday', () => {
-    const funds = holdingsByFund([evaluated(122639, PPFAS, '125.432', '2024-03-31'), evaluated(122639, PPFAS, '10', null)]);
+    const funds = holdingsByFund([
+      evaluated(122639, PPFAS, '125.432', '2024-03-31'),
+      evaluated(122639, PPFAS, '10', null),
+    ]);
     const gain = portfolioDayGain(funds, new Map([[122639, change]]));
     // 125.432 × ₹1.2703 = ₹159.34 (pending units don't count)
     expect(formatInr(gain?.amount ?? 0n, VALUE_SCALE, 'always')).toBe('+₹159.34');
@@ -148,5 +168,27 @@ describe('sortHoldings', () => {
     expect(sortHoldings(funds, 'value', 'desc').map((f) => f.schemeCode)).toEqual([2, 1, 3]);
     expect(sortHoldings(funds, 'value', 'asc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
     expect(sortHoldings(funds, 'returns', 'desc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('allocationByAssetClass', () => {
+  it('sums funds into classes in the fixed order, with shares of the whole', () => {
+    const funds = holdingsByFund([
+      evaluated(1, 'Hybrid One - Direct Plan - Growth', '10', '2024-03-31'),
+      evaluated(2, 'Equity One - Direct Plan - Growth', '20', '2024-03-31'),
+      evaluated(3, 'Equity Two - Direct Plan - Growth', '10', '2024-03-31'),
+    ]);
+    const categories = new Map([
+      [1, 'Hybrid Scheme - Aggressive Hybrid Fund'],
+      [2, 'Equity Scheme - Large Cap Fund'],
+      [3, 'Equity Scheme - Mid Cap Fund'],
+    ]);
+    const slices = allocationByAssetClass(funds, (f) =>
+      assetClassOf(categories.get(f.schemeCode) ?? null, f.schemeName),
+    );
+    expect(slices.map((s) => [s.assetClass, s.fundCount, s.shareHundredths])).toEqual([
+      ['Equity', 2, 7500n],
+      ['Hybrid', 1, 2500n],
+    ]);
   });
 });
