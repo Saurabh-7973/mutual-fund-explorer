@@ -77,10 +77,13 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
           {formatNav(point.nav)}
         </AppText>
-        <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-          as of {formatDate(point.date)}
-        </AppText>
-        {stale && <Badge label="Stale" tone="warning" />}
+        {/* The badge sits beside the date it qualifies, keeping the row two lines tall. */}
+        <View style={[styles.dateLine, { gap: spacing.xs }]}>
+          {stale && <Badge label="Stale" tone="warning" />}
+          <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
+            as of {formatDate(point.date)}
+          </AppText>
+        </View>
       </View>
     );
   }
@@ -122,4 +125,5 @@ const styles = StyleSheet.create({
   left: { flex: 1 },
   title: { fontWeight: '600' },
   right: { alignItems: 'flex-end' },
+  dateLine: { flexDirection: 'row', alignItems: 'center' },
 });

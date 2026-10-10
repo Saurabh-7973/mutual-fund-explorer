@@ -184,3 +184,8 @@ _(Claude Code: add entries below this line.)_
 **Pre-built code changed:** none.
 
 **Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.
+
+**Phone test feedback (user, 10 Oct 2026)**
+- The "Stale" badge was a third stacked line in the row's right column; in a 76 pt row it crowded the bottom edge and read as if it belonged to the next row (it looked like only the last row had it). It now sits on the same line as "as of <date>", so every row is two lines on the right. Fixed.
+- Row alignment and general polish: user wants to revisit later (Phase 7).
+- Step 7 (offline after relaunch) not checked: the emulator misbehaved. Still open.
