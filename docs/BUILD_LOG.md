@@ -163,3 +163,24 @@ _(Claude Code: add entries below this line.)_
 **Pre-built code changed:** none.
 
 **Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.
+
+**Phone test (user, 10 Oct 2026):** Phase 4 passes.
+
+- **For `AI_CONTEXT.md` (carry over):** my Phase 4 test notes gave hand-computed expected values for 125.432 units bought 31 Mar 2024: "Invested ≈ ₹9,390.80, Value ≈ ₹11,154.05". Both were wrong, by 11 and 9 paise. The exact figures are 125.432 × 74.8685 = 9,390.905692 → **₹9,390.91**, and 125.432 × 88.9258 = 11,154.1409456 → **₹11,154.14**, gain **+₹1,763.24 (+18.78%)**. The app showed the right values: they come from BigInt maths in `valueLot`, and these exact figures are asserted in `src/domain/__tests__/valuation.test.ts`. The agent got money wrong doing arithmetic in its head; the exact domain code and its tests got it right, which is why the money code was built and tested first. Rule from now on: expected money values in test notes come from the domain functions or the tests, never from hand arithmetic.
+
+---
+
+## Phase 5: Watchlist (10 Oct 2026, Claude Code)
+
+**Built:** `src/app/(tabs)/watchlist.tsx` and `src/components/watchlist/WatchRow.tsx` (memoised, fixed 76 pt, own `useLatestNav` per row).
+
+**Decisions**
+- Each row has four states at the same height: skeleton while loading, "Couldn't load NAV" + Retry (refetches only that row; also covers a fetch paused offline with nothing saved), "No NAV published", or NAV + "as of" date + a "Stale" badge after 7 days.
+- Remove → `unwatch` returns `{ item, index }`, kept in state for the Undo toast; Undo calls `undoUnwatch(item, index)` so the fund returns to the same position. The toast remounts per removal (`key` = scheme code), so removing two plans that share a title still restarts the 5-second timer. The list gets extra bottom padding while the toast shows, so it never covers the last row. Removing the last fund shows the empty state with the toast still available.
+- The header copy and offline banner sit above the `FlatList`, not in `ListHeaderComponent`, so `getItemLayout` offsets are exact. The same mistake existed in Explore (the "Open scheme code" row is a list header of row height); its `getItemLayout` now adds one row of offset when that row shows.
+- Pull to refresh: `refetchQueries({ queryKey: ['nav-latest'], type: 'active' })`, plus `useRefreshOnFocus('nav-latest')` for returning to the tab. Plain React Native `FlatList` and `RefreshControl` here (no chart, so no Gesture Handler scroll view).
+- Empty-state chips navigate to Explore with `q`, which Explore copies into the search field.
+
+**Pre-built code changed:** none.
+
+**Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: clean. Rule greps: nothing found.

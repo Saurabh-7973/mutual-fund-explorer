@@ -28,11 +28,14 @@ import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 const keyExtractor = (item: SchemeSearchResult) => String(item.schemeCode);
-const getItemLayout = (_data: ArrayLike<SchemeSearchResult> | null | undefined, index: number) => ({
+// The "Open scheme code" row, when shown, is the list header and has the same height as a row.
+const layoutWithHeader = (headerRows: number) => (_data: ArrayLike<SchemeSearchResult> | null | undefined, index: number) => ({
   length: SCHEME_ROW_HEIGHT,
-  offset: SCHEME_ROW_HEIGHT * index,
+  offset: SCHEME_ROW_HEIGHT * (index + headerRows),
   index,
 });
+const layoutNoHeader = layoutWithHeader(0);
+const layoutOneHeader = layoutWithHeader(1);
 
 export default function ExploreScreen() {
   const { colors, radius, spacing, typography } = useTheme();
@@ -176,7 +179,7 @@ export default function ExploreScreen() {
           data={filtered}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
-          getItemLayout={getItemLayout}
+          getItemLayout={codeRow !== null ? layoutOneHeader : layoutNoHeader}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           style={{ opacity: query.isPlaceholderData ? 0.6 : 1 }}
