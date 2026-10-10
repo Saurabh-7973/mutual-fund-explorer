@@ -272,3 +272,25 @@ Every item was driven on the Android emulator (Expo Go, SDK 57) with adb: deep l
 - `npx expo-doctor`: 21/21 checks passed. `npx expo install --check`: dependencies up to date.
 - Rule greps on `src/app` and `src/components`: nothing found. `src/app` holds route files only.
 - The Phase 7 list was run on the emulator in Phase 7 (results above). **Still open:** one full pass on the user's real phone in Expo Go, and the items Phase 7 couldn't verify on the emulator.
+
+---
+
+## Product and UX pass (10–11 Oct 2026, Claude Code)
+
+The user asked for the best UI/UX possible, with every component decided by the data it shows and by how live MF apps present it, plus something of our own. Decisions are in `docs/DESIGN.md`.
+
+**Research**
+- Web: Groww's fund page leads with "3Y annualised" plus the 1D move, has an Annualised/Absolute toggle and a SIP/one-time calculator; Groww offers Active vs Lifetime XIRR. Review sites call Kuvera dense and Coin minimal; no reliable source covered watchlist UX.
+- On the user's phone, read-only, with the user's permission and amounts hidden by Groww's eye toggle: Groww MF Explore, Dashboard, Watchlist and a fund page. Learned: a key/value summary (1D returns, Total returns, Invested, XIRR), dots for hidden amounts with percentages kept, two-line fund rows with one switchable value column, a fund page that collapses everything below the key facts, and a sticky primary action. No buy, sell or redeem control was touched; an action sheet opened by a row tap was dismissed.
+- Not studied: Motilal (no way to hide the user's real amounts).
+
+**Built (all logic in `src/domain` with tests)**
+- `fetchNavRange` (date-window history), `recentNavQuery` and `dayChange`: today's change on watchlist rows, recently viewed and the holdings summary, from two weeks of NAVs plus `/latest`.
+- `xirrPercent` (bisection, tested against CAGR and a known NPV), `holdingsByFund`, `annualisedReturn` (XIRR only once a year old), `allocation`, `portfolioDayGain`, `headlineReturn`.
+- `replayInvestment` (SIP and one-time, real NAVs, the purchase rule, units to 4 decimals) and `rollingReturns`.
+- `usePreferencesStore` (eye toggle and recently viewed, validated on load, kept apart from the portfolio).
+- Components: `SwipeRow` (Gesture Handler pan with React Native `Animated`, since the library's `Swipeable` is deprecated in favour of a Reanimated one), `Section` (collapsible with a takeaway), `PrivateAmount`, `FundHero`, `KeyFacts`, `ReturnsBars`, `InvestReplay`, `Consistency`, `AllocationBar`, `FundHoldingRow`, `RecentFundRow`; the palette changed to the "patient money" tokens.
+
+**Checks:** `npm run check` before every commit: 18 → 21 suites, 152 → 178 tests. Android export clean. Each screen checked on the emulator (light and dark), and the fund page on the user's phone over `adb reverse` (Wi-Fi to Metro was failing on the phone: "Cannot connect to Expo CLI").
+
+**Open:** `src/components/fund/LatestNavCard.tsx` is no longer used (the hero and key facts replaced it). Not deleted: CLAUDE.md asks for approval before deleting files.

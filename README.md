@@ -31,10 +31,12 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 
 ## Features
 
-- **Explore:** search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
-- **Fund screen:** latest NAV with its date and the change from the previous NAV; a chart with 1M to All ranges and touch scrubbing; trailing returns (1M and 6M absolute; 1Y, 3Y, 5Y and since start annualised), each labelled; your holdings in the fund; recent NAVs; and a full NAV history list that marks unusual gaps in the data.
-- **Watchlist:** each fund's latest NAV and its date, a stale flag for NAVs over 7 days old (closed or merged schemes), pull to refresh, remove with Undo, and offline display from the saved cache.
-- **Holdings:** record a purchase by units and date; see invested amount, current value, gain in ₹ and %, and p.a. (CAGR) after a year; portfolio totals; remove with confirmation.
+- **Explore:** recently viewed funds with their NAV and today's move; search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
+- **Fund screen:** the 3-year annualised return and today's move up front, a chart with 1M to All ranges and touch scrubbing, key facts, your own investment in the fund, then collapsible sections that state their takeaway while closed: trailing returns as a bar chart, "If you had invested" (a monthly SIP or one-time investment replayed on the fund's real NAVs), "How consistent were returns?" (worst, typical and best 3- and 5-year holding periods), and the full NAV history list.
+- **Watchlist:** each fund's latest NAV with its date and today's change, a Stale flag for NAVs over 7 days old, pull to refresh, swipe to remove with Undo, and offline display from the saved cache.
+- **Holdings:** one row per fund with value, returns or XIRR (switchable); a summary with today's change, total return, invested, XIRR across purchases and an allocation bar; an eye toggle that hides rupee amounts; record purchases by units and date; remove with confirmation.
+
+Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md).
 
 ## Requirements and where they are handled
 
