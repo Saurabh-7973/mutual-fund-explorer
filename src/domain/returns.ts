@@ -22,10 +22,12 @@ export interface PeriodReturn {
 
 export const RETURN_PERIODS: readonly { key: string; label: string; months: number | null }[] = [
   { key: '1M', label: '1 month', months: 1 },
+  { key: '3M', label: '3 months', months: 3 },
   { key: '6M', label: '6 months', months: 6 },
   { key: '1Y', label: '1 year', months: 12 },
   { key: '3Y', label: '3 years', months: 36 },
   { key: '5Y', label: '5 years', months: 60 },
+  { key: '10Y', label: '10 years', months: 120 },
   { key: 'ALL', label: 'Since start', months: null },
 ];
 

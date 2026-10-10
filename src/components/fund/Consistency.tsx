@@ -8,7 +8,7 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Chip } from '../ui/Chip';
+import { SegmentedRow } from '../ui/SegmentedRow';
 
 const HOLDS = [3, 5] as const;
 
@@ -35,17 +35,12 @@ export function Consistency({ points }: { points: NavPoint[] }) {
 
   return (
     <>
-      <View style={[styles.wrap, { gap: spacing.sm }]}>
-        {HOLDS.map((y) => (
-          <Chip
-            key={y}
-            label={`Held ${y} years`}
-            selected={chosenYears === y}
-            disabled={!available.includes(y)}
-            onPress={() => setYears(y)}
-          />
-        ))}
-      </View>
+      <SegmentedRow
+        accessibilityLabel="Holding period"
+        options={HOLDS.map((y) => ({ key: String(y), label: `Held ${y} years`, disabled: !available.includes(y) }))}
+        selected={String(chosenYears)}
+        onSelect={(key) => setYears(Number(key))}
+      />
       <AppText>
         Buying on any day since {formatMonthYear(points[0]?.date ?? summary.from)} and holding for {chosenYears} years
         returned:

@@ -43,6 +43,8 @@ describe('trailingReturns', () => {
     expect(byKey['1M']?.kind).toBe('absolute');
     expect(byKey['1M']?.percent).toBeCloseTo((121 / 120 - 1) * 100, 8);
     expect(byKey['6M']?.percent).toBeCloseTo((121 / 115 - 1) * 100, 8);
+    expect(byKey['3M']?.kind).toBe('absolute');
+    expect(byKey['10Y']?.kind).toBe('annualised');
   });
 
   it('annualises one year and longer', () => {

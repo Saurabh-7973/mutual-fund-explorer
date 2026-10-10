@@ -178,10 +178,11 @@ export function navRowsNewestFirst(points: readonly NavPoint[]): NavRow[] {
   return rows;
 }
 
-export type ChartRange = '1M' | '6M' | '1Y' | '3Y' | '5Y' | 'ALL';
+export type ChartRange = '1M' | '3M' | '6M' | '1Y' | '3Y' | '5Y' | 'ALL';
 
 export const CHART_RANGES: readonly { key: ChartRange; label: string; months: number | null }[] = [
   { key: '1M', label: '1M', months: 1 },
+  { key: '3M', label: '3M', months: 3 },
   { key: '6M', label: '6M', months: 6 },
   { key: '1Y', label: '1Y', months: 12 },
   { key: '3Y', label: '3Y', months: 36 },
@@ -241,6 +242,7 @@ export function defaultChartRange(points: readonly NavPoint[]): ChartRange {
 
 const RANGE_WORDS: Record<Exclude<ChartRange, 'ALL'>, string> = {
   '1M': '1 month',
+  '3M': '3 months',
   '6M': '6 months',
   '1Y': '1 year',
   '3Y': '3 years',

@@ -22,8 +22,8 @@ import { ReturnsBars } from '@/components/fund/ReturnsBars';
 import { WatchToggle } from '@/components/search/WatchToggle';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
 import { Section } from '@/components/ui/Section';
+import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, formatMonthYear } from '@/domain/dates';
 import { formatInrCompact, formatPercent } from '@/domain/format';
@@ -193,17 +193,16 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
         {/* The chart sits on the page, not in a card, with its ranges right under it. */}
         <View style={{ gap: spacing.md }}>
           <NavChart points={ranged} rangeLabel={chartRangeLabel(range, points)} />
-          <View style={[styles.ranges, { gap: spacing.xs }]}>
-            {CHART_RANGES.map((item) => (
-              <Chip
-                key={item.key}
-                label={item.label}
-                selected={item.key === range}
-                disabled={!coverage.get(item.key)}
-                onPress={() => setChosenRange(item.key)}
-              />
-            ))}
-          </View>
+          <SegmentedRow
+            accessibilityLabel="Chart range"
+            options={CHART_RANGES.map((item) => ({
+              key: item.key,
+              label: item.label,
+              disabled: !coverage.get(item.key),
+            }))}
+            selected={range}
+            onSelect={setChosenRange}
+          />
         </View>
 
         <KeyFacts meta={history.meta} last={last} first={first} skipped={history.skipped} />

@@ -10,7 +10,7 @@ import type { NavPoint } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Chip } from '../ui/Chip';
+import { SegmentedRow } from '../ui/SegmentedRow';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 
@@ -51,26 +51,27 @@ export function InvestReplay({ points }: { points: NavPoint[] }) {
 
   return (
     <>
-      <View style={[styles.wrap, { gap: spacing.sm }]}>
-        <Chip label="Monthly SIP" selected={mode === 'sip'} onPress={() => switchMode('sip')} />
-        <Chip label="One time" selected={mode === 'lumpsum'} onPress={() => switchMode('lumpsum')} />
-      </View>
-      <View style={[styles.wrap, { gap: spacing.sm }]}>
-        {AMOUNTS[mode].map((value) => (
-          <Chip key={value} label={rupees(value)} selected={amount === value} onPress={() => setAmount(value)} />
-        ))}
-      </View>
-      <View style={[styles.wrap, { gap: spacing.sm }]}>
-        {PERIODS.map((p) => (
-          <Chip
-            key={p.label}
-            label={p.label}
-            selected={chosen === p.months}
-            disabled={!covered.includes(p)}
-            onPress={() => setMonths(p.months)}
-          />
-        ))}
-      </View>
+      <SegmentedRow
+        accessibilityLabel="Invest"
+        options={[
+          { key: 'sip', label: 'Monthly SIP' },
+          { key: 'lumpsum', label: 'One time' },
+        ]}
+        selected={mode}
+        onSelect={switchMode}
+      />
+      <SegmentedRow
+        accessibilityLabel="Amount"
+        options={AMOUNTS[mode].map((value) => ({ key: String(value), label: rupees(value) }))}
+        selected={String(amount)}
+        onSelect={(key) => setAmount(Number(key))}
+      />
+      <SegmentedRow
+        accessibilityLabel="Period"
+        options={PERIODS.map((p) => ({ key: String(p.months), label: p.label, disabled: !covered.includes(p) }))}
+        selected={String(chosen)}
+        onSelect={(key) => setMonths(Number(key))}
+      />
 
       {replay !== null && (
         <View style={{ gap: spacing.xs }} accessibilityLiveRegion="polite">
