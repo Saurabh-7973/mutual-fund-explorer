@@ -101,7 +101,10 @@ function FundContent({ schemeCode, paramName }: { schemeCode: number; paramName:
                   </AppText>
                 )}
               </View>
-            ) : null,
+            ) : (
+              // An empty view, not null: a title that renders nothing also hides the back button.
+              <View />
+            ),
           headerRight: () => <WatchToggle schemeCode={schemeCode} schemeName={name} />,
         }}
       />
