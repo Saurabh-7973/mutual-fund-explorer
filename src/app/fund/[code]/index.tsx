@@ -1,7 +1,8 @@
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
+import { StyleSheet, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+// Both from Gesture Handler: its ScrollView waits on the refresh control's gesture, which only its own RefreshControl provides.
+import { RefreshControl, ScrollView } from 'react-native-gesture-handler';
 
 import { FundGate, InvalidSchemeLink, fundDisplayName, type FundReady } from '@/components/fund/FundGate';
 import { FundLots } from '@/components/fund/FundLots';
@@ -26,6 +27,7 @@ import {
   sliceRange,
   type ChartRange,
 } from '@/domain/nav';
+import { describeScheme } from '@/domain/schemeName';
 import { parseSchemeCode } from '@/domain/search';
 import { useFundSeries } from '@/query/hooks';
 import { useTheme } from '@/theme/useTheme';
@@ -50,14 +52,28 @@ function FundContent({ schemeCode, paramName }: { schemeCode: number; paramName:
   const { colors } = useTheme();
   const series = useFundSeries(schemeCode);
   const name = fundDisplayName(series, paramName, schemeCode);
+  // The header stays empty while the full title is on screen, then shows the short title.
+  const [titleScrolledAway, setTitleScrolledAway] = useState(false);
+  const shortTitle = describeScheme(name).title;
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
       <Stack.Screen
-        options={{ title: '', headerRight: () => <WatchToggle schemeCode={schemeCode} schemeName={name} /> }}
+        options={{
+          title: titleScrolledAway ? shortTitle : '',
+          headerRight: () => <WatchToggle schemeCode={schemeCode} schemeName={name} />,
+        }}
       />
       <FundGate schemeCode={schemeCode} series={series} loading={<FundSkeleton />}>
-        {(ready) => <FundBody ready={ready} series={series} schemeCode={schemeCode} name={name} />}
+        {(ready) => (
+          <FundBody
+            ready={ready}
+            series={series}
+            schemeCode={schemeCode}
+            name={name}
+            onTitleScrolledAway={setTitleScrolledAway}
+          />
+        )}
       </FundGate>
     </View>
   );
@@ -68,13 +84,15 @@ interface FundBodyProps {
   series: ReturnType<typeof useFundSeries>;
   schemeCode: number;
   name: string;
+  onTitleScrolledAway: (away: boolean) => void;
 }
 
-function FundBody({ ready, series, schemeCode, name }: FundBodyProps) {
+function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: FundBodyProps) {
   const { colors, spacing } = useTheme();
   const { history, points, last } = ready;
   const [chosenRange, setChosenRange] = useState<ChartRange | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [titleBottom, setTitleBottom] = useState(0);
 
   const range = chosenRange ?? defaultChartRange(points);
   const months = CHART_RANGES.find((item) => item.key === range)?.months ?? null;
@@ -96,12 +114,28 @@ function FundBody({ ready, series, schemeCode, name }: FundBodyProps) {
     }
   }, [historyQuery, latestQuery]);
 
+  const onTitleLayout = useCallback((event: LayoutChangeEvent) => {
+    const { y, height } = event.nativeEvent.layout;
+    setTitleBottom(y + height);
+  }, []);
+  const onScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // React skips the re-render when the boolean hasn't changed.
+      onTitleScrolledAway(titleBottom > 0 && event.nativeEvent.contentOffset.y > titleBottom);
+    },
+    [onTitleScrolledAway, titleBottom],
+  );
+
   return (
     <ScrollView
+      onScroll={onScroll}
+      scrollEventThrottle={32}
       contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}
     >
-      <FundTitle name={name} schemeCode={schemeCode} meta={history.meta} />
+      <View onLayout={onTitleLayout}>
+        <FundTitle name={name} schemeCode={schemeCode} meta={history.meta} />
+      </View>
 
       <LatestNavCard points={points} last={last} skipped={history.skipped} schemeCode={schemeCode} name={name} />
 

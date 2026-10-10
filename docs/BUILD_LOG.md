@@ -141,3 +141,8 @@ _(Claude Code: add entries below this line.)_
 **Pre-built code changed:** `src/domain/nav.ts` (additions above).
 
 **Checks:** `npm run check`: typecheck 0 errors; 16 suites, 146 tests passed. `npx expo export --platform android`: bundled cleanly. Rule greps (`parseFloat|toFixed(|Intl.NumberFormat|new Date('` and hex colours in `src/app` and `src/components`): nothing found.
+
+**Phone test feedback (user, 10 Oct 2026) and fixes**
+- Everything else in the Phase 3 list worked. Pull to refresh on the fund screen misbehaved. Cause: the screen used Gesture Handler's `ScrollView` (needed for chart scrubbing) with React Native's `RefreshControl`. Gesture Handler's `ScrollView` clones its refresh control with a gesture ref and waits on it (`waitFor`); only Gesture Handler's own `RefreshControl` is a gesture handler, so the pull never resolved properly on Android. Fix: import `RefreshControl` from `react-native-gesture-handler` too (confirmed in `GestureComponents.tsx`).
+- The user asked why the header is unused. The plan put the long name in the content and left the header title empty, which left an empty bar. Now the header stays empty while the title block is visible and shows the short fund title (from `describeScheme`) once it scrolls out of view, so the bar always says which fund you're in. The star stays at the right.
+- Checks: `npm run check` 146 passed; Android export clean.
