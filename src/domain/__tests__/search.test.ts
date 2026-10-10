@@ -7,6 +7,7 @@ import {
   mayBeTruncated,
   normalizeQuery,
   parseSchemeCode,
+  rankSearchResults,
   schemeCodeInQuery,
 } from '../search';
 
@@ -69,5 +70,25 @@ describe('mayBeTruncated', () => {
     expect(mayBeTruncated(15)).toBe(true);
     expect(mayBeTruncated(14)).toBe(false);
     expect(mayBeTruncated(0)).toBe(false);
+  });
+});
+
+describe('rankSearchResults', () => {
+  const names = (items: { schemeName: string }[]) => items.map((i) => i.schemeName);
+  it('keeps funds in search order and puts Direct Growth first within each fund', () => {
+    const ranked = rankSearchResults([
+      { schemeName: 'Parag Parikh Flexi Cap Fund - Regular Plan - Growth' },
+      { schemeName: 'Parag Parikh Flexi Cap Fund - Direct Plan - Growth' },
+      { schemeName: 'Parag Parikh Liquid Fund - Regular Plan - IDCW' },
+      { schemeName: 'Parag Parikh Flexi Cap Fund - Direct Plan - IDCW' },
+      { schemeName: 'Parag Parikh Liquid Fund - Direct Plan - Growth' },
+    ]);
+    expect(names(ranked)).toEqual([
+      'Parag Parikh Flexi Cap Fund - Direct Plan - Growth',
+      'Parag Parikh Flexi Cap Fund - Direct Plan - IDCW',
+      'Parag Parikh Flexi Cap Fund - Regular Plan - Growth',
+      'Parag Parikh Liquid Fund - Direct Plan - Growth',
+      'Parag Parikh Liquid Fund - Regular Plan - IDCW',
+    ]);
   });
 });

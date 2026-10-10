@@ -56,7 +56,7 @@ function NavList({ ready, schemeCode, name }: { ready: FundReady; schemeCode: nu
 
   return (
     <>
-      <View style={{ padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.xs, backgroundColor: colors.surface }}>
+      <View style={{ padding: spacing.lg, paddingBottom: spacing.sm, gap: spacing.xs, backgroundColor: colors.background }}>
         <FundTitle name={name} schemeCode={schemeCode} compact />
         {first !== undefined && (
           <AppText variant="label" tone="muted" numeric>
@@ -64,7 +64,7 @@ function NavList({ ready, schemeCode, name }: { ready: FundReady; schemeCode: nu
           </AppText>
         )}
       </View>
-      <View style={{ backgroundColor: colors.surface }}>
+      <View style={{ backgroundColor: colors.background }}>
         <NavHeaderRow />
       </View>
       <FlatList

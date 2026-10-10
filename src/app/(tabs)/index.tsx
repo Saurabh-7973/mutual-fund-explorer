@@ -28,6 +28,7 @@ import {
   SEARCH_SUGGESTIONS,
   filterSchemes,
   mayBeTruncated,
+  rankSearchResults,
   schemeCodeInQuery,
 } from '@/domain/search';
 import type { SchemeSearchResult } from '@/domain/types';
@@ -70,7 +71,7 @@ export default function ExploreScreen() {
   const pausedOverOldResults = query.isPlaceholderData && query.fetchStatus === 'paused';
   const data = pausedOverOldResults ? undefined : query.data;
   const filtered = useMemo(
-    () => (data === undefined ? [] : filterSchemes(data, { directOnly, growthOnly })),
+    () => (data === undefined ? [] : rankSearchResults(filterSchemes(data, { directOnly, growthOnly }))),
     [data, directOnly, growthOnly],
   );
   const codeInQuery = schemeCodeInQuery(normalized);

@@ -71,3 +71,33 @@ export const SEARCH_RESULT_CAP = 15;
 export function mayBeTruncated(resultCount: number): boolean {
   return resultCount >= SEARCH_RESULT_CAP;
 }
+
+/** Plan and option order inside one fund: the usual choice for a self-directed investor first. */
+const VARIANT_RANK: Record<string, number> = {
+  'Direct|Growth': 0,
+  'Direct|IDCW': 1,
+  'Direct|null': 2,
+  'Regular|Growth': 3,
+  'Regular|IDCW': 4,
+  'Regular|null': 5,
+};
+
+/**
+ * Search results with each fund's plans grouped and ordered Direct Growth first. Funds
+ * keep mfapi's relevance order (by where each title first appears); only the variants
+ * of one fund are reordered, so "Parag Parikh Flexi Cap" stays where search put it.
+ */
+export function rankSearchResults<T extends { schemeName: string }>(items: readonly T[]): T[] {
+  const firstSeen = new Map<string, number>();
+  const keyed = items.map((item, index) => {
+    const { title, plan, option } = describeScheme(item.schemeName);
+    const group = title.toLowerCase();
+    if (!firstSeen.has(group)) firstSeen.set(group, index);
+    return { item, index, group, rank: VARIANT_RANK[`${plan}|${option}`] ?? 6 };
+  });
+  keyed.sort(
+    (a, b) =>
+      (firstSeen.get(a.group) ?? 0) - (firstSeen.get(b.group) ?? 0) || a.rank - b.rank || a.index - b.index,
+  );
+  return keyed.map((entry) => entry.item);
+}
