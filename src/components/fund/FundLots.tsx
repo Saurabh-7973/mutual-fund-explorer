@@ -38,6 +38,10 @@ const navText = (scaled: bigint) => formatNav(toPlainString(scaled, NAV_SCALE));
 /** "₹5,000": whole rupees without paise. */
 const rupeesText = (rupees: number) => formatInr(BigInt(rupees) * 100n, 2).replace(/\.00$/, '');
 
+/** Timeline dot, and its offset so it centres on a row's first line (8 pt padding + half an 18 pt line). */
+const DOT_SIZE = 12;
+const DOT_TOP = 8 + 9 - DOT_SIZE / 2;
+
 /** Purchases shown before "Show earlier purchases". */
 const RECENT_PURCHASES = 4;
 
@@ -228,7 +232,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
             accessibilityRole="button"
             style={[styles.event, styles.centered, { paddingRight: spacing.lg, gap: spacing.md, minHeight: 44 }]}
           >
-            <Spine filled={false} first />
+            <Spine filled={false} first centered />
             <AppText variant="label" tone="primary" style={styles.flex}>
               Show {hiddenCount} earlier {hiddenCount === 1 ? 'purchase' : 'purchases'}
             </AppText>
@@ -319,16 +323,40 @@ function Divider() {
   return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
 }
 
-/** The spine and its dot, drawn the same for every event so the eye follows one line down. */
-function Spine({ filled, first = false, last = false }: { filled: boolean; first?: boolean; last?: boolean }) {
+/**
+ * The spine and its dot, drawn the same for every event so the eye follows one line down.
+ * The dot sits beside the event's first line (its date), not the middle of its block.
+ */
+function Spine({
+  filled,
+  first = false,
+  last = false,
+  centered = false,
+}: {
+  filled: boolean;
+  first?: boolean;
+  last?: boolean;
+  /** For one-line rows (the "Show earlier purchases" link): centre the dot instead. */
+  centered?: boolean;
+}) {
   const { colors } = useTheme();
+  const dotTop = centered ? undefined : DOT_TOP;
+  const middle = centered ? '50%' : DOT_TOP + DOT_SIZE / 2;
   return (
-    <View style={styles.spine}>
+    <View style={[styles.spine, !centered && styles.spineTop]}>
       <View
-        style={[styles.spineLine, { backgroundColor: colors.border, top: first ? '50%' : 0, bottom: last ? '50%' : 0 }]}
+        style={[
+          styles.spineLine,
+          { backgroundColor: colors.border, top: first ? middle : 0 },
+          last ? { height: middle } : { bottom: 0 },
+        ]}
       />
       <View
-        style={[styles.dot, { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface }]}
+        style={[
+          styles.dot,
+          dotTop !== undefined && { marginTop: dotTop },
+          { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface },
+        ]}
       />
     </View>
   );
@@ -447,6 +475,7 @@ const styles = StyleSheet.create({
   periodRow: { flexDirection: 'row', alignItems: 'flex-start' },
   periodIcon: { marginTop: 2 },
   spine: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  spineTop: { justifyContent: 'flex-start' },
   spineLine: { position: 'absolute', width: 2 },
-  dot: { width: 12, height: 12, borderRadius: 6, borderWidth: 2 },
+  dot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2, borderWidth: 2 },
 });
