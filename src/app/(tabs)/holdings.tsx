@@ -51,7 +51,7 @@ import {
 } from '@/domain/holdings';
 import { dayChange, type NavChange } from '@/domain/nav';
 import { assetClassOf } from '@/domain/assetClass';
-import { describeScheme } from '@/domain/schemeName';
+import { describeScheme, optionFromIsins } from '@/domain/schemeName';
 import { detectSip } from '@/domain/sip';
 import { evaluateLot, summarize, type LotStatus } from '@/domain/valuation';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
@@ -126,6 +126,10 @@ export default function HoldingsScreen() {
   const classSlices = allocationByAssetClass(funds, (fund) =>
     assetClassOf(byCode.get(fund.schemeCode)?.data?.meta.schemeCategory ?? null, fund.schemeName),
   );
+  const isinOption = (code: number) => {
+    const meta = byCode.get(code)?.data?.meta;
+    return meta !== undefined ? optionFromIsins(meta.isinGrowth, meta.isinDivReinvestment) : null;
+  };
   const anyFirstLoad = [...navState.values()].includes('loading');
   const excluded = totals.pendingCount + totals.unavailableCount;
 
@@ -180,11 +184,12 @@ export default function HoldingsScreen() {
         column={column}
         dayGain={fundDayGains.get(item.schemeCode) ?? null}
         sipRupees={sips.get(item.schemeCode) ?? null}
+        isinOption={isinOption(item.schemeCode)}
         onRetry={onRetry}
         onRemove={onRemove}
       />
     ),
-    [navState, column, fundDayGains, sips, onRetry, onRemove],
+    [navState, column, fundDayGains, sips, isinOption, onRetry, onRemove],
   );
 
   if (!hydrated) {

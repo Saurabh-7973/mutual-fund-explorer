@@ -5,7 +5,7 @@ import { formatDate, todayInIndia } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercent, formatPercentHundredths } from '@/domain/format';
 import { isStale, latestChange } from '@/domain/nav';
 import { headlineReturn, trailingReturns } from '@/domain/returns';
-import { describeScheme } from '@/domain/schemeName';
+import { describeScheme, optionFromIsins } from '@/domain/schemeName';
 import type { NavPoint, SchemeMeta } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
@@ -30,6 +30,7 @@ function shortCategory(category: string | null): string | null {
 export function FundHero({ name, meta, points }: { name: string; meta: SchemeMeta; points: NavPoint[] }) {
   const { spacing } = useTheme();
   const label = useMemo(() => describeScheme(name), [name]);
+  const option = label.option ?? optionFromIsins(meta.isinGrowth, meta.isinDivReinvestment);
   const headline = useMemo(() => headlineReturn(trailingReturns(points)), [points]);
   const change = useMemo(() => latestChange(points), [points]);
   const last = points[points.length - 1];
@@ -46,7 +47,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
         {/* Plan and option explain themselves on tap; the category is plain text. */}
         <View style={[styles.line, { gap: spacing.md }]}>
           {label.plan !== null && <Term term="direct" label={label.plan} />}
-          {label.option !== null && <Term term="idcw" label={label.option} />}
+          {option !== null && <Term term="idcw" label={option} />}
           {category !== null && (
             <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
               {category}

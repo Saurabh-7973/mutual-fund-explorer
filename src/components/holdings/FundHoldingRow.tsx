@@ -38,6 +38,8 @@ export interface FundHoldingRowProps {
   column: HoldingColumn;
   /** Today's change in this fund's value, or null until two recent NAVs are loaded. */
   dayGain: DayGain | null;
+  /** Growth or IDCW from the scheme's ISINs, for names that don't say. */
+  isinOption: 'Growth' | 'IDCW' | null;
   /** A running SIP's monthly amount in whole rupees, shown instead of the purchase count. */
   sipRupees: number | null;
   onRetry: (schemeCode: number) => void;
@@ -55,6 +57,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
   column,
   dayGain,
   sipRupees,
+  isinOption,
   onRetry,
   onRemove,
 }: FundHoldingRowProps) {
@@ -70,7 +73,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
         ? 'SIP'
         : `SIP ${formatInr(BigInt(sipRupees) * 100n, 2).replace(/\.00$/, '')}`
       : `${fund.lotCount} ${fund.lotCount === 1 ? 'purchase' : 'purchases'}`;
-  const meta = [label.plan, label.option, held]
+  const meta = [label.plan, label.option ?? isinOption, held]
     .filter((part): part is string => part !== null)
     .join(' · ');
   const waiting = fund.pendingCount > 0 ? `${fund.pendingCount} awaiting NAV` : null;

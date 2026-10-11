@@ -40,3 +40,15 @@ export function describeScheme(name: string): SchemeLabel {
 
   return { title, variant, plan, option };
 }
+
+/**
+ * The payout option when the name doesn't say, from the ISINs AMFI publishes: a scheme with
+ * only an IDCW-reinvestment ISIN is an IDCW plan, one with only a growth ISIN is Growth.
+ * With both or neither it stays unknown, rather than a guess. (Direct or Regular can't be
+ * read from an ISIN.)
+ */
+export function optionFromIsins(isinGrowth: string | null, isinDivReinvestment: string | null): PayoutOption | null {
+  if (isinGrowth === null && isinDivReinvestment !== null) return 'IDCW';
+  if (isinGrowth !== null && isinDivReinvestment === null) return 'Growth';
+  return null;
+}

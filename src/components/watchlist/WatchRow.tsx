@@ -144,7 +144,15 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
           </View>
           <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
             <View style={styles.flex}>
-              <SchemeBadges name={schemeName} size="sm" />
+              <SchemeBadges
+                name={schemeName}
+                size="sm"
+                isins={
+                  latest.data !== undefined
+                    ? { growth: latest.data.meta.isinGrowth, idcw: latest.data.meta.isinDivReinvestment }
+                    : undefined
+                }
+              />
             </View>
             {middle}
           </View>

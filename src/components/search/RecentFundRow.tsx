@@ -3,7 +3,7 @@ import { memo, useMemo } from 'react';
 import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatNav, formatPercentHundredths } from '@/domain/format';
-import { describeScheme } from '@/domain/schemeName';
+import { describeScheme, optionFromIsins } from '@/domain/schemeName';
 import { useDayChange, useLatestNav } from '@/query/hooks';
 import type { RecentFund } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
@@ -22,7 +22,10 @@ export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: Recen
   const latest = useLatestNav(fund.schemeCode);
   const point = latest.data?.point;
   const change = useDayChange(fund.schemeCode, point);
-  const meta = [label.plan, label.option].filter((part): part is NonNullable<typeof part> => part !== null).join(' · ');
+  const option =
+    label.option ??
+    (latest.data !== undefined ? optionFromIsins(latest.data.meta.isinGrowth, latest.data.meta.isinDivReinvestment) : null);
+  const meta = [label.plan, option].filter((part): part is NonNullable<typeof part> => part !== null).join(' · ');
 
   return (
     <Pressable

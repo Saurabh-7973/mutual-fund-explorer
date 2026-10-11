@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { describeScheme } from '../schemeName';
+import { describeScheme, optionFromIsins } from '../schemeName';
 
 describe('describeScheme', () => {
   it('splits the usual "Fund - Plan - Option" form', () => {
@@ -41,5 +41,17 @@ describe('describeScheme', () => {
 
   it('falls back to the whole name when there is no spaced separator', () => {
     expect(describeScheme('Grindlays Super Saver Income Fund-GSSIF-Half Yearly Dividend').option).toBe('IDCW');
+  });
+});
+
+describe('optionFromIsins', () => {
+  it('reads IDCW or Growth when only one ISIN is published (real PPFAS DAAF plans)', () => {
+    expect(optionFromIsins(null, 'INF879O01258')).toBe('IDCW');
+    expect(optionFromIsins('INF879O01027', null)).toBe('Growth');
+  });
+
+  it('stays unknown with both or neither', () => {
+    expect(optionFromIsins('INF879O01027', 'INF879O01258')).toBeNull();
+    expect(optionFromIsins(null, null)).toBeNull();
   });
 });
