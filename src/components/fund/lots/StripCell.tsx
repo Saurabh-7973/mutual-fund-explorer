@@ -26,7 +26,7 @@ export function Cell({ label, stacked, children }: { label: string; stacked: boo
 
 export function Divider() {
   const { colors } = useTheme();
-  return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
+  return <View style={[styles.divider, { backgroundColor: colors.hairline }]} />;
 }
 
 const styles = StyleSheet.create({

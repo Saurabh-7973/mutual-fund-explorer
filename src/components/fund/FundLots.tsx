@@ -142,15 +142,16 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
         <View
           style={[
             stacked ? styles.stripStacked : styles.strip,
-            { backgroundColor: colors.surfaceMuted },
-            stacked && { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm },
+            // Inset hairlines above and below, like the figures strip on Holdings.
+            { borderTopWidth: StyleSheet.hairlineWidth, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.hairline, marginHorizontal: spacing.lg },
+            stacked && { paddingVertical: spacing.sm },
           ]}
         >
           <Cell label="Invested" stacked={stacked}>
             <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="label" />
           </Cell>
           {!stacked && <Divider />}
-          <Cell label="1D" stacked={stacked}>
+          <Cell label="Today" stacked={stacked}>
             {dayGain !== null ? (
               <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
             ) : (
