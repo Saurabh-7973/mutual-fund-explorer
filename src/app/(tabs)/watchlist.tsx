@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import { Animated, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 
 import { WatchToggle } from '@/components/search/WatchToggle';
+import { FundMark } from '@/components/ui/FundMark';
 import { AppText } from '@/components/ui/AppText';
 import { LargeTitle, ScreenHeader, TopBar, useCollapsingTitle } from '@/components/ui/ScreenHeader';
 import { Banner } from '@/components/ui/Banner';
@@ -32,7 +33,7 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 const keyExtractor = (item: WatchItem) => String(item.schemeCode);
 
 export default function WatchlistScreen() {
-  const { colors, spacing } = useTheme();
+  const { colors, radius, spacing } = useTheme();
   const watchlist = usePortfolioStore((s) => s.watchlist);
   const hydrated = usePortfolioStore((s) => s.hydrated);
   const unwatch = usePortfolioStore((s) => s.unwatch);
@@ -131,18 +132,27 @@ export default function WatchlistScreen() {
           >
             {recentlyViewed.length > 0 && (
               // One-tap adds from funds you've already looked at.
-              <View style={[styles.recent, { gap: spacing.xs, marginBottom: spacing.md }]}>
-                <AppText variant="label" tone="muted">
+              <View style={[styles.recent, { gap: spacing.sm, marginBottom: spacing.md }]}>
+                <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
                   Recently viewed
                 </AppText>
-                {recentlyViewed.slice(0, 4).map((fund) => (
-                  <View key={fund.schemeCode} style={[styles.recentRow, { borderBottomColor: colors.border }]}>
-                    <AppText variant="label" numberOfLines={1} style={styles.flex}>
-                      {describeScheme(fund.schemeName).title}
-                    </AppText>
-                    <WatchToggle schemeCode={fund.schemeCode} schemeName={fund.schemeName} />
-                  </View>
-                ))}
+                <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingLeft: spacing.lg, paddingRight: spacing.xs }}>
+                  {recentlyViewed.slice(0, 4).map((fund, i, shown) => (
+                    <View
+                      key={fund.schemeCode}
+                      style={[
+                        styles.recentRow,
+                        { gap: spacing.md, borderBottomColor: colors.hairline, borderBottomWidth: i === shown.length - 1 ? 0 : StyleSheet.hairlineWidth },
+                      ]}
+                    >
+                      <FundMark schemeName={fund.schemeName} size={32} />
+                      <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+                        {describeScheme(fund.schemeName).title}
+                      </AppText>
+                      <WatchToggle schemeCode={fund.schemeCode} schemeName={fund.schemeName} />
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
             <View style={[styles.wrap, { gap: spacing.sm }]}>
@@ -212,5 +222,5 @@ const styles = StyleSheet.create({
   wrap: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   recent: { alignSelf: 'stretch' },
   listHead: { flexDirection: 'row', alignItems: 'baseline' },
-  recentRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
+  recentRow: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
 });
