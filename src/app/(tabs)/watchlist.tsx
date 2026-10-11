@@ -163,8 +163,7 @@ export default function WatchlistScreen() {
         }
         ListFooterComponent={
           <AppText variant="caption" tone="muted" style={{ padding: spacing.lg }}>
-            NAVs are published after market close, so each date is the business day it's for. Swipe a fund left to
-            remove it.
+            Swipe a fund left to remove it.
           </AppText>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}

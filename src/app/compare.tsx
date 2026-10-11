@@ -210,7 +210,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
         />
         {growth !== null && <CompareChart growth={growth} labelA={fa.title} labelB={fb.title} />}
         <AppText variant="caption" tone="muted">
-          Both start at ₹10,000 on the same day, so their lines are comparable. Drag the chart to see a date. NAV-based, before taxes and exit loads.
+          Both start at ₹10,000 on the same day. Drag to read any date.
         </AppText>
       </Card>
 
@@ -271,7 +271,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
         </AppText>
       </Pressable>
       <AppText variant="caption" tone="muted">
-        Past returns don't predict future ones. Figures from published NAVs (mfapi.in); ratings and costs aren't in this data.
+        From published NAVs, before costs and taxes. Past returns don't predict future ones.
       </AppText>
     </ScrollView>
   );

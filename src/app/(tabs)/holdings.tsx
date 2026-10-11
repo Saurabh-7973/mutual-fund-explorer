@@ -372,13 +372,9 @@ export default function HoldingsScreen() {
         ListHeaderComponent={summary}
         ListFooterComponent={
           <View style={{ padding: spacing.lg, gap: spacing.sm }}>
+            <Term term="howValued" label="How these figures are worked out" variant="caption" />
             <AppText variant="caption" tone="muted">
-              Values use each fund's latest published NAV. Returns are absolute; XIRR is the yearly rate across
-              purchases made on different dates, shown once your oldest purchase is a year old. Totals are summed before
-              rounding, so they can differ from the rows by a paisa.
-            </AppText>
-            <AppText variant="caption" tone="muted">
-              Your holdings are saved on this phone, nowhere else. Swipe a fund left to remove it.
+              Saved on this phone only. Swipe a fund left to remove it.
             </AppText>
             <Button
               label="Back up or restore your data"

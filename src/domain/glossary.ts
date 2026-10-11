@@ -18,7 +18,9 @@ export type GlossaryKey =
   | 'assetClass'
   | 'averageCost'
   | 'lockIn'
-  | 'longTerm';
+  | 'longTerm'
+  | 'howValued'
+  | 'cutoff';
 
 export interface GlossaryEntry {
   title: string;
@@ -85,5 +87,13 @@ export const GLOSSARY: Record<GlossaryKey, GlossaryEntry> = {
   longTerm: {
     title: 'Long-term units',
     body: 'Units of an equity fund held for more than 12 months count as long-term for capital gains tax, which is usually taxed lower than short-term gains. Each purchase has its own date. Check the current rules before you sell.',
+  },
+  howValued: {
+    title: 'How these figures are worked out',
+    body: "Each fund is valued at its latest published NAV. Returns are absolute; XIRR is the yearly rate across purchases made on different dates, shown once your oldest purchase is a year old. Totals are added up before rounding, so they can differ from the rows by a paisa.",
+  },
+  cutoff: {
+    title: 'Which NAV a purchase gets',
+    body: "Use the allotment date from your account statement. A purchase made after the 3 pm cut-off, or on a holiday, gets the next business day's NAV, and the app prices it the same way.",
   },
 };

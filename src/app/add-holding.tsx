@@ -29,6 +29,7 @@ import { usePortfolioStore } from '@/store/portfolioStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { haptic } from '@/components/ui/haptics';
+import { Term } from '@/components/ui/Term';
 
 export default function AddHoldingScreen() {
   const params = useLocalSearchParams<{
@@ -285,10 +286,7 @@ function AddHoldingForm({
                 ))}
             </View>
 
-            <AppText variant="caption" tone="muted">
-              Use the allotment date from your account statement. A purchase made after the 3 pm cut-off gets the next
-              business day's NAV.
-            </AppText>
+            <Term term="cutoff" label="Which NAV does my purchase get?" variant="caption" />
 
             {units.ok && resolution?.kind === 'matched' && (
               <Card style={{ gap: spacing.sm }}>

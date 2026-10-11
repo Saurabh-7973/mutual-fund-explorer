@@ -178,8 +178,7 @@ export function SipForm({
             </AppText>
           )}
           <AppText variant="caption" tone="muted">
-            Units are worked out as the amount ÷ the NAV of each instalment's date (or the next NAV after a holiday).
-            Your statement may differ in the last decimal because of stamp duty.
+            Units = amount ÷ each instalment's NAV. Stamp duty can move the last decimal on your statement.
           </AppText>
         </Card>
       )}

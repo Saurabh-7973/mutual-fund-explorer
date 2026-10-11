@@ -65,8 +65,7 @@ export default function BackupScreen() {
     >
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: spacing.lg, gap: spacing.lg }}>
         <AppText tone="muted">
-          Your watchlist and holdings are saved only on this phone. Share a backup to yourself (email, notes or a chat
-          with yourself) so you can restore it on a new phone.
+          Your data lives only on this phone. Send yourself a backup to restore it on a new one.
         </AppText>
 
         <Card style={{ gap: spacing.md }}>
