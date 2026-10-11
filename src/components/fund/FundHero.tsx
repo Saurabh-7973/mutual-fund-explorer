@@ -24,7 +24,7 @@ function shortCategory(category: string | null): string | null {
 }
 
 /**
- * The top of a fund page: what it is, and the one number to judge it by (3-year yearly
+ * The top of a fund page: what it is, and the one number to judge it by (3-year annualised
  * return when the history allows), with today's move under it. Everything else sits below.
  */
 export function FundHero({ name, meta, points }: { name: string; meta: SchemeMeta; points: NavPoint[] }) {
@@ -58,7 +58,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
       {headline !== null && headline.percent !== null && (
         <View
           accessible
-          accessibilityLabel={`${formatPercent(headline.percent)} ${headline.kind === 'absolute' ? 'over' : 'a year over'} ${headline.label}`}
+          accessibilityLabel={`${formatPercent(headline.percent)} ${headline.kind === 'absolute' ? 'over' : 'per year over'} ${headline.label}`}
           style={[styles.line, { gap: spacing.sm }]}
         >
           <AppText
@@ -68,7 +68,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
           >
             {formatPercent(headline.percent)}
           </AppText>
-          <Term term="cagr" label={headline.key === 'ALL' ? 'a year since start' : `${headline.key} annualised`} />
+          <Term term="cagr" label={headline.key === 'ALL' ? 'since start, p.a.' : `${headline.key} annualised`} />
         </View>
       )}
       {stale && (
@@ -77,15 +77,29 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
           text={`No NAV since ${formatDate(last.date)}. This scheme may be closed or merged; figures here end on that date.`}
         />
       )}
-      {change !== null && (
-        <AppText
-          variant="label"
-          numeric
-          tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}
-          accessibilityLabel={`NAV ${formatNav(change.to.nav)} on ${formatDate(change.to.date)}, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`}
+      {last !== undefined && (
+        // The NAV and its date sit above the chart: the one price a fund has, and when it was set.
+        <View
+          accessible
+          accessibilityLabel={`NAV ${formatNav(last.nav)} as of ${formatDate(last.date)}${
+            change !== null
+              ? `, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`
+              : ''
+          }`}
+          style={[styles.line, { columnGap: spacing.sm }]}
         >
-          {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)}) on {formatDate(change.to.date)}
-        </AppText>
+          <AppText variant="labelStrong" numeric>
+            NAV {formatNav(last.nav)}
+          </AppText>
+          {change !== null && (
+            <AppText variant="label" numeric tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}>
+              {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+            </AppText>
+          )}
+          <AppText variant="label" tone="muted" numeric>
+            as of {formatDate(last.date)}
+          </AppText>
+        </View>
       )}
     </View>
   );

@@ -98,7 +98,7 @@ export function InvestReplay({ points }: { points: NavPoint[] }) {
               numeric
               accessibilityLabel={`XIRR ${formatPercent(replay.xirrPercent)} per year`}
             >
-              XIRR {formatPercent(replay.xirrPercent)} a year
+              XIRR {formatPercent(replay.xirrPercent)} p.a.
             </AppText>
           )}
         </View>
@@ -106,7 +106,7 @@ export function InvestReplay({ points }: { points: NavPoint[] }) {
       {replay !== null && (
         <AppText variant="caption" tone="muted">
           Replays this fund's real NAVs from {formatDate(replay.firstDate)} to {formatDate(replay.valueDate)}: each
-          purchase at the next published NAV, before taxes and exit loads. Past returns don't predict future ones.
+          purchase at the next published NAV, before taxes and exit loads. Past performance may or may not be sustained in future.
         </AppText>
       )}
     </>

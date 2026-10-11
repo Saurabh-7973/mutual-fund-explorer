@@ -9,6 +9,7 @@ import {
   dayChange,
   defaultChartRange,
   isStale,
+  currentNavDate,
   latestChange,
   lowerBound,
   mergeLatest,
@@ -158,6 +159,14 @@ describe('isStale', () => {
     expect(isStale(d('2018-06-01'), TODAY)).toBe(true);
     expect(isStale(d('2026-10-03'), TODAY)).toBe(false);
     expect(isStale(d('2026-10-02'), TODAY)).toBe(true);
+  });
+});
+
+describe('currentNavDate', () => {
+  it('takes the newest NAV date that is not stale', () => {
+    expect(currentNavDate([d('2026-10-08'), d('2026-10-09'), d('2018-06-01')], TODAY)).toBe('2026-10-09');
+    expect(currentNavDate([d('2018-06-01')], TODAY)).toBeNull();
+    expect(currentNavDate([], TODAY)).toBeNull();
   });
 });
 

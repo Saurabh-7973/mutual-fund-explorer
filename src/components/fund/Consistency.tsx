@@ -51,7 +51,7 @@ export function Consistency({ points }: { points: NavPoint[] }) {
 
       <View
         accessible
-        accessibilityLabel={`Worst ${formatPercent(summary.worst)}, typical ${formatPercent(summary.median)}, best ${formatPercent(summary.best)} a year`}
+        accessibilityLabel={`Worst ${formatPercent(summary.worst)}, typical ${formatPercent(summary.median)}, best ${formatPercent(summary.best)} per year`}
         style={{ gap: spacing.xs }}
       >
         <View style={[styles.track, { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill }]}>
@@ -115,9 +115,9 @@ export function Consistency({ points }: { points: NavPoint[] }) {
         </View>
       )}
       <AppText variant="caption" tone="muted">
-        Yearly (CAGR) returns over {groupIndian(String(summary.windows))} holding periods ending between{' '}
-        {formatMonthYear(summary.from)} and {formatMonthYear(summary.through)}, from NAVs only. Past returns don't
-        predict future ones.
+        Annualised (CAGR) returns over {groupIndian(String(summary.windows))} holding periods ending between{' '}
+        {formatMonthYear(summary.from)} and {formatMonthYear(summary.through)}, from NAVs only. Past performance may
+        or may not be sustained in future.
       </AppText>
     </>
   );

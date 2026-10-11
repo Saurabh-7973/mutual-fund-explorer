@@ -150,6 +150,19 @@ export function isStale(lastDate: IsoDate, today: IsoDate): boolean {
   return diffDays(lastDate, today) > STALE_AFTER_DAYS;
 }
 
+/**
+ * The date a list of latest NAVs is "as of": the newest one that isn't stale. A stale NAV
+ * (a closed scheme) says its own date instead, so it never drags the shared date back.
+ */
+export function currentNavDate(dates: readonly IsoDate[], today: IsoDate): IsoDate | null {
+  let newest: IsoDate | null = null;
+  for (const date of dates) {
+    if (isStale(date, today)) continue;
+    if (newest === null || date > newest) newest = date;
+  }
+  return newest;
+}
+
 /** One row of the NAV history list. */
 export interface NavRow {
   date: IsoDate;

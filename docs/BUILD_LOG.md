@@ -409,3 +409,9 @@ The user asked whether the to-do list held anything I'd found myself; mostly it 
 ## Polish pass (docs/POLISH_PLAN.md, approved by the user)
 
 - **P0-1. Hygiene.** Deleted, with approval: `src/components/fund/LatestNavCard.tsx` and `src/components/holdings/LotRow.tsx` (unused since the fund hero and the by-fund holdings rows replaced them; nothing imports them) and `docs/screenshots/05-consistency.png` (unused, and it shared the `05-` prefix with the calendar shot). Earlier entries that mention them describe what was built at the time and are left as written. `docs/POLISH_PLAN.md` committed with this item.
+- **P0-2. Data honesty and copy.**
+  - Recently viewed showed NAVs with no date, so HDFC Balanced Fund's 2018 NAV read as current. The section header now says "NAV · 1D · as of 09 Oct 2026" (new `currentNavDate` in `src/domain/nav.ts`, tested: the newest NAV date that isn't stale). A stale row shows a "Stale" tag and its own date in place of the 1D move; a current NAV from another day prints its date after the move.
+  - Fund hero: "NAV ₹88.9258 +₹1.2703 (+1.45%) as of 09 Oct 2026" under the 3Y headline, above the chart. Before, the NAV only appeared in key facts below the fold.
+  - One convention for yearly figures: "p.a." on screen ("XIRR +11.03% p.a.", "since start, p.a.", "3 years (p.a.)"), "Annualised (CAGR)" and "Absolute" as the returns group heads, "per year" for screen readers. `grep -rn "a year" src` now finds only code comments.
+  - SEBI wording: "Past performance may or may not be sustained in future." replaces "Past returns don't predict future ones." (returns, replay, consistency, compare). The market-risk line sits once, under the source note at the foot of the fund page.
+  - Checked on the emulator: Explore (header date, the Stale row), the fund hero, Holdings' XIRR row.

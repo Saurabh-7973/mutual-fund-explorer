@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useQueries } from '@tanstack/react-query';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -32,11 +33,13 @@ import {
   rankSearchResults,
   schemeCodeInQuery,
 } from '@/domain/search';
-import type { SchemeSearchResult } from '@/domain/types';
+import { formatDate, todayInIndia } from '@/domain/dates';
+import { currentNavDate } from '@/domain/nav';
+import type { IsoDate, SchemeSearchResult } from '@/domain/types';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { useOnline } from '@/hooks/useOnline';
-import { useSchemeSearch } from '@/query/hooks';
+import { latestNavQuery, useSchemeSearch } from '@/query/hooks';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -63,6 +66,12 @@ export default function ExploreScreen() {
   const { query, normalized, enabled } = useSchemeSearch(debounced);
   const online = useOnline();
   const recentlyViewed = usePreferencesStore((s) => s.recentlyViewed);
+  // One "as of" date for the recently viewed NAVs; a row on another date shows its own.
+  const recentLatest = useQueries({ queries: recentlyViewed.map((fund) => latestNavQuery(fund.schemeCode)) });
+  const recentDates = recentLatest
+    .map((result) => result.data?.point?.date)
+    .filter((date): date is IsoDate => date !== undefined);
+  const recentAsOf = currentNavDate(recentDates, todayInIndia());
   const keyboard = useKeyboardOverlap();
 
   // The Watchlist empty state links here with a suggested query.
@@ -138,13 +147,13 @@ export default function ExploreScreen() {
                 <AppText variant="heading" accessibilityRole="header" style={styles.flexOne}>
                   Recently viewed
                 </AppText>
-                <AppText variant="caption" tone="muted">
-                  NAV · 1D
+                <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+                  {recentAsOf !== null ? `NAV · 1D · as of ${formatDate(recentAsOf)}` : 'NAV · 1D'}
                 </AppText>
               </View>
               <View>
                 {recentlyViewed.map((fund) => (
-                  <RecentFundRow key={fund.schemeCode} fund={fund} />
+                  <RecentFundRow key={fund.schemeCode} fund={fund} asOf={recentAsOf} />
                 ))}
               </View>
             </View>

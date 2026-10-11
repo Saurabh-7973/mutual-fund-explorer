@@ -122,7 +122,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
                   numeric
                   accessibilityLabel={`XIRR ${formatPercent(fund.xirrPercent)} per year`}
                 >
-                  · XIRR {formatPercent(fund.xirrPercent)} a year
+                  · XIRR {formatPercent(fund.xirrPercent)} p.a.
                 </AppText>
               )}
             </View>

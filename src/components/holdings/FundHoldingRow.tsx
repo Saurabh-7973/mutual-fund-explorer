@@ -162,7 +162,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
       );
     secondary = (
       <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
-        {fund.xirrPercent !== null ? 'a year' : 'after 1 year'}
+        {fund.xirrPercent !== null ? 'p.a.' : 'after 1 year'}
       </AppText>
     );
   }

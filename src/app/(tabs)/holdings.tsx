@@ -287,7 +287,7 @@ export default function HoldingsScreen() {
                     tone={xirr > 0 ? 'gain' : xirr < 0 ? 'loss' : 'muted'}
                     accessibilityLabel={`${formatPercent(xirr)} per year`}
                   >
-                    {formatPercent(xirr)} a year
+                    {formatPercent(xirr)} p.a.
                   </AppText>
                 ) : (
                   <AppText variant="label" tone="muted">

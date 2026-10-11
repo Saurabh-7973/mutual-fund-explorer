@@ -11,7 +11,7 @@ import { Term } from '../ui/Term';
 
 /**
  * Trailing returns as a small bar chart, in two groups: periods under a year (absolute
- * change) and periods from a year (a yearly rate). Saying it once per group, with the
+ * change) and periods from a year (annualised). Saying it once per group, with the
  * glossary term as the group's heading, keeps each row to one line. The zero line sits
  * where the data puts it, so a mostly positive fund doesn't waste half the width on
  * losses it never had.
@@ -30,10 +30,10 @@ export function ReturnsBars({ points }: { points: NavPoint[] }) {
 
   return (
     <View style={{ gap: spacing.md }}>
-      {short.length > 0 && <Group term="absolute" label="Absolute change" rows={short} scale={scale} />}
-      {long.length > 0 && <Group term="cagr" label="A year (CAGR)" rows={long} scale={scale} />}
+      {short.length > 0 && <Group term="absolute" label="Absolute" rows={short} scale={scale} />}
+      {long.length > 0 && <Group term="cagr" label="Annualised (CAGR)" rows={long} scale={scale} />}
       <AppText variant="caption" maxFontSizeMultiplier={1.3} tone="muted">
-        NAV-based, so IDCW payouts aren't added back. Past returns don't predict future ones.
+        NAV-based, so IDCW payouts aren't added back. Past performance may or may not be sustained in future.
       </AppText>
     </View>
   );

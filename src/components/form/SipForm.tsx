@@ -174,7 +174,7 @@ export function SipForm({
           </View>
           {preview.xirr !== null && (
             <AppText variant="label" tone="muted" numeric>
-              XIRR {formatPercent(preview.xirr)} a year
+              XIRR {formatPercent(preview.xirr)} p.a.
             </AppText>
           )}
           <AppText variant="caption" tone="muted">

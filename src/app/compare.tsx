@@ -183,8 +183,8 @@ function Comparison({ a, b }: { a: number; b: number }) {
   const ret = (f: FundFacts, key: string) => f.returns.find((r) => r.key === key)?.percent ?? null;
   const rows: { label: string; term?: Parameters<typeof Term>[0]['term']; a: number | null; b: number | null; kind: 'pct' | 'share' }[] = [
     { label: '1 year', a: ret(fa, '1Y'), b: ret(fb, '1Y'), kind: 'pct' },
-    { label: '3 years, a year', term: 'cagr', a: ret(fa, '3Y'), b: ret(fb, '3Y'), kind: 'pct' },
-    { label: '5 years, a year', a: ret(fa, '5Y'), b: ret(fb, '5Y'), kind: 'pct' },
+    { label: '3 years (p.a.)', term: 'cagr', a: ret(fa, '3Y'), b: ret(fb, '3Y'), kind: 'pct' },
+    { label: '5 years (p.a.)', a: ret(fa, '5Y'), b: ret(fb, '5Y'), kind: 'pct' },
     { label: 'Typical 3-year hold', term: 'rolling', a: fa.rolling?.median ?? null, b: fb.rolling?.median ?? null, kind: 'pct' },
     {
       label: '3-year holds that lost money',
@@ -277,7 +277,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
         </AppText>
       </Pressable>
       <AppText variant="caption" tone="muted">
-        From published NAVs, before costs and taxes. Past returns don't predict future ones.
+        From published NAVs, before costs and taxes. Past performance may or may not be sustained in future.
       </AppText>
     </ScrollView>
   );

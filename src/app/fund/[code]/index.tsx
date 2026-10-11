@@ -103,7 +103,7 @@ function FundContent({ schemeCode, paramName }: { schemeCode: number; paramName:
                     maxFontSizeMultiplier={1.3}
                   >
                     {formatPercent(headline.percent)}{' '}
-                    {headline.key === 'ALL' ? 'a year since start' : `${headline.key} annualised`}
+                    {headline.key === 'ALL' ? 'since start, p.a.' : `${headline.key} annualised`}
                   </AppText>
                 )}
               </View>
@@ -231,7 +231,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
             returnsHeadline !== null && returnsHeadline.percent !== null ? (
               <AppText variant="label" tone="muted" numeric>
                 {formatPercent(returnsHeadline.percent)}{' '}
-                {returnsHeadline.key === 'ALL' ? 'a year since start' : `${returnsHeadline.key} annualised`}
+                {returnsHeadline.key === 'ALL' ? 'since start, p.a.' : `${returnsHeadline.key} annualised`}
               </AppText>
             ) : undefined
           }
@@ -264,7 +264,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
             title="How consistent were returns?"
             summary={
               <AppText variant="label" tone="muted" numeric>
-                3-year holds: {formatPercent(rolling.worst)} to {formatPercent(rolling.best)} a year
+                3-year holds: {formatPercent(rolling.worst)} to {formatPercent(rolling.best)} p.a.
                 {drawdown !== null ? ` · worst fall ${formatPercent(drawdown.percent)}` : ''}
               </AppText>
             }
@@ -297,6 +297,9 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
           Source: mfapi.in (AMFI data). Earliest NAV in the data: {formatDate(first.date)}. NAVs are published after
           market close; funds of funds and overseas funds publish a day later. ISIN{' '}
           {history.meta.isinGrowth ?? history.meta.isinDivReinvestment ?? '—'}.
+        </AppText>
+        <AppText variant="caption" tone="muted">
+          Mutual fund investments are subject to market risks, read all scheme related documents carefully.
         </AppText>
       </ScrollView>
 
