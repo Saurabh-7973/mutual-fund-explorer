@@ -152,7 +152,7 @@ export function CalendarSheet({
                 accessibilityState={{ selected }}
                 style={[
                   styles.yearCell,
-                  { borderRadius: radius.pill, backgroundColor: selected ? colors.primary : colors.surfaceMuted },
+                  { borderRadius: radius.sm, backgroundColor: selected ? colors.primary : colors.surfaceMuted },
                 ]}
               >
                 <AppText

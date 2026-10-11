@@ -85,7 +85,10 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         {formatNav(point.nav)}
       </AppText>
     );
-    if (change !== null) {
+    if (stale) {
+      // A week or more without a NAV: the status slot says so instead of an old day's change.
+      middle = <Badge label="Stale" tone="warning" />;
+    } else if (change !== null) {
       const direction = change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged';
       const pct = change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths;
       middle = (
@@ -109,7 +112,6 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
           as of {formatDate(point.date)}
         </AppText>
-        {stale && <Badge label="Stale" tone="warning" />}
       </View>
     );
   }

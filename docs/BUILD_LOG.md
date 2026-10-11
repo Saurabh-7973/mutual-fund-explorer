@@ -400,3 +400,7 @@ The user asked whether the to-do list held anything I'd found myself; mostly it 
   - NAV calendar: cells clipped their percentage (fixed 52 pt) → minimum height, cells grow; weekday header capped.
   - Fund page: the scrolled header's name and return wrapped into the star → one line each, capped; category and "is ₹… a unit" capped to match their neighbours.
   - Checked and fine: sort sheet, collection cards, compare table, pill buttons, monograms (dark tones readable).
+- **Boxy shapes and the stale row** (user: "the stale msg and the row don't look good… chips might look better with a little radius and boxy design"):
+  - One radius scale (`radius.xs` 4 added): tags 4, chips and selector thumbs 6, buttons, inputs and tracks 10, cards 14. Pill is kept only for data bars. Chips, badges, buttons, both selector variants, the tab pill, calendar year chips and fund marks moved off full circles.
+  - Badges have a fixed 20 pt height, so a tag lines up with the text beside it.
+  - Watchlist: "Stale" now takes the status slot on the middle line (right of the plan badges, where the day's change sits for other funds) instead of trailing the date; an old day's change is meaningless for a fund without a NAV for a week. Every row's three lines now read name | NAV, tags | status, house | date.

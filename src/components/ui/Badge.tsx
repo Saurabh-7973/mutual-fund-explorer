@@ -5,6 +5,8 @@ import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
 
+export const BADGE_HEIGHT = 20;
+
 export type BadgeTone = 'neutral' | 'info' | 'warning' | 'gain' | 'loss';
 
 export interface BadgeProps {
@@ -26,13 +28,19 @@ export function Badge({ label, tone = 'neutral' }: BadgeProps) {
     <View
       style={{
         alignSelf: 'flex-start',
+        // A fixed height, so a tag sits on the same baseline grid as the text beside it.
+        height: BADGE_HEIGHT,
+        justifyContent: 'center',
         backgroundColor: palette.bg,
-        borderRadius: radius.pill,
-        paddingHorizontal: spacing.sm,
-        paddingVertical: 2,
+        borderRadius: radius.xs,
+        paddingHorizontal: spacing.xs + 2,
       }}
     >
-      <AppText variant="caption" maxFontSizeMultiplier={1.3} style={{ color: palette.fg, fontFamily: fonts.semibold }}>
+      <AppText
+        variant="caption"
+        maxFontSizeMultiplier={1.2}
+        style={{ color: palette.fg, fontFamily: fonts.semibold, lineHeight: 16 }}
+      >
         {label}
       </AppText>
     </View>

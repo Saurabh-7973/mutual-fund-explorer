@@ -27,7 +27,7 @@ export function Chip({ label, onPress, selected = false, disabled = false }: Chi
       style={({ pressed }) => [
         styles.chip,
         {
-          borderRadius: radius.pill,
+          borderRadius: radius.sm,
           paddingHorizontal: spacing.md,
           borderColor: selected ? colors.primary : colors.border,
           backgroundColor: selected ? colors.infoSurface : colors.surface,

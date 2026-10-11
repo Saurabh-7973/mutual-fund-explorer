@@ -21,7 +21,7 @@ export const FundMark = memo(function FundMark({ schemeName, size = FUND_MARK_SI
     <View
       importantForAccessibility="no-hide-descendants"
       accessibilityElementsHidden
-      style={[styles.mark, { width: size, height: size, borderRadius: size * 0.3, backgroundColor: background }]}
+      style={[styles.mark, { width: size, height: size, borderRadius: size * 0.25, backgroundColor: background }]}
     >
       <AppText
         variant="labelStrong"

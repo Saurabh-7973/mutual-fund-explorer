@@ -15,7 +15,7 @@ function TabIcon({ focused, color, on, off }: { focused: boolean; color: ColorVa
     <View
       style={[
         styles.pill,
-        { borderRadius: radius.pill, backgroundColor: focused ? colors.primarySoft : 'transparent' },
+        { borderRadius: radius.md, backgroundColor: focused ? colors.primarySoft : 'transparent' },
       ]}
     >
       <Ionicons name={focused ? on : off} color={String(color)} size={22} />

@@ -53,7 +53,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
           {
             backgroundColor: look.bg,
             borderColor: look.border,
-            borderRadius: radius.pill,
+            borderRadius: radius.md,
             paddingHorizontal: spacing.xl,
             gap: spacing.sm,
             opacity: inactive ? 0.5 : pressed ? 0.85 : 1,

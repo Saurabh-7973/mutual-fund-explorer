@@ -84,7 +84,7 @@ export function SegmentedRow<K extends string>({
         styles.row,
         track && {
           padding: inset,
-          borderRadius: radius.md + inset,
+          borderRadius: radius.sm + inset,
           backgroundColor: colors.surfaceMuted,
           borderColor: colors.border,
           borderWidth: StyleSheet.hairlineWidth,
@@ -105,12 +105,12 @@ export function SegmentedRow<K extends string>({
             },
             track
               ? {
-                  borderRadius: radius.md,
+                  borderRadius: radius.sm,
                   backgroundColor: colors.raised,
                   borderColor: colors.border,
                   borderWidth: StyleSheet.hairlineWidth,
                 }
-              : { borderRadius: radius.pill, backgroundColor: colors.primarySoft },
+              : { borderRadius: radius.sm, backgroundColor: colors.primarySoft },
           ]}
         />
       )}
