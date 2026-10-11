@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
 import { buildChartGeometry, chartSummary, nearestIndex, type ChartGeometry } from '@/domain/chart';
 import { formatDate } from '@/domain/dates';
@@ -22,7 +22,8 @@ import { useTheme } from '@/theme/useTheme';
  */
 
 const DEFAULT_HEIGHT = 200;
-const PADDING = { padTop: 12, padBottom: 12, padX: 2 };
+// Room above and below the line for the High and Low labels drawn on the chart.
+const PADDING = { padTop: 24, padBottom: 22, padX: 2 };
 
 export interface NavChartProps {
   /** NAVs for the selected range, oldest first (already sliced). */
@@ -56,6 +57,10 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
   const extremes = useMemo(() => lowAndHigh(points), [points]);
 
   const lineColor = change !== null && change.diff < 0n ? colors.loss : colors.gain;
+  const markers = useMemo(
+    () => (geometry !== null && extremes !== null ? placeExtremes(geometry, extremes, height) : null),
+    [geometry, extremes, height],
+  );
 
   const scrubTo = useCallback(
     (x: number) => {
@@ -99,23 +104,31 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
   const activeY = activeIndex !== null ? geometry?.ys[activeIndex] : undefined;
   const first = points[0];
   const last = points[points.length - 1];
+  const activeChange = active !== undefined && first !== undefined ? navChange(first, active) : null;
 
   return (
     <View style={{ gap: spacing.sm }}>
+      {/* Fixed height, so the chart doesn't jump when scrubbing swaps the change for a date's NAV. */}
       <View style={styles.readout}>
         {active !== undefined ? (
           <>
-            <Text style={[typography.heading, tabularNumbers, { color: colors.text }]}>{formatNav(active.nav)}</Text>
-            <Text style={[typography.caption, { color: colors.textMuted }]}>NAV on {formatDate(active.date)}</Text>
+            <Text style={[typography.label, tabularNumbers, { color: colors.text }]}>
+              {formatNav(active.nav)}
+              <Text style={{ color: colors.textMuted }}> NAV on {formatDate(active.date)}</Text>
+            </Text>
+            {activeChange !== null && first !== undefined && (
+              <Text style={[typography.caption, tabularNumbers, { color: colors.textMuted }]}>
+                {formatPercentHundredths(activeChange.pctHundredths)} from {formatDate(first.date)}
+              </Text>
+            )}
           </>
         ) : change !== null ? (
           <>
-            <Text style={[typography.heading, tabularNumbers, { color: lineColor }]}>
+            <Text style={[typography.label, tabularNumbers, { color: lineColor }]}>
               {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+              <Text style={{ color: colors.textMuted }}> over {rangeLabel}, absolute</Text>
             </Text>
-            <Text style={[typography.caption, { color: colors.textMuted }]}>
-              NAV change over {rangeLabel} · absolute, not annualised · drag the chart to see a date
-            </Text>
+            <Text style={[typography.caption, { color: colors.textMuted }]}>Drag across the chart to read any date</Text>
           </>
         ) : null}
       </View>
@@ -131,6 +144,23 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
           {geometry !== null && (
             <Svg width={width} height={height}>
               <ChartPaths geometry={geometry} color={lineColor} />
+              {markers !== null && active === undefined && (
+                <>
+                  <Marker
+                    x={markers.high.x}
+                    y={markers.high.y}
+                    label={`High ${formatNav(markers.high.point.nav)}`}
+                    above
+                    width={width}
+                  />
+                  <Marker
+                    x={markers.low.x}
+                    y={markers.low.y}
+                    label={`Low ${formatNav(markers.low.point.nav)}`}
+                    width={width}
+                  />
+                </>
+              )}
               {activeX !== undefined && activeY !== undefined && (
                 <>
                   <Line x1={activeX} y1={0} x2={activeX} y2={height} stroke={colors.textMuted} strokeWidth={1} strokeDasharray="4 4" />
@@ -146,12 +176,6 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
         <Text style={[typography.caption, { color: colors.textMuted }]}>{first !== undefined ? formatDate(first.date) : ''}</Text>
         <Text style={[typography.caption, { color: colors.textMuted }]}>{last !== undefined ? formatDate(last.date) : ''}</Text>
       </View>
-      {extremes !== null && (
-        <Text style={[typography.caption, tabularNumbers, { color: colors.textMuted }]}>
-          Low {formatNav(extremes.low.nav)} ({formatDate(extremes.low.date)}) · High {formatNav(extremes.high.nav)} (
-          {formatDate(extremes.high.date)})
-        </Text>
-      )}
     </View>
   );
 }
@@ -171,6 +195,58 @@ const ChartPaths = memo(function ChartPaths({ geometry, color }: { geometry: Cha
     </>
   );
 });
+
+interface Placed {
+  point: NavPoint;
+  x: number;
+  y: number;
+}
+
+/** Where the exact low and high (from the full range) fall on the drawn, downsampled line. */
+function placeExtremes(
+  geometry: ChartGeometry,
+  extremes: { low: NavPoint; high: NavPoint },
+  height: number,
+): { low: Placed; high: Placed } | null {
+  const span = geometry.maxValue - geometry.minValue;
+  const place = (point: NavPoint): Placed | null => {
+    const index = geometry.points.findIndex((drawn) => drawn.date >= point.date);
+    const x = geometry.xs[index === -1 ? geometry.xs.length - 1 : index];
+    if (x === undefined) return null;
+    const fraction = span > 0 ? (point.value - geometry.minValue) / span : 0.5;
+    const y = PADDING.padTop + (1 - fraction) * (height - PADDING.padTop - PADDING.padBottom);
+    return { point, x, y: Math.min(height - 2, Math.max(2, y)) };
+  };
+  const low = place(extremes.low);
+  const high = place(extremes.high);
+  return low !== null && high !== null ? { low, high } : null;
+}
+
+/** A small dot on an extreme with its label above (high) or below (low), kept inside the chart. */
+function Marker({
+  x,
+  y,
+  label,
+  above = false,
+  width,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  above?: boolean;
+  width: number;
+}) {
+  const { colors } = useTheme();
+  const anchor = x < width * 0.2 ? 'start' : x > width * 0.8 ? 'end' : 'middle';
+  return (
+    <>
+      <Circle cx={x} cy={y} r={3} fill={colors.textMuted} />
+      <SvgText x={x} y={above ? y - 8 : y + 16} fontSize={11} fill={colors.textMuted} textAnchor={anchor}>
+        {label}
+      </SvgText>
+    </>
+  );
+}
 
 function lowAndHigh(points: readonly NavPoint[]): { low: NavPoint; high: NavPoint } | null {
   let low = points[0];
