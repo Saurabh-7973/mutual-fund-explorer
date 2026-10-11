@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 
+import { scrubTickKey } from '@/domain/chart';
 import { GROWTH_BASE, growthAt, type GrowthComparison } from '@/domain/compare';
 import { formatDate } from '@/domain/dates';
 import { formatInr } from '@/domain/format';
@@ -69,19 +70,30 @@ export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
   }, [growth, width]);
 
   const count = growth.points.length;
+  const lastTick = useRef<string | null>(null);
   const scrubTo = useCallback(
     (px: number) => {
       if (width === 0) return;
       const index = Math.min(count - 1, Math.max(0, Math.round((px / width) * (count - 1))));
-      setActive((current) => {
-        if (current === index) return current;
-        haptic.tick();
-        return index;
-      });
+      // One tick per step (a point over short spans, a month over long ones), like the NAV chart.
+      const point = growth.points[index];
+      const first = growth.points[0];
+      const last = growth.points[count - 1];
+      if (point !== undefined && first !== undefined && last !== undefined) {
+        const key = scrubTickKey(point.date, first.date, last.date);
+        if (key !== lastTick.current) {
+          lastTick.current = key;
+          haptic.tick();
+        }
+      }
+      setActive(index);
     },
-    [width, count],
+    [width, count, growth.points],
   );
-  const release = useCallback(() => setActive(null), []);
+  const release = useCallback(() => {
+    lastTick.current = null;
+    setActive(null);
+  }, []);
   const gesture = useMemo(() => {
     // Same feel as the NAV chart: a horizontal drag scrubs, a vertical swipe scrolls the page.
     const drag = Gesture.Pan()

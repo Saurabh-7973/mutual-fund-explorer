@@ -143,6 +143,7 @@ export default function HoldingsScreen() {
       new Promise<boolean>((resolve) => {
         const title = describeScheme(fund.schemeName).title;
         const what = fund.lotCount === 1 ? 'your purchase' : `all ${fund.lotCount} purchases`;
+        haptic.warn();
         Alert.alert(`Remove ${title}?`, `This removes ${what} of this fund. It can't be undone.`, [
           { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
           {

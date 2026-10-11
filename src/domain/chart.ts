@@ -1,8 +1,8 @@
-import { dayNumber, formatDate } from './dates';
+import { dayNumber, diffDays, formatDate } from './dates';
 import { formatNav, formatPercentHundredths } from './format';
 import { lttbIndices } from './lttb';
 import { navChange } from './nav';
-import type { NavPoint } from './types';
+import type { IsoDate, NavPoint } from './types';
 
 /**
  * Pure geometry for the NAV line chart, so the SVG component only draws.
@@ -116,4 +116,16 @@ export function chartSummary(series: readonly NavPoint[]): string | null {
   const magnitude = change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths;
   const direction = change.diff > 0n ? 'up' : 'down';
   return `NAV ${direction} ${formatPercentHundredths(magnitude, 'negative-only')} ${from}`;
+}
+
+/** Spans up to this many days tick on every point while scrubbed (1M and 3M); longer ones once a month. */
+export const TICK_EVERY_POINT_DAYS = 100;
+
+/**
+ * The step a scrub gives a haptic tick on. Over a year a drag crosses ~150 drawn points,
+ * and a tick on each is a buzz, not a cue; a tick per month reads like a ruler's marks.
+ * The chart ticks whenever this key changes.
+ */
+export function scrubTickKey(date: IsoDate, first: IsoDate, last: IsoDate): string {
+  return diffDays(first, last) <= TICK_EVERY_POINT_DAYS ? date : date.slice(0, 7);
 }

@@ -86,9 +86,10 @@ Motion tokens are `fast` 150 ms, `base` 220 ms and `slow` 320 ms, on the native 
 | A section opens or closes | the page eases apart (`LayoutAnimation`), the chevron turns | tap |
 | A sheet opens or closes | the dim fades while the sheet glides by its own height | — |
 | A chart range changes | the line draws in left to right; snaps to drawn if interrupted | tick |
-| Scrubbing a chart | crosshair and readout follow the finger | tick on each new point (to be thinned to a new month on long ranges: plan P1-2) |
+| Scrubbing a chart (NAV and Compare) | crosshair and readout follow the finger | tick on each new point over 1M and 3M, on each new month over longer ranges, and on reaching the marked high or low (`scrubTickKey`) |
 | Star, eye | — (cross-fade and a small scale are plan P1-1) | tap |
-| Save a purchase or SIP; load the sample | — | done |
+| Save a purchase or SIP; load the sample; a restore finishes | — | done |
+| Save on an invalid form; a confirmation before removing or replacing data | — | warning |
 | Button press | scales to 0.97 and back | — |
 
 Never animated: money and percentages (a counting number shows wrong values on the way), and screen transitions (they stay native to each platform).

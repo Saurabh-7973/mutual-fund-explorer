@@ -135,6 +135,7 @@ function AddHoldingForm({
 
   const save = () => {
     if (!units.ok || !amount.ok || resolution === null || purchaseDate === null || !priceable) {
+      haptic.warn();
       setSubmitted(true);
       return;
     }

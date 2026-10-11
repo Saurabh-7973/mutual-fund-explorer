@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { holdingsCsv, makeBackup, readBackup } from '@/store/backup';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { useTheme } from '@/theme/useTheme';
+import { haptic } from '@/components/ui/haptics';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -44,6 +45,8 @@ export default function BackupScreen() {
       : `This replaces the ${plural(watchlist.length, 'watched fund', 'watched funds')} and ${plural(lots.length, 'purchase', 'purchases')} on this phone.`;
     const damaged =
       result.dropped > 0 ? ` ${plural(result.dropped, 'damaged row was', 'damaged rows were')} left out.` : '';
+    // Replacing saved data can't be undone: the same warning feel as any removal.
+    if (!empty) haptic.warn();
     Alert.alert(`Restore ${incoming}?`, `${current}${damaged}`, [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -52,6 +55,7 @@ export default function BackupScreen() {
         onPress: () => {
           replaceAll(result.data);
           setPasted('');
+          haptic.done();
           Alert.alert('Restored', `${incoming} are back.`, [{ text: 'OK', onPress: () => router.back() }]);
         },
       },

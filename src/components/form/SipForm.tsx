@@ -93,6 +93,7 @@ export function SipForm({
 
   const save = () => {
     if (plan === null || plan.instalments.length === 0) {
+      haptic.warn();
       setSubmitted(true);
       return;
     }

@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import { MINUS } from '../format';
-import { buildChartGeometry, chartSummary, nearestIndex } from '../chart';
+import { buildChartGeometry, chartSummary, nearestIndex, scrubTickKey } from '../chart';
 import { addDays } from '../dates';
 import type { IsoDate, NavPoint } from '../types';
 
@@ -86,5 +86,19 @@ describe('chartSummary', () => {
   it('says nothing for a single point and never uses a minus sign in words', () => {
     expect(chartSummary([p('2026-10-08', '10')])).toBeNull();
     expect(chartSummary([p('2026-10-07', '20'), p('2026-10-08', '10')])).not.toContain(MINUS);
+  });
+});
+
+describe('scrubTickKey', () => {
+  const d = (value: string) => value as IsoDate;
+  it('ticks on every point over three months or less', () => {
+    expect(scrubTickKey(d('2026-09-14'), d('2026-07-09'), d('2026-10-09'))).toBe('2026-09-14');
+  });
+  it('ticks once a month over longer spans', () => {
+    const first = d('2025-10-09');
+    const last = d('2026-10-09');
+    expect(scrubTickKey(d('2026-03-02'), first, last)).toBe('2026-03');
+    expect(scrubTickKey(d('2026-03-31'), first, last)).toBe(scrubTickKey(d('2026-03-02'), first, last));
+    expect(scrubTickKey(d('2026-04-01'), first, last)).not.toBe(scrubTickKey(d('2026-03-31'), first, last));
   });
 });

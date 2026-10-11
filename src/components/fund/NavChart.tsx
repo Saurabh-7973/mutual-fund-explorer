@@ -3,7 +3,7 @@ import { Animated, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
-import { buildChartGeometry, chartSummary, nearestIndex, type ChartGeometry } from '@/domain/chart';
+import { buildChartGeometry, chartSummary, nearestIndex, scrubTickKey, type ChartGeometry } from '@/domain/chart';
 import { formatDate } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
 import { navChange } from '@/domain/nav';
@@ -93,19 +93,38 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
     [geometry, extremes, height],
   );
 
+  // Haptics: a tick per scrub step (each point over short ranges, each month over long ones,
+  // see scrubTickKey) and one on reaching the marked high or low; never one per drawn point.
+  const extremeIndexes = useMemo(
+    () =>
+      geometry === null || extremes === null
+        ? []
+        : [extremes.low, extremes.high].map((extreme) => geometry.points.findIndex((drawn) => drawn.date >= extreme.date)),
+    [geometry, extremes],
+  );
+  const lastTick = useRef<string | null>(null);
   const scrubTo = useCallback(
     (x: number) => {
       if (geometry === null) return;
       const index = nearestIndex(geometry.xs, x);
-      setActiveIndex((current) => {
-        if (current === index) return current;
-        haptic.tick();
-        return index;
-      });
+      const point = geometry.points[index];
+      const first = geometry.points[0];
+      const last = geometry.points[geometry.points.length - 1];
+      if (point !== undefined && first !== undefined && last !== undefined) {
+        const key = extremeIndexes.includes(index) ? `mark-${index}` : scrubTickKey(point.date, first.date, last.date);
+        if (key !== lastTick.current) {
+          lastTick.current = key;
+          haptic.tick();
+        }
+      }
+      setActiveIndex(index);
     },
-    [geometry],
+    [geometry, extremeIndexes],
   );
-  const release = useCallback(() => setActiveIndex(null), []);
+  const release = useCallback(() => {
+    lastTick.current = null;
+    setActiveIndex(null);
+  }, []);
 
   const gesture = useMemo(() => {
     // A horizontal drag scrubs at once; a vertical swipe fails it, so the page scrolls instead.

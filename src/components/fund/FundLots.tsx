@@ -408,6 +408,7 @@ function TimelineRow({
   const confirm = useCallback(
     () =>
       new Promise<boolean>((resolve) => {
+        haptic.warn();
         Alert.alert(
           'Remove this purchase?',
           `${formatUnits(entry.units)} units bought ${formatDate(entry.purchaseDate)}. This can't be undone.`,
