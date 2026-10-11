@@ -168,9 +168,9 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT, inset = 
       <View style={[styles.readout, { paddingHorizontal: inset }]}>
         {active !== undefined ? (
           <>
-            <Text style={[typography.label, tabularNumbers, { color: colors.text }]}>
+            <Text style={[typography.rowTitle, tabularNumbers, { color: colors.text }]}>
               {formatNav(active.nav)}
-              <Text style={{ color: colors.textMuted }}> NAV on {formatDate(active.date)}</Text>
+              <Text style={[typography.label, { color: colors.textMuted }]}> NAV on {formatDate(active.date)}</Text>
             </Text>
             {activeChange !== null && first !== undefined && (
               <Text style={[typography.caption, tabularNumbers, { color: colors.textMuted }]}>
