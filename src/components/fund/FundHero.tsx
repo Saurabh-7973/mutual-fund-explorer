@@ -79,26 +79,30 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
       )}
       {last !== undefined && (
         // The NAV and its date sit above the chart: the one price a fund has, and when it was set.
-        <View
-          accessible
-          accessibilityLabel={`NAV ${formatNav(last.nav)} as of ${formatDate(last.date)}${
-            change !== null
-              ? `, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`
-              : ''
-          }`}
-          style={[styles.line, { columnGap: spacing.sm }]}
-        >
-          <AppText variant="labelStrong" numeric>
-            NAV {formatNav(last.nav)}
-          </AppText>
-          {change !== null && (
-            <AppText variant="label" numeric tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}>
-              {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+        // "NAV ⓘ" is its own control so screen readers can reach it; the figures read as one.
+        <View style={[styles.line, { columnGap: spacing.sm }]}>
+          <Term term="nav" label="NAV" variant="labelStrong" tone="default" />
+          <View
+            accessible
+            accessibilityLabel={`${formatNav(last.nav)} as of ${formatDate(last.date)}${
+              change !== null
+                ? `, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`
+                : ''
+            }`}
+            style={[styles.line, { columnGap: spacing.sm }]}
+          >
+            <AppText variant="labelStrong" numeric>
+              {formatNav(last.nav)}
             </AppText>
-          )}
-          <AppText variant="label" tone="muted" numeric>
-            as of {formatDate(last.date)}
-          </AppText>
+            {change !== null && (
+              <AppText variant="label" numeric tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}>
+                {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+              </AppText>
+            )}
+            <AppText variant="label" tone="muted" numeric>
+              as of {formatDate(last.date)}
+            </AppText>
+          </View>
         </View>
       )}
     </View>

@@ -215,7 +215,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
           />
         </View>
 
-        <KeyFacts meta={history.meta} last={last} first={first} skipped={history.skipped} />
+        <KeyFacts meta={history.meta} first={first} skipped={history.skipped} />
 
         <FundLots
           schemeCode={schemeCode}
@@ -295,8 +295,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
 
         <AppText variant="caption" tone="muted">
           Source: mfapi.in (AMFI data). Earliest NAV in the data: {formatDate(first.date)}. NAVs are published after
-          market close; funds of funds and overseas funds publish a day later. ISIN{' '}
-          {history.meta.isinGrowth ?? history.meta.isinDivReinvestment ?? '—'}.
+          market close; funds of funds and overseas funds publish a day later.
         </AppText>
         <AppText variant="caption" tone="muted">
           Mutual fund investments are subject to market risks, read all scheme related documents carefully.
