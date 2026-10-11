@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { memo, useCallback, useMemo, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatDate, todayInIndia } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
@@ -16,7 +16,9 @@ import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { SwipeRow } from '../ui/SwipeRow';
 
-export const WATCH_ROW_HEIGHT = 92;
+// Whole device pixels: at 2.625x, 92 dp is a fractional pixel height, so every other row overlapped
+// the one above by a pixel and hid its hairline divider.
+export const WATCH_ROW_HEIGHT = PixelRatio.roundToNearestPixel(92);
 
 export interface WatchRowProps {
   item: WatchItem;

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { memo, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { describeScheme } from '@/domain/schemeName';
 import type { SchemeSearchResult } from '@/domain/types';
@@ -10,7 +10,9 @@ import { AppText } from '../ui/AppText';
 import { SchemeBadges } from './SchemeBadges';
 import { WatchToggle } from './WatchToggle';
 
-export const SCHEME_ROW_HEIGHT = 76;
+// Whole device pixels: at 2.625x, 76 dp is a fractional pixel height, so every other row overlapped
+// the one above by a pixel and hid its hairline divider.
+export const SCHEME_ROW_HEIGHT = PixelRatio.roundToNearestPixel(76);
 
 export interface SchemeRowProps {
   scheme: SchemeSearchResult;

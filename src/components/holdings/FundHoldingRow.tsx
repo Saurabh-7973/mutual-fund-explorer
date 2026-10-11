@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { memo, useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { VALUE_SCALE } from '@/domain/decimal';
 import { formatPercent } from '@/domain/format';
@@ -15,7 +15,9 @@ import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
 
-export const FUND_HOLDING_ROW_HEIGHT = 76;
+// Whole device pixels: at 2.625x, 76 dp is a fractional pixel height, so every other row overlapped
+// the one above by a pixel and hid its hairline divider.
+export const FUND_HOLDING_ROW_HEIGHT = PixelRatio.roundToNearestPixel(76);
 
 /** What the right-hand column shows; one at a time keeps rows quiet (switched above the list). */
 export type HoldingColumn = 'value' | 'returns' | 'xirr';

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { memo, useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatNav, formatPercentHundredths } from '@/domain/format';
 import { describeScheme } from '@/domain/schemeName';
@@ -10,7 +10,9 @@ import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
 
-export const RECENT_ROW_HEIGHT = 60;
+// Whole device pixels: at 2.625x, 60 dp is a fractional pixel height, so every other row overlapped
+// the one above by a pixel and hid its hairline divider.
+export const RECENT_ROW_HEIGHT = PixelRatio.roundToNearestPixel(60);
 
 /** A fund opened earlier: name and plan, with its latest NAV and today's move so the list is worth a glance. */
 export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: RecentFund }) {

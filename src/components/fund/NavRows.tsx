@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { PixelRatio, StyleSheet, View } from 'react-native';
 
 import { formatDate } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
@@ -10,7 +10,9 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 
 /** One height for every item in the NAV list, so getItemLayout is exact. */
-export const NAV_ROW_HEIGHT = 48;
+// Whole device pixels: at 2.625x, 48 dp is a fractional pixel height, so every other row overlapped
+// the one above by a pixel and hid its hairline divider.
+export const NAV_ROW_HEIGHT = PixelRatio.roundToNearestPixel(48);
 
 /** Date | NAV | change. Used by the fund screen's recent NAVs and the full list. */
 export const NavRowView = memo(function NavRowView({ row }: { row: NavRow }) {
