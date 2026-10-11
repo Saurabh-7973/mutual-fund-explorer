@@ -4,14 +4,14 @@ import { Alert, Pressable, StyleSheet, View, useWindowDimensions } from 'react-n
 import { router } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 
-import { formatDate, ordinalDay, todayInIndia } from '@/domain/dates';
+import { diffDays, formatDate, formatDuration, ordinalDay, todayInIndia } from '@/domain/dates';
 import { NAV_SCALE, VALUE_SCALE, toPlainString } from '@/domain/decimal';
 import { formatInr, formatNav, formatPercent, formatUnits } from '@/domain/format';
 import { holdingPeriods, lockInEndsOn, type UnitsUntil } from '@/domain/holdingPeriod';
 import { holdingsByFund, portfolioDayGain, purchaseTimeline, type TimelineEntry } from '@/domain/holdings';
 import { detectSip } from '@/domain/sip';
 import type { IsoDate, NavPoint } from '@/domain/types';
-import { evaluateLot } from '@/domain/valuation';
+import { evaluateLot, unitsValue } from '@/domain/valuation';
 import { useDayChange } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
@@ -80,6 +80,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
   );
   if (fund === undefined) return null;
   const average = timeline[timeline.length - 1]?.averageNavAfter ?? null;
+  const firstDate = timeline[0]?.purchaseDate;
 
   return (
     <View
@@ -87,9 +88,16 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
     >
       <View style={{ padding: spacing.lg, paddingBottom: spacing.md, gap: spacing.xs }}>
         <View style={styles.row}>
-          <AppText variant="heading" accessibilityRole="header" style={styles.flex}>
-            Your investment
-          </AppText>
+          <View style={styles.flex}>
+            <AppText variant="heading" accessibilityRole="header">
+              Your investment
+            </AppText>
+            {firstDate !== undefined && (
+              <AppText variant="caption" tone="muted">
+                Invested for {formatDuration(diffDays(firstDate, today))}
+              </AppText>
+            )}
+          </View>
           <IconButton
             name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
             onPress={toggleHideAmounts}
@@ -159,6 +167,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
               label="In lock-in"
               until={periods.locked}
               total={fund.units}
+              nav={last.nav}
               next="Next unlocks"
               all="all free by"
             />
@@ -170,6 +179,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
               label="Short-term"
               until={periods.shortTerm}
               total={fund.units}
+              nav={last.nav}
               next="Next turns long-term"
               all="all by"
             />
@@ -270,6 +280,7 @@ function PeriodLine({
   label,
   until,
   total,
+  nav,
   next,
   all,
 }: {
@@ -278,19 +289,33 @@ function PeriodLine({
   label: string;
   until: UnitsUntil;
   total: bigint;
+  /** Today's NAV: the line shows what the waiting units are worth, as Groww splits long and short term in rupees. */
+  nav: string;
   next: string;
   all: string;
 }) {
   const { colors, spacing } = useTheme();
+  const waitingValue = unitsValue(until.units, nav);
+  const totalValue = unitsValue(total, nav);
   return (
     <View style={[styles.periodRow, { gap: spacing.sm }]}>
       <Ionicons name={icon} size={14} color={colors.textMuted} style={styles.periodIcon} />
       <View style={[styles.flex, { gap: 2 }]}>
         <View style={[styles.line, { columnGap: spacing.sm }]}>
           <Term term={term} label={label} variant="caption" />
-          <AppText variant="caption" numeric>
-            {formatUnits(until.units)} of {formatUnits(total)} units
-          </AppText>
+          {waitingValue !== null && totalValue !== null ? (
+            <View style={[styles.line, { columnGap: 4 }]}>
+              <PrivateAmount value={waitingValue} scale={VALUE_SCALE} variant="caption" />
+              <AppText variant="caption" tone="muted">
+                of
+              </AppText>
+              <PrivateAmount value={totalValue} scale={VALUE_SCALE} variant="caption" tone="muted" />
+            </View>
+          ) : (
+            <AppText variant="caption" numeric>
+              {formatUnits(until.units)} of {formatUnits(total)} units
+            </AppText>
+          )}
         </View>
         <AppText variant="caption" tone="muted" numeric>
           {next} {formatDate(until.next)}

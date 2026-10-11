@@ -42,6 +42,12 @@ export function lotInvested(lot: { units: string; applied: AppliedNav | null; am
   return units === null || nav === null ? null : units * nav;
 }
 
+/** What some units are worth at a NAV, at VALUE_SCALE (null for an unreadable NAV). */
+export function unitsValue(units: bigint, nav: string): bigint | null {
+  const scaled = parseScaled(nav, NAV_SCALE);
+  return scaled === null ? null : units * scaled;
+}
+
 export interface LotInput {
   units: string;
   /** Rupees paid, when known; otherwise invested is units × applied NAV. */

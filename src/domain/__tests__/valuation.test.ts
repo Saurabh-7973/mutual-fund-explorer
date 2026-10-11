@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { VALUE_SCALE } from '../decimal';
 import { MINUS, formatInr, formatPercentHundredths } from '../format';
-import { evaluateLot, lotInvested, parseAmount, summarize, valueLot, type LotValuation } from '../valuation';
+import { evaluateLot, lotInvested, parseAmount, summarize, unitsValue, valueLot, type LotValuation } from '../valuation';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -60,6 +60,20 @@ describe('amount paid', () => {
       latest,
     );
     expect(status.status === 'valued' && inr(status.valuation.invested)).toBe('₹9,391.00');
+  });
+});
+
+describe('unitsValue', () => {
+  it('values units at a NAV exactly, matching a lot valued the same way', () => {
+    const lot = mustValue({
+      units: '125.432',
+      appliedNav: '74.86850',
+      appliedDate: d('2024-03-31'),
+      latestNav: '88.92580',
+      latestDate: d('2026-10-09'),
+    });
+    expect(unitsValue(lot.units, '88.92580')).toBe(lot.current);
+    expect(unitsValue(1n, 'abc')).toBeNull();
   });
 });
 
