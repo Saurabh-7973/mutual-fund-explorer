@@ -55,6 +55,14 @@ During the Claude Code phases (details and dates in `docs/BUILD_LOG.md`):
 - **Product gaps found by walking through six investor personas** (`docs/PERSONAS.md`): no explanations for beginners (now a glossary), no way to enter years of SIP instalments (now one form, plus "Add instalments due"), no risk measure (now the worst fall and recovery), no comparison (now Compare), and data that lived only on the phone (now backup, restore and CSV).
 - **Not every surprise was a bug.** Expo Go's "Failed to download remote update" in airplane mode is development-only (it fetches the bundle from Metro at each launch); `adb reverse` made offline cold starts testable. The plan expected 3 Direct Growth Parag Parikh plans; the live data now has 4.
 
+- **A fresh clone wouldn't install.** Adding a dependency exposed that `npm install` on a clean clone failed (ERESOLVE): the lockfile carried `react-dom@19.3.0`, an optional Expo peer that needs React 19.3, while SDK 57 pins 19.2.3. A reviewer's first command would have failed. Fixed with an `overrides` pin, verified with `npm ci` in an empty directory. The first attempted fix (`--legacy-peer-deps`) rewrote 500 lockfile lines and dropped packages, so it was reverted.
+- **A formatter run without the repo's config.** `npx prettier` (no config in the repo) rewrote five files to double quotes; they were restored from git and edited again by hand.
+- **A wrong first diagnosis.** Missing list dividers looked like a tall badge painting over the border; moving the divider changed nothing. Measuring row bounds showed the cause: 92 dp is 241.5 px at 420 dpi, so alternate rows overlapped by a pixel. Row heights are now rounded to whole pixels.
+- **A privacy leak.** The new "SIP ₹5,000" row label showed money with amounts hidden; the background security review flagged it, and it now reads "SIP".
+- **Invested didn't match the statement.** SIP instalments showed ₹4,999.99 because invested was units × NAV. Real apps and CAMS statements count the rupees paid; with approval, purchases now store the amount (optional, backward-compatible).
+- **"Is the list I gave you mine or yours?"** When I asked whether the to-do list had anything Claude found itself, it admitted it was mostly my own asks, then did its own critical audit of every screen (16 findings: duplicated figures, labels repeated per row, a pinned title wasting space, dots misaligned, tips in subtitles) and fixed them.
+- **A chart animation that stopped halfway.** The draw-in reveal was cancelled by re-renders; it now runs only when the range changes and finishes if interrupted.
+
 **[YOU]** Say in your own words how you caught these (what you saw on the phone, what made you push back) and which ones mattered most to you.
 
 ## Key decisions and trade-offs
