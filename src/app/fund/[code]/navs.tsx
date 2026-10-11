@@ -10,6 +10,7 @@ import { GapRowView, NAV_ROW_HEIGHT, NavHeaderRow, NavRowView } from '@/componen
 import { AppText } from '@/components/ui/AppText';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { formatDate } from '@/domain/dates';
+import { groupIndian } from '@/domain/format';
 import { navListItems, type NavListItem } from '@/domain/nav';
 import { parseSchemeCode } from '@/domain/search';
 import { useFundSeries } from '@/query/hooks';
@@ -64,7 +65,7 @@ function NavList({ ready, schemeCode, name }: { ready: FundReady; schemeCode: nu
         <FundTitle name={name} schemeCode={schemeCode} compact />
         {first !== undefined && (
           <AppText variant="label" tone="muted" numeric>
-            {points.length} NAVs from {formatDate(first.date)} to {formatDate(last.date)}
+            {groupIndian(String(points.length))} NAVs from {formatDate(first.date)} to {formatDate(last.date)}
           </AppText>
         )}
         <View style={{ marginTop: spacing.sm }}>

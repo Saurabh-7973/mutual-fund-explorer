@@ -26,7 +26,7 @@ import { Section } from '@/components/ui/Section';
 import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { formatDate, formatMonthYear } from '@/domain/dates';
-import { formatInrCompact, formatPercent } from '@/domain/format';
+import { formatInrCompact, formatPercent, groupIndian } from '@/domain/format';
 import { VALUE_SCALE } from '@/domain/decimal';
 import { maxDrawdown, replayInvestment, rollingReturns } from '@/domain/longTerm';
 import { headlineReturn, trailingReturns } from '@/domain/returns';
@@ -277,7 +277,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
           title="NAV history"
           summary={
             <AppText variant="label" tone="muted" numeric>
-              {points.length} NAVs since {formatMonthYear(first.date)}
+              {groupIndian(String(points.length))} NAVs since {formatMonthYear(first.date)}
             </AppText>
           }
         >
@@ -287,7 +287,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
             ))}
           </View>
           <Button
-            label={`See all ${points.length} NAVs`}
+            label={`See all ${groupIndian(String(points.length))} NAVs`}
             variant="secondary"
             onPress={() => router.push({ pathname: '/fund/[code]/navs', params: { code: String(schemeCode), name } })}
           />
