@@ -1,20 +1,18 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Animated,
-  Pressable,
   RefreshControl,
   StyleSheet,
   View,
-  useWindowDimensions,
   type LayoutChangeEvent,
   type ListRenderItem,
 } from 'react-native';
 
-import { AllocationCard } from '@/components/holdings/AllocationCard';
+import { HoldingsListHeader } from '@/components/holdings/HoldingsListHeader';
+import { PortfolioSummary } from '@/components/holdings/PortfolioSummary';
 import { SORT_OPTIONS, SortSheet, directionLabels } from '@/components/holdings/SortSheet';
 import {
   FUND_HOLDING_ROW_HEIGHT,
@@ -28,16 +26,10 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LoadSampleButton, SampleBanner } from '@/components/holdings/SamplePortfolio';
 import { IconButton } from '@/components/ui/IconButton';
-import { PrivateAmount } from '@/components/ui/PrivateAmount';
 import { LargeTitle, ScreenHeader, TopBar, useCollapsingTitle } from '@/components/ui/ScreenHeader';
 import { Term } from '@/components/ui/Term';
-import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton';
-import { SignedAmount } from '@/components/ui/SignedAmount';
-import { SignedPercent } from '@/components/ui/SignedPercent';
+import { SkeletonRows } from '@/components/ui/Skeleton';
 import { formatAsOf } from '@/domain/dates';
-import type { GlossaryKey } from '@/domain/glossary';
-import { VALUE_SCALE } from '@/domain/decimal';
-import { formatPercent } from '@/domain/format';
 import {
   allocation,
   allocationByAssetClass,
@@ -260,123 +252,26 @@ export default function HoldingsScreen() {
       <View style={{ paddingHorizontal: spacing.lg }}>
         <SampleBanner />
       </View>
-      <View
-        style={[
-          styles.summary,
-          {
-            backgroundColor: colors.surface,
-            borderColor: colors.border,
-            borderRadius: radius.lg,
-            margin: spacing.lg,
-            padding: spacing.lg,
-          },
-        ]}
-      >
-        <View style={styles.headerRow}>
-          <AppText variant="label" tone="muted" style={styles.flex}>
-            {funds.length === 1 ? '1 fund' : `${funds.length} funds`} · current value
-          </AppText>
-        </View>
-        {anyFirstLoad ? (
-          // Never show partial totals while a fund's latest NAV is still on its first load.
-          <View accessible accessibilityLabel="Loading totals" style={{ gap: spacing.sm, marginTop: spacing.xs }}>
-            <Skeleton width={200} height={34} />
-            <Skeleton width={240} height={16} />
-          </View>
-        ) : (
-          <>
-            <PrivateAmount value={totals.current} scale={VALUE_SCALE} variant="figure" />
-            <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
-            <View style={{ gap: spacing.sm }}>
-              <Row label="1D returns" term="oneDay">
-                {dayGain !== null ? (
-                  <View style={[styles.inline, { gap: spacing.xs }]}>
-                    <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
-                    <SignedPercent hundredths={dayGain.pctHundredths} variant="label" />
-                  </View>
-                ) : (
-                  <AppText variant="label" tone="muted">
-                    —
-                  </AppText>
-                )}
-              </Row>
-              <Row label="Total returns">
-                <View style={[styles.inline, { gap: spacing.xs }]}>
-                  <SignedAmount value={totals.gain} scale={VALUE_SCALE} variant="label" private />
-                  {totals.returnHundredths !== null && (
-                    <SignedPercent hundredths={totals.returnHundredths} variant="label" />
-                  )}
-                </View>
-              </Row>
-              <Row label="Invested">
-                <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="label" />
-              </Row>
-              <Row label="XIRR" term="xirr">
-                {xirr !== null ? (
-                  <AppText
-                    variant="label"
-                    numeric
-                    tone={xirr > 0 ? 'gain' : xirr < 0 ? 'loss' : 'muted'}
-                    accessibilityLabel={`${formatPercent(xirr)} per year`}
-                  >
-                    {formatPercent(xirr)} p.a.
-                  </AppText>
-                ) : (
-                  <AppText variant="label" tone="muted">
-                    after your first year
-                  </AppText>
-                )}
-              </Row>
-            </View>
-            <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
-            <AllocationCard byClass={classSlices} byFund={slices} />
-          </>
-        )}
-        {excluded > 0 && (
-          <View style={{ marginTop: spacing.md }}>
-            <AppText variant="caption" tone="warning">
-              {[
-                totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
-                totals.unavailableCount > 0 ? `${totals.unavailableCount} not loaded` : null,
-              ]
-                .filter((part): part is string => part !== null)
-                .join(' and ')}{' '}
-              {excluded === 1 ? "isn't" : "aren't"} in these totals.
-            </AppText>
-          </View>
-        )}
-      </View>
+      <PortfolioSummary
+        fundCount={funds.length}
+        loading={anyFirstLoad}
+        totals={totals}
+        dayGain={dayGain}
+        xirr={xirr}
+        classSlices={classSlices}
+        slices={slices}
+        excluded={excluded}
+      />
 
-      {/* One figure per row keeps the list calm; this switches which one. */}
-      {/* Groww's layout: how the list is ordered on the left, which figure the rows show on the right. */}
-      <View style={[styles.listHeader, { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}>
-        <Pressable
-          onPress={() => setSorting(true)}
-          accessibilityRole="button"
-          accessibilityLabel={`Sorted by ${sortOption.label}, ${directionLabels(sortBy)[direction]}. Change sort`}
-          hitSlop={12}
-          style={[styles.inline, { gap: spacing.xs }]}
-        >
-          <Ionicons name="swap-vertical" size={14} color={colors.primary} />
-          <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" numberOfLines={1}>
-            {sortOption.short}
-          </AppText>
-          <Ionicons name={direction === 'desc' ? 'arrow-down' : 'arrow-up'} size={12} color={colors.primary} />
-        </Pressable>
-        <View style={styles.flex} />
-        <Pressable
-          onPress={() => setColumn(nextColumn.key)}
-          accessibilityRole="button"
-          accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
-          hitSlop={12}
-          style={[styles.inline, { gap: spacing.xs }]}
-        >
-          <Ionicons name="code-outline" size={14} color={colors.primary} />
-          <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" style={[styles.dotted, { borderBottomColor: colors.primary }]}>
-            {columnLabel}
-          </AppText>
-        </Pressable>
-      </View>
+      <HoldingsListHeader
+        sortShort={sortOption.short}
+        sortLabel={`${sortOption.label}, ${directionLabels(sortBy)[direction]}`}
+        direction={direction}
+        columnLabel={columnLabel}
+        nextColumnLabel={nextColumn.label}
+        onSort={() => setSorting(true)}
+        onSwitchColumn={() => setColumn(nextColumn.key)}
+      />
     </View>
   );
 
@@ -438,36 +333,7 @@ export default function HoldingsScreen() {
   );
 }
 
-function Row({ label, term, children }: { label: string; term?: GlossaryKey; children: ReactNode }) {
-  // At large text sizes a label and a long figure can't share a line: the label goes above.
-  const stacked = useWindowDimensions().fontScale > 1.3;
-  return (
-    <View style={stacked ? styles.kvStacked : styles.kv}>
-      <View style={stacked ? undefined : styles.flex}>
-        {term !== undefined ? (
-          <Term term={term} label={label} />
-        ) : (
-          // Capped like the glossary labels, so every label in the card is one size.
-          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
-            {label}
-          </AppText>
-        )}
-      </View>
-      {children}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { justifyContent: 'center' },
-  summary: { borderWidth: StyleSheet.hairlineWidth },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  rule: { borderTopWidth: 1, borderStyle: 'dashed' },
-  kv: { flexDirection: 'row', alignItems: 'center', minHeight: 22 },
-  kvStacked: { gap: 2 },
-  inline: { flexDirection: 'row', alignItems: 'center' },
-  listHeader: { flexDirection: 'row', alignItems: 'center' },
-  // A dotted underline marks the column label as tappable, as Groww does.
-  dotted: { borderBottomWidth: 1, borderStyle: 'dashed' },
 });

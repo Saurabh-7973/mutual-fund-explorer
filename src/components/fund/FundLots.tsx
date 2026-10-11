@@ -1,17 +1,16 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Alert, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useShallow } from 'zustand/react/shallow';
 
 import { diffDays, formatDate, formatDuration, ordinalDay, todayInIndia } from '@/domain/dates';
-import { NAV_SCALE, VALUE_SCALE, toPlainString } from '@/domain/decimal';
-import { formatInr, formatNav, formatPercent, formatUnits } from '@/domain/format';
-import { holdingPeriods, lockInEndsOn, type UnitsUntil } from '@/domain/holdingPeriod';
-import { holdingsByFund, portfolioDayGain, purchaseTimeline, type TimelineEntry } from '@/domain/holdings';
+import { VALUE_SCALE } from '@/domain/decimal';
+import { formatInr, formatPercent, formatUnits } from '@/domain/format';
+import { holdingPeriods } from '@/domain/holdingPeriod';
+import { holdingsByFund, portfolioDayGain, purchaseTimeline } from '@/domain/holdings';
 import { detectSip } from '@/domain/sip';
-import type { IsoDate, NavPoint } from '@/domain/types';
-import { evaluateLot, unitsValue } from '@/domain/valuation';
+import type { NavPoint } from '@/domain/types';
+import { evaluateLot } from '@/domain/valuation';
 import { useDayChange } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
@@ -20,14 +19,16 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
-import { Term } from '../ui/Term';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
-import { SwipeRow } from '../ui/SwipeRow';
 import { haptic } from '../ui/haptics';
 import { easeNextLayout } from '../ui/motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+
+import { PeriodLine, stillLocked } from './lots/PeriodLine';
+import { Cell, Divider } from './lots/StripCell';
+import { Spine, TimelineRow, TodayRow } from './lots/Timeline';
 
 export interface FundLotsProps {
   schemeCode: number;
@@ -37,13 +38,8 @@ export interface FundLotsProps {
   schemeName: string;
 }
 
-const navText = (scaled: bigint) => formatNav(toPlainString(scaled, NAV_SCALE));
 /** "₹5,000": whole rupees without paise. */
 const rupeesText = (rupees: number) => formatInr(BigInt(rupees) * 100n, 2).replace(/\.00$/, '');
-
-/** Timeline dot, and its offset so it centres on a row's first line (8 pt padding + half an 18 pt line). */
-const DOT_SIZE = 12;
-const DOT_TOP = 8 + 9 - DOT_SIZE / 2;
 
 /** Purchases shown before "Show earlier purchases". */
 const RECENT_PURCHASES = 4;
@@ -278,245 +274,13 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
   );
 }
 
-/** An ELSS purchase's lock-in end date, from its allotment (NAV) date, while it's still ahead. */
-function stillLocked(allotted: IsoDate, today: IsoDate): IsoDate | null {
-  const end = lockInEndsOn(allotted);
-  return end > today ? end : null;
-}
-
-/**
- * "In lock-in ⓘ  1,390.3029 of 1,766.5700 units", then "Next unlocks 05 Nov 2026 · all free
- * by 05 Oct 2029": how much is waiting, then when it starts and finishes.
- */
-function PeriodLine({
-  icon,
-  term,
-  label,
-  until,
-  total,
-  nav,
-  next,
-  all,
-}: {
-  icon: 'lock-closed-outline' | 'time-outline';
-  term: 'lockIn' | 'longTerm';
-  label: string;
-  until: UnitsUntil;
-  total: bigint;
-  /** Today's NAV: the line shows what the waiting units are worth, as Groww splits long and short term in rupees. */
-  nav: string;
-  next: string;
-  all: string;
-}) {
-  const { colors, spacing } = useTheme();
-  const waitingValue = unitsValue(until.units, nav);
-  const totalValue = unitsValue(total, nav);
-  return (
-    <View style={[styles.periodRow, { gap: spacing.sm }]}>
-      <Ionicons name={icon} size={14} color={colors.textMuted} style={styles.periodIcon} />
-      <View style={[styles.flex, { gap: 2 }]}>
-        <View style={[styles.line, { columnGap: spacing.sm }]}>
-          <Term term={term} label={label} variant="caption" />
-          {waitingValue !== null && totalValue !== null ? (
-            <View style={[styles.line, { columnGap: 4 }]}>
-              <PrivateAmount value={waitingValue} scale={VALUE_SCALE} variant="caption" />
-              <AppText variant="caption" tone="muted">
-                of
-              </AppText>
-              <PrivateAmount value={totalValue} scale={VALUE_SCALE} variant="caption" tone="muted" />
-            </View>
-          ) : (
-            <AppText variant="caption" numeric>
-              {formatUnits(until.units)} of {formatUnits(total)} units
-            </AppText>
-          )}
-        </View>
-        <AppText variant="caption" tone="muted" numeric>
-          {next} {formatDate(until.next)}
-          {until.all !== until.next ? ` · ${all} ${formatDate(until.all)}` : ''}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
-function Cell({ label, stacked, children }: { label: string; stacked: boolean; children: ReactNode }) {
-  const { spacing } = useTheme();
-  return (
-    <View
-      style={
-        stacked
-          ? [styles.cellStacked, { paddingVertical: spacing.xs, gap: spacing.md }]
-          : [styles.cell, { paddingVertical: spacing.md, gap: 2 }]
-      }
-    >
-      <AppText variant="caption" tone="muted">
-        {label}
-      </AppText>
-      {children}
-    </View>
-  );
-}
-
-function Divider() {
-  const { colors } = useTheme();
-  return <View style={[styles.divider, { backgroundColor: colors.border }]} />;
-}
-
-/**
- * The spine and its dot, drawn the same for every event so the eye follows one line down.
- * The dot sits beside the event's first line (its date), not the middle of its block.
- */
-function Spine({
-  filled,
-  first = false,
-  last = false,
-  centered = false,
-}: {
-  filled: boolean;
-  first?: boolean;
-  last?: boolean;
-  /** For one-line rows (the "Show earlier purchases" link): centre the dot instead. */
-  centered?: boolean;
-}) {
-  const { colors } = useTheme();
-  const dotTop = centered ? undefined : DOT_TOP;
-  const middle = centered ? '50%' : DOT_TOP + DOT_SIZE / 2;
-  return (
-    <View style={[styles.spine, !centered && styles.spineTop]}>
-      <View
-        style={[
-          styles.spineLine,
-          { backgroundColor: colors.border, top: first ? middle : 0 },
-          last ? { height: middle } : { bottom: 0 },
-        ]}
-      />
-      <View
-        style={[
-          styles.dot,
-          dotTop !== undefined && { marginTop: dotTop },
-          { borderColor: colors.primary, backgroundColor: filled ? colors.primary : colors.surface },
-        ]}
-      />
-    </View>
-  );
-}
-
-function TimelineRow({
-  entry,
-  first,
-  onRemove,
-  lockedUntil,
-}: {
-  entry: TimelineEntry;
-  first: boolean;
-  onRemove: (id: string) => void;
-  /** An ELSS purchase still in its lock-in: the day it ends. */
-  lockedUntil: IsoDate | null;
-}) {
-  const { colors, spacing } = useTheme();
-  const confirm = useCallback(
-    () =>
-      new Promise<boolean>((resolve) => {
-        haptic.warn();
-        Alert.alert(
-          'Remove this purchase?',
-          `${formatUnits(entry.units)} units bought ${formatDate(entry.purchaseDate)}. This can't be undone.`,
-          [
-            { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-            {
-              text: 'Remove',
-              style: 'destructive',
-              onPress: () => {
-                onRemove(entry.id);
-                resolve(true);
-              },
-            },
-          ],
-        );
-      }),
-    [entry, onRemove],
-  );
-
-  return (
-    <SwipeRow actionLabel="Remove" onAction={confirm}>
-      <View style={[styles.event, { backgroundColor: colors.surface, paddingRight: spacing.lg, gap: spacing.md }]}>
-        <Spine filled={entry.nav !== null} first={first} />
-        <View style={[styles.flex, { paddingVertical: spacing.sm, gap: 2 }]}>
-          <View style={[styles.row, { gap: spacing.md }]}>
-            <AppText variant="label" numeric style={styles.flex}>
-              Bought {formatDate(entry.purchaseDate)}
-            </AppText>
-            {entry.invested !== null ? (
-              <PrivateAmount value={entry.invested} scale={VALUE_SCALE} variant="label" />
-            ) : (
-              <AppText variant="caption" tone="warning">
-                Awaiting NAV
-              </AppText>
-            )}
-          </View>
-          <AppText variant="caption" tone="muted" numeric>
-            {formatUnits(entry.units)} units
-            {entry.nav !== null ? ` at ${formatNav(entry.nav)}` : ''}
-            {entry.navDate !== null && entry.navDate !== entry.purchaseDate
-              ? ` (NAV of ${formatDate(entry.navDate)})`
-              : ''}
-          </AppText>
-          {entry.averageNavAfter !== null && entry.nav !== null && (
-            <AppText variant="caption" tone="muted" numeric>
-              Average cost now {navText(entry.averageNavAfter)}
-            </AppText>
-          )}
-          {lockedUntil !== null && (
-            <AppText variant="caption" tone="muted" numeric>
-              Lock-in ends {formatDate(lockedUntil)}
-            </AppText>
-          )}
-        </View>
-      </View>
-    </SwipeRow>
-  );
-}
-
-/** The timeline ends at today: where the NAV is against what you paid on average. */
-function TodayRow({ last, average }: { last: NavPoint; average: bigint | null }) {
-  const { spacing } = useTheme();
-  return (
-    <View style={[styles.event, { paddingRight: spacing.lg, gap: spacing.md }]}>
-      <Spine filled last />
-      <View style={[styles.flex, { paddingVertical: spacing.sm, gap: 2 }]}>
-        <AppText variant="label" numeric>
-          NAV {formatNav(last.nav)} on {formatDate(last.date)}
-        </AppText>
-        {average !== null && (
-          <View style={[styles.line, { gap: 4 }]}>
-            <Term term="averageCost" label="Your average cost" variant="caption" />
-            <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-              is {navText(average)} a unit
-            </AppText>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center' },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
   flex: { flex: 1 },
   strip: { flexDirection: 'row', alignItems: 'stretch' },
-  cell: { flex: 1, alignItems: 'center' },
   stripStacked: { alignItems: 'stretch' },
-  cellStacked: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap' },
-  divider: { width: StyleSheet.hairlineWidth, marginVertical: 10 },
   event: { flexDirection: 'row', alignItems: 'stretch' },
   centered: { alignItems: 'center' },
-  periodRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  periodIcon: { marginTop: 2 },
-  spine: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  spineTop: { justifyContent: 'flex-start' },
-  spineLine: { position: 'absolute', width: 2 },
-  dot: { width: DOT_SIZE, height: DOT_SIZE, borderRadius: DOT_SIZE / 2, borderWidth: 2 },
 });
