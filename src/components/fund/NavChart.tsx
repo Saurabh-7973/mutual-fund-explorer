@@ -33,9 +33,11 @@ export interface NavChartProps {
   /** How the range reads in a sentence: "1 year", "6 months", "since 28 May 2013". */
   rangeLabel: string;
   height?: number;
+  /** Side padding for the text above and below, when the chart itself runs edge to edge. */
+  inset?: number;
 }
 
-export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavChartProps) {
+export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT, inset = 0 }: NavChartProps) {
   const { colors, spacing, typography } = useTheme();
   const [width, setWidth] = useState(0);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -163,7 +165,7 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
   return (
     <View style={{ gap: spacing.sm }}>
       {/* Fixed height, so the chart doesn't jump when scrubbing swaps the change for a date's NAV. */}
-      <View style={styles.readout}>
+      <View style={[styles.readout, { paddingHorizontal: inset }]}>
         {active !== undefined ? (
           <>
             <Text style={[typography.label, tabularNumbers, { color: colors.text }]}>
@@ -178,9 +180,9 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
           </>
         ) : change !== null ? (
           <>
-            <Text style={[typography.label, tabularNumbers, { color: lineColor }]}>
+            <Text style={[typography.rowTitle, tabularNumbers, { color: lineColor }]}>
               {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
-              <Text style={{ color: colors.textMuted }}> over {rangeLabel}, absolute</Text>
+              <Text style={[typography.label, { color: colors.textMuted }]}> over {rangeLabel}, absolute</Text>
             </Text>
             <Text style={[typography.caption, { color: colors.textMuted }]}>Drag across the chart to read any date</Text>
           </>
@@ -236,7 +238,7 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
         </View>
       </GestureDetector>
 
-      <View style={styles.axis}>
+      <View style={[styles.axis, { paddingHorizontal: inset }]}>
         <Text style={[typography.caption, { color: colors.textMuted }]}>{first !== undefined ? formatDate(first.date) : ''}</Text>
         <Text style={[typography.caption, { color: colors.textMuted }]}>{last !== undefined ? formatDate(last.date) : ''}</Text>
       </View>

@@ -19,9 +19,10 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 import { Button } from '../ui/Button';
 import { IconButton } from '../ui/IconButton';
+import { ChangeChip } from '../ui/ChangeChip';
+import { MoneyHero } from '../ui/MoneyHero';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
-import { SignedPercent } from '../ui/SignedPercent';
 import { haptic } from '../ui/haptics';
 import { easeNextLayout } from '../ui/motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
@@ -91,7 +92,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
 
   return (
     <View
-      style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      style={[styles.card, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
     >
       <View style={{ padding: spacing.lg, paddingBottom: spacing.md, gap: spacing.xs }}>
         <View style={styles.row}>
@@ -117,10 +118,9 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
         </View>
         {fund.valuedCount > 0 ? (
           <>
-            <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="figure" />
-            <View style={[styles.line, { gap: spacing.sm }]}>
-              <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="label" private />
-              {fund.returnHundredths !== null && <SignedPercent hundredths={fund.returnHundredths} variant="label" />}
+            <MoneyHero value={fund.current} scale={VALUE_SCALE} />
+            <View style={[styles.row, { gap: spacing.sm, flexWrap: 'wrap', marginTop: spacing.xs }]}>
+              <ChangeChip amount={fund.gain} scale={VALUE_SCALE} pctHundredths={fund.returnHundredths} private />
               {fund.xirrPercent !== null && (
                 <AppText
                   variant="label"
@@ -128,7 +128,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
                   numeric
                   accessibilityLabel={`XIRR ${formatPercent(fund.xirrPercent)} per year`}
                 >
-                  · XIRR {formatPercent(fund.xirrPercent)} p.a.
+                  XIRR {formatPercent(fund.xirrPercent)} p.a.
                 </AppText>
               )}
             </View>
@@ -275,7 +275,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
 }
 
 const styles = StyleSheet.create({
-  card: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  card: { overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center' },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
   flex: { flex: 1 },

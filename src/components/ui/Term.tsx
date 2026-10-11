@@ -47,3 +47,36 @@ export function Term({ term, label, variant = 'label', tone = 'muted' }: TermPro
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center' },
 });
+
+/**
+ * The same explanation behind a tonal pill instead of an ⓘ: for labels that are tags in
+ * their own right ("Direct", "Growth", a category), so a row of them stays quiet.
+ */
+export function TermChip({ term, label }: { term: GlossaryKey; label: string }) {
+  const { colors, radius, spacing } = useTheme();
+  const [open, setOpen] = useState(false);
+  const entry = GLOSSARY[term];
+  return (
+    <>
+      <Pressable
+        onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`${label}. What does this mean?`}
+        hitSlop={{ top: 6, bottom: 6 }}
+        style={({ pressed }) => [
+          chipStyles.chip,
+          { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill, paddingHorizontal: spacing.md, opacity: pressed ? 0.7 : 1 },
+        ]}
+      >
+        <AppText variant="labelStrong" tone="muted" maxFontSizeMultiplier={1.3}>
+          {label}
+        </AppText>
+      </Pressable>
+      <InfoSheet visible={open} title={entry.title} body={entry.body} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+const chipStyles = StyleSheet.create({
+  chip: { minHeight: 32, justifyContent: 'center' },
+});

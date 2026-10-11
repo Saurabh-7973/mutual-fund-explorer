@@ -10,7 +10,7 @@ import type { NavPoint, SchemeMeta } from '@/domain/types';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Term } from '../ui/Term';
+import { Term, TermChip } from '../ui/Term';
 import { Banner } from '../ui/Banner';
 import { FundMark } from '../ui/FundMark';
 
@@ -37,78 +37,102 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
   const stale = last !== undefined && isStale(last.date, todayInIndia());
   const category = shortCategory(meta.schemeCategory);
 
+  const annualised = headline !== null && headline.kind !== 'absolute';
+  const headlineLabel =
+    headline === null
+      ? ''
+      : headline.key === 'ALL'
+        ? `Return since start${annualised ? ', annualised' : ''}`
+        : `${headline.label.replace(/^(\d+) (year|month)s?$/, '$1-$2')} return${annualised ? ', annualised' : ''}`;
+
   return (
-    <View style={{ gap: spacing.sm }}>
-      <View style={{ gap: spacing.xs }}>
-        <FundMark schemeName={name} size={48} />
-        <AppText variant="title" accessibilityRole="header" style={{ marginTop: spacing.sm }}>
-          {label.title}
-        </AppText>
-        {/* Plan and option explain themselves on tap; the category is plain text. */}
-        <View style={[styles.line, { gap: spacing.md }]}>
-          {label.plan !== null && <Term term="direct" label={label.plan} />}
-          {option !== null && <Term term="idcw" label={option} />}
-          {category !== null && (
-            <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
-              {category}
-            </AppText>
-          )}
+    <View style={{ gap: spacing.lg }}>
+      <View style={{ gap: spacing.md }}>
+        <View style={[styles.row, { gap: spacing.md }]}>
+          <FundMark schemeName={name} size={44} />
+          <AppText variant="title" accessibilityRole="header" style={styles.flex}>
+            {label.title}
+          </AppText>
+        </View>
+        {/* Plan, option and category as chips; each opens its plain explanation. */}
+        <View style={[styles.wrap, { gap: spacing.sm }]}>
+          {label.plan !== null && <TermChip term="direct" label={label.plan} />}
+          {option !== null && <TermChip term="idcw" label={option} />}
+          {category !== null && <TermChip term="assetClass" label={category} />}
         </View>
       </View>
-      {headline !== null && headline.percent !== null && (
-        <View
-          accessible
-          accessibilityLabel={`${formatPercent(headline.percent)} ${headline.kind === 'absolute' ? 'over' : 'per year over'} ${headline.label}`}
-          style={[styles.line, { gap: spacing.sm }]}
-        >
-          <AppText
-            variant="figure"
-            numeric
-            tone={headline.percent > 0 ? 'gain' : headline.percent < 0 ? 'loss' : 'default'}
-          >
-            {formatPercent(headline.percent)}
-          </AppText>
-          <Term term="cagr" label={headline.key === 'ALL' ? 'since start, p.a.' : `${headline.key} annualised`} />
-        </View>
-      )}
+
+      <View style={{ gap: spacing.xs }}>
+        {headline !== null && headline.percent !== null && (
+          <>
+            <Term term={annualised ? 'cagr' : 'absolute'} label={headlineLabel} />
+            <View
+              accessible
+              accessibilityLabel={`${formatPercent(headline.percent)}${annualised ? ' per year' : ''} over ${headline.label}`}
+              style={[styles.line, { gap: spacing.xs }]}
+            >
+              <AppText
+                variant="hero"
+                numeric
+                maxFontSizeMultiplier={1.2}
+                tone={headline.percent > 0 ? 'gain' : headline.percent < 0 ? 'loss' : 'default'}
+              >
+                {formatPercent(headline.percent)}
+              </AppText>
+              {annualised && (
+                <AppText
+                  variant="heading"
+                  maxFontSizeMultiplier={1.2}
+                  tone={headline.percent > 0 ? 'gain' : headline.percent < 0 ? 'loss' : 'default'}
+                >
+                  p.a.
+                </AppText>
+              )}
+            </View>
+          </>
+        )}
+        {last !== undefined && (
+          // The NAV and its date: the one price a fund has, and when it was set.
+          // "NAV ⓘ" is its own control so screen readers can reach it; the figures read as one.
+          <View style={[styles.line, { columnGap: spacing.sm }]}>
+            <Term term="nav" label="NAV" variant="rowTitle" tone="default" />
+            <View
+              accessible
+              accessibilityLabel={`${formatNav(last.nav)} as of ${formatDate(last.date)}${
+                change !== null
+                  ? `, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`
+                  : ''
+              }`}
+              style={[styles.line, { columnGap: spacing.sm }]}
+            >
+              <AppText variant="rowTitle" numeric>
+                {formatNav(last.nav)}
+              </AppText>
+              {change !== null && (
+                <AppText variant="rowTitle" numeric tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}>
+                  {formatPercentHundredths(change.pctHundredths)} today
+                </AppText>
+              )}
+              <AppText variant="label" tone="muted" numeric>
+                · {formatDate(last.date)}
+              </AppText>
+            </View>
+          </View>
+        )}
+      </View>
       {stale && (
         <Banner
           tone="warning"
           text={`No NAV since ${formatDate(last.date)}. This scheme may be closed or merged; figures here end on that date.`}
         />
       )}
-      {last !== undefined && (
-        // The NAV and its date sit above the chart: the one price a fund has, and when it was set.
-        // "NAV ⓘ" is its own control so screen readers can reach it; the figures read as one.
-        <View style={[styles.line, { columnGap: spacing.sm }]}>
-          <Term term="nav" label="NAV" variant="labelStrong" tone="default" />
-          <View
-            accessible
-            accessibilityLabel={`${formatNav(last.nav)} as of ${formatDate(last.date)}${
-              change !== null
-                ? `, ${change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged'} ${formatPercentHundredths(change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths, 'negative-only')} on the day`
-                : ''
-            }`}
-            style={[styles.line, { columnGap: spacing.sm }]}
-          >
-            <AppText variant="labelStrong" numeric>
-              {formatNav(last.nav)}
-            </AppText>
-            {change !== null && (
-              <AppText variant="label" numeric tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}>
-                {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
-              </AppText>
-            )}
-            <AppText variant="label" tone="muted" numeric>
-              as of {formatDate(last.date)}
-            </AppText>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
+  flex: { flex: 1 },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap' },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
 });

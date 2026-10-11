@@ -200,10 +200,12 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
           <FundHero name={name} meta={history.meta} points={points} />
         </View>
 
-        {/* The chart sits on the page, not in a card, with its ranges right under it. */}
-        <View style={{ gap: spacing.md }}>
-          <NavChart points={ranged} rangeLabel={chartRangeLabel(range, points)} />
+        {/* The chart sits on the page, edge to edge, with its range switch right under it. */}
+        <View style={{ gap: spacing.md, marginHorizontal: -spacing.lg }}>
+          <NavChart points={ranged} rangeLabel={chartRangeLabel(range, points)} inset={spacing.lg} />
+          <View style={{ paddingHorizontal: spacing.lg }}>
           <SegmentedRow
+            variant="track"
             accessibilityLabel="Chart range"
             options={CHART_RANGES.map((item) => ({
               key: item.key,
@@ -213,6 +215,7 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
             selected={range}
             onSelect={setChosenRange}
           />
+          </View>
         </View>
 
         <KeyFacts meta={history.meta} first={first} skipped={history.skipped} />
@@ -307,8 +310,8 @@ function FundBody({ ready, series, schemeCode, name, onTitleScrolledAway }: Fund
         style={[
           styles.bar,
           {
-            backgroundColor: colors.surface,
-            borderTopColor: colors.border,
+            backgroundColor: colors.background,
+            borderTopColor: colors.hairline,
             paddingHorizontal: spacing.lg,
             paddingTop: spacing.md,
             paddingBottom: Math.max(spacing.md, insets.bottom),
