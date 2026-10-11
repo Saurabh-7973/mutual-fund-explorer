@@ -11,6 +11,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Term } from '@/components/ui/Term';
+import { FundMark } from '@/components/ui/FundMark';
 import { comparisonCovers, compareGrowth } from '@/domain/compare';
 import { formatDate } from '@/domain/dates';
 import { formatPercent } from '@/domain/format';
@@ -119,6 +120,7 @@ function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
 
 interface FundFacts {
   title: string;
+  name: string;
   returns: ReturnType<typeof trailingReturns>;
   drawdown: ReturnType<typeof maxDrawdown>;
   rolling: ReturnType<typeof rollingReturns>;
@@ -128,6 +130,7 @@ interface FundFacts {
 function facts(name: string, points: NavPoint[]): FundFacts {
   return {
     title: describeScheme(name).title,
+    name,
     returns: trailingReturns(points),
     drawdown: maxDrawdown(points),
     rolling: rollingReturns(points, 3),
@@ -219,7 +222,10 @@ function Comparison({ a, b }: { a: number; b: number }) {
           <View style={styles.labelCol} />
           {[fa, fb].map((f, i) => (
             <View key={i} style={[styles.valueCol, { gap: 4 }]}>
-              <View style={[styles.swatch, { backgroundColor: colors.chart[i] }]} />
+              <View style={[styles.markRow, { gap: 6 }]}>
+                <View style={[styles.swatch, { backgroundColor: colors.chart[i] }]} />
+                <FundMark schemeName={f.name} size={28} />
+              </View>
               <AppText variant="caption" numberOfLines={2} style={styles.right}>
                 {f.title}
               </AppText>
@@ -286,5 +292,6 @@ const styles = StyleSheet.create({
   valueCol: { flex: 1, alignItems: 'flex-end' },
   right: { textAlign: 'right' },
   swatch: { width: 14, height: 3, borderRadius: 2 },
+  markRow: { flexDirection: 'row', alignItems: 'center' },
   change: { minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
 });
