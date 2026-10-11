@@ -53,6 +53,7 @@ export function InvestReplay({ points }: { points: NavPoint[] }) {
     <>
       <SegmentedRow
         accessibilityLabel="Invest"
+        variant="track"
         options={[
           { key: 'sip', label: 'Monthly SIP' },
           { key: 'lumpsum', label: 'One time' },
