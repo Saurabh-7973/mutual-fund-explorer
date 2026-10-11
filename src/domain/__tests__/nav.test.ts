@@ -233,7 +233,8 @@ describe('chart range defaults and labels', () => {
   const series = (dates: string[]): NavPoint[] =>
     dates.map((date) => ({ date: date as IsoDate, nav: '10.0000', value: 10 }));
 
-  it('opens on 1Y when the history covers a year, otherwise All', () => {
+  it('opens on the headline period: 3Y, else 1Y, else All', () => {
+    expect(defaultChartRange(series(['2023-01-01', '2026-10-09']))).toBe('3Y');
     expect(defaultChartRange(series(['2025-01-01', '2026-10-09']))).toBe('1Y');
     expect(defaultChartRange(series(['2026-03-01', '2026-10-09']))).toBe('ALL');
   });

@@ -256,8 +256,12 @@ export function sliceRange(points: readonly NavPoint[], months: number | null): 
   return points.slice(startIndex);
 }
 
-/** The range a fund screen opens on: 1 year when the history covers it, otherwise all of it. */
+/**
+ * The range a fund screen opens on: the period of its headline return (`headlineReturn`:
+ * 3 years, else 1 year, else all), so the first number and the first chart tell one story.
+ */
 export function defaultChartRange(points: readonly NavPoint[]): ChartRange {
+  if (rangeCovered(points, 36)) return '3Y';
   return rangeCovered(points, 12) ? '1Y' : 'ALL';
 }
 
