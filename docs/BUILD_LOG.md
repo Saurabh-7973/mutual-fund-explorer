@@ -433,3 +433,7 @@ The user asked whether the to-do list held anything I'd found myself; mostly it 
   - `docs/DESIGN.md`: the radius scale, the watchlist status slot, NAV dates in lists, the fund hero line, "p.a.", the disclaimers, the sample portfolio, and the motion and haptics map as built (with the P1 changes marked as planned).
   - `AI_CONTEXT.md` cut from 90 to 60 lines: six corrections kept with one or two lines each, the rest pointed to this log; "with more time" refreshed (it listed things already built); every **[YOU]** marker kept, none filled in.
   - Commit hashes cited in this log are the ones after the history rewrite.
+- **Doc review fixes (user's review of P0-6).**
+  - SECURITY.md: the `npm audit` advisories are now traced against the bundle. Of 64, only five packages have an advisory of their own; four (`braces`, `node-forge`, `sprintf-js`, `uuid`) are CLI and test tooling and never ship; `decode-uri-component` 0.2.2 does ship (expo-router → query-string 7) and is moderate (slow decoding of a malformed link). Fixed upstream in 0.5.0, but an override would cross `query-string`'s expected 0.2.x and `npm audit fix --force` jumps to expo-router 58, so it waits for the SDK 58 upgrade.
+  - README: worst fall and rolling returns live in `longTerm.ts`; `mfx.preferences` added to the storage notes; tour step 2 no longer promises a loss on whatever day it's read.
+  - AI_CONTEXT: "Six examples from the build" (which mattered most is the author's part); component tests back under "with more time".

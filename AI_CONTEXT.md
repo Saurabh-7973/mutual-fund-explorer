@@ -26,7 +26,7 @@
 
 From the research reports: the purchase-NAV rule (below); libraries that don't run in Expo Go (`react-native-charts-wrapper`, MMKV); claims attributed to Groww that were Shopify's; an SDK 54 baseline.
 
-The six that mattered most during the build (the rest are in `docs/BUILD_LOG.md`):
+Six examples from the build (the rest are in `docs/BUILD_LOG.md`):
 
 1. **Search was assumed to match parts of words.** On my phone "par" found nothing. Claude Code checked the live API (`par` → 0, `parag` → 15) instead of guessing, and changed the copy rather than downloading all ~40,000 schemes.
 2. **Money done in its head.** Its test notes said "Invested ≈ ₹9,390.80"; the exact figure is ₹9,390.91. The app was right because the figure comes from BigInt maths in `valueLot`. Rule since: expected money comes from the domain functions or the tests, never hand arithmetic.
@@ -57,4 +57,4 @@ The app uses the first NAV on or after the purchase date, and saves a purchase a
 
 ## With more time
 
-Import from a CAS statement; Maestro end-to-end tests; a development build with app-switcher privacy tied to the hide-amounts toggle; multiple portfolios (for example, one per family member).
+Import from a CAS statement; component tests (React Native Testing Library) and Maestro end-to-end tests; a development build with app-switcher privacy tied to the hide-amounts toggle; multiple portfolios (for example, one per family member).

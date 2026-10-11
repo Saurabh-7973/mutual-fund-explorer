@@ -7,7 +7,7 @@ Search Indian mutual funds, read a fund's NAV history, keep a watchlist, and rec
 ## Two-minute tour
 
 1. Open **Holdings** and tap **Explore with a sample portfolio**. It prices five real funds from their published NAVs (one-time purchases and two monthly SIPs since 2022 and 2023), the same way a purchase you type in is priced, and stars three funds. **Clear** on the banner takes out only the sample.
-2. Open **Parag Parikh Flexi Cap**. Under *Your investment*, the purchase dated **Sunday 31 Mar 2024** got that day's NAV: AMFI published one that Sunday, the last day of the financial year. The October 2025 purchase was near the year's high, so it shows a loss.
+2. Open **Parag Parikh Flexi Cap**. Under *Your investment*, the purchase dated **Sunday 31 Mar 2024** got that day's NAV: AMFI published one that Sunday, the last day of the financial year. The October 2025 purchase was bought near that year's high; compare its return with the March 2024 one.
 3. Open **HDFC Mid Cap**: the app spotted the ₹5,000 monthly SIP and offers **Add instalments due** for the months since the last one.
 4. Tap **Add another purchase**, enter any units and pick **Fri 2 Oct 2026** (Gandhi Jayanti, no NAV). It's priced at **Mon 5 Oct**, the first NAV on or after the date, and the form says so.
 5. Turn on airplane mode and reopen **Watchlist**: the saved NAVs show with their dates, and the closed HDFC Balanced Fund is flagged **Stale** with its last date, 01 Jun 2018.
@@ -79,7 +79,7 @@ The brief asks for search, NAV history, a watchlist and holdings. Each extra bel
 | A monthly SIP entered in one go, and "Add instalments due" | Arjun | `sip.ts` (`planSip`, `detectSip`) |
 | XIRR across purchases, today's change, allocation by asset class | Arjun, Vikram | `xirr.ts`, `holdings.ts`, `assetClass.ts` |
 | ELSS lock-in and long-term dates per purchase | Kavya, Arjun | `holdingPeriod.ts` |
-| Worst fall and recovery; rolling 3- and 5-year returns | Meena, Vikram | `returns.ts`, `longTerm.ts` |
+| Worst fall and recovery; rolling 3- and 5-year returns | Meena, Vikram | `longTerm.ts` (`maxDrawdown`, `rollingReturns`) |
 | Compare two funds | Vikram | `compare.ts` |
 | NAV history as a month calendar | everyone | `navCalendar.ts` |
 | Plain-language glossary behind ⓘ | Riya (beginner) | `glossary.ts` |
@@ -144,7 +144,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 ## Environment and data notes
 
 - No `.env` file is needed. The API base URL is in `src/api/client.ts`.
-- Everything is stored on the device in AsyncStorage: the watchlist and holdings under `mfx.portfolio`, and cached latest NAVs under `mfx.query-cache` (kept for 7 days). Clearing the app's data resets both.
+- Everything is stored on the device in AsyncStorage: the watchlist and holdings under `mfx.portfolio`; the hide-amounts setting, recently viewed funds and, while it's loaded, the sample portfolio's ids under `mfx.preferences`; and cached latest NAVs under `mfx.query-cache` (kept for 7 days). Clearing the app's data resets all three.
 - On a network that blocks `api.mfapi.in` (some office networks do), test on mobile data.
 
 ## Troubleshooting
