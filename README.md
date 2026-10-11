@@ -31,15 +31,15 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 
 ## Screenshots
 
-Android emulator, light mode, Expo Go (SDK 57).
+Android emulator, light mode, Expo Go (SDK 57). Inter typeface, fund-house monograms, haptics and motion throughout.
 
 | Explore | Fund | Your investment | Returns |
 |---|---|---|---|
 | ![Explore](docs/screenshots/01-explore.png) | ![Fund page](docs/screenshots/02-fund.png) | ![Your investment](docs/screenshots/03-your-investment.png) | ![Returns](docs/screenshots/04-returns.png) |
 
-| Consistency and worst fall | Watchlist | Holdings | Compare |
+| NAV calendar | Watchlist | Holdings | Compare |
 |---|---|---|---|
-| ![Consistency](docs/screenshots/05-consistency.png) | ![Watchlist](docs/screenshots/06-watchlist.png) | ![Holdings](docs/screenshots/07-holdings.png) | ![Compare](docs/screenshots/08-compare.png) |
+| ![NAV calendar](docs/screenshots/05-nav-calendar.png) | ![Watchlist](docs/screenshots/06-watchlist.png) | ![Holdings](docs/screenshots/07-holdings.png) | ![Compare](docs/screenshots/08-compare.png) |
 
 ## Features
 
