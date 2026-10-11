@@ -185,7 +185,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
     { label: '1 year', a: ret(fa, '1Y'), b: ret(fb, '1Y'), kind: 'pct' },
     { label: '3 years (p.a.)', term: 'cagr', a: ret(fa, '3Y'), b: ret(fb, '3Y'), kind: 'pct' },
     { label: '5 years (p.a.)', a: ret(fa, '5Y'), b: ret(fb, '5Y'), kind: 'pct' },
-    { label: 'Typical 3-year hold', term: 'rolling', a: fa.rolling?.median ?? null, b: fb.rolling?.median ?? null, kind: 'pct' },
+    { label: 'Typical 3-year hold (p.a.)', term: 'rolling', a: fa.rolling?.median ?? null, b: fb.rolling?.median ?? null, kind: 'pct' },
     {
       label: '3-year holds that lost money',
       a: fa.rolling ? fa.rolling.lossShare * 100 : null,
