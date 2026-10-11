@@ -15,6 +15,9 @@ export interface GrowthPoint {
   date: IsoDate;
   a: number;
   b: number;
+  /** The NAVs behind this point, so an exact value can be worked out on demand. */
+  navA: string;
+  navB: string;
 }
 
 export interface GrowthComparison {
@@ -25,12 +28,15 @@ export interface GrowthComparison {
   /** What ₹10,000 became in each fund, exactly, in paise (scale 2). */
   endA: bigint;
   endB: bigint;
+  /** The NAVs on the start date that both lines are rebased to. */
+  baseNavA: string;
+  baseNavB: string;
 }
 
 /** ₹10,000 × end NAV ÷ start NAV, exactly, in paise. */
-function grown(start: NavPoint, end: NavPoint): bigint | null {
-  const s = parseScaled(start.nav, NAV_SCALE);
-  const e = parseScaled(end.nav, NAV_SCALE);
+function grown(start: string, end: string): bigint | null {
+  const s = parseScaled(start, NAV_SCALE);
+  const e = parseScaled(end, NAV_SCALE);
   if (s === null || e === null || s <= 0n) return null;
   return divRound(BigInt(GROWTH_BASE) * 100n * e, s);
 }
@@ -60,20 +66,35 @@ export function compareGrowth(
   const baseB = navOnOrBefore(b, start);
   if (!baseA || !baseB || baseA.value <= 0 || baseB.value <= 0) return null;
 
-  const points: GrowthPoint[] = [{ date: start, a: GROWTH_BASE, b: GROWTH_BASE }];
+  const points: GrowthPoint[] = [{ date: start, a: GROWTH_BASE, b: GROWTH_BASE, navA: baseA.nav, navB: baseB.nav }];
   for (const p of a) {
     if (p.date <= start || p.date > end) continue;
     const pb = navOnOrBefore(b, p.date);
     if (!pb) continue;
-    points.push({ date: p.date, a: (p.value / baseA.value) * GROWTH_BASE, b: (pb.value / baseB.value) * GROWTH_BASE });
+    points.push({
+      date: p.date,
+      a: (p.value / baseA.value) * GROWTH_BASE,
+      b: (pb.value / baseB.value) * GROWTH_BASE,
+      navA: p.nav,
+      navB: pb.nav,
+    });
   }
   if (points.length < 2) return null;
   const endPointA = navOnOrBefore(a, end);
   const endPointB = navOnOrBefore(b, end);
-  const endA = endPointA ? grown(baseA, endPointA) : null;
-  const endB = endPointB ? grown(baseB, endPointB) : null;
+  const endA = endPointA ? grown(baseA.nav, endPointA.nav) : null;
+  const endB = endPointB ? grown(baseB.nav, endPointB.nav) : null;
   if (endA === null || endB === null) return null;
-  return { start, end, points, endA, endB };
+  return { start, end, points, endA, endB, baseNavA: baseA.nav, baseNavB: baseB.nav };
+}
+
+/** What ₹10,000 had become in each fund on one point of the comparison, exactly, in paise. */
+export function growthAt(comparison: GrowthComparison, index: number): { a: bigint; b: bigint } | null {
+  const point = comparison.points[index];
+  if (!point) return null;
+  const a = grown(comparison.baseNavA, point.navA);
+  const b = grown(comparison.baseNavB, point.navB);
+  return a === null || b === null ? null : { a, b };
 }
 
 /** Whether a range is fully covered by both histories (so the chart's chip can be enabled). */

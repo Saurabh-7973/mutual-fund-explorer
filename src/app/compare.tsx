@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { ScrollView } from 'react-native-gesture-handler';
 
 import { CompareChart } from '@/components/fund/CompareChart';
 import { AppText } from '@/components/ui/AppText';
@@ -209,7 +210,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
         />
         {growth !== null && <CompareChart growth={growth} labelA={fa.title} labelB={fb.title} />}
         <AppText variant="caption" tone="muted">
-          Both start at ₹10,000 on the same day, so their lines are comparable. NAV-based, before taxes and exit loads.
+          Both start at ₹10,000 on the same day, so their lines are comparable. Drag the chart to see a date. NAV-based, before taxes and exit loads.
         </AppText>
       </Card>
 

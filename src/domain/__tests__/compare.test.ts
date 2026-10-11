@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { comparisonCovers, compareGrowth, GROWTH_BASE } from '../compare';
+import { comparisonCovers, compareGrowth, growthAt, GROWTH_BASE } from '../compare';
 import type { IsoDate, NavPoint } from '../types';
 
 const p = (date: string, value: number): NavPoint => ({ date: date as IsoDate, nav: String(value), value });
@@ -12,7 +12,7 @@ describe('compareGrowth', () => {
   it('starts both at ₹10,000 on the first date both histories cover', () => {
     const growth = compareGrowth(a, b, null);
     expect(growth?.start).toBe('2021-01-01');
-    expect(growth?.points[0]).toEqual({ date: '2021-01-01', a: GROWTH_BASE, b: GROWTH_BASE });
+    expect(growth?.points[0]).toMatchObject({ date: '2021-01-01', a: GROWTH_BASE, b: GROWTH_BASE });
     const last = growth?.points[growth.points.length - 1];
     expect(last?.a).toBeCloseTo((20 / 12) * GROWTH_BASE, 6);
     expect(last?.b).toBeCloseTo(1.3 * GROWTH_BASE, 6);
@@ -24,6 +24,15 @@ describe('compareGrowth', () => {
     const growth = compareGrowth(a, b, 12);
     expect(growth?.start).toBe('2022-01-01');
     expect(growth?.end).toBe('2023-01-01');
+  });
+
+  it('gives the exact value on any point, matching the end values on the last', () => {
+    const growth = compareGrowth(a, b, null);
+    if (!growth) throw new Error('expected a comparison');
+    expect(growthAt(growth, 0)).toEqual({ a: 1_000_000n, b: 1_000_000n }); // ₹10,000.00 each
+    expect(growthAt(growth, growth.points.length - 1)).toEqual({ a: growth.endA, b: growth.endB });
+    expect(growthAt(growth, 1)).toEqual({ a: 1_250_000n, b: 900_000n }); // 15/12 and 90/100
+    expect(growthAt(growth, 99)).toBeNull();
   });
 
   it('is null without overlap', () => {

@@ -320,3 +320,9 @@ The user asked for the best UI/UX possible, with every component decided by the 
 - **Security:** the background commit review flagged CSV formula injection in the purchases export (scheme names come from an outside API). Text cells starting with =, +, -, @, tab or CR now get a leading apostrophe; tested.
 - **SIP continuation** (Arjun): `detectSip` and `ordinalDay` (tested; the first version broke on 31st-of-month SIPs after a clamped February, fixed by comparing consecutive months and month-end days). "Your investment" names the SIP; "Add instalments due" prefills the SIP form via route params, offered only once a NAV on or after the next date exists. The SIP form now explains an unpriceable instalment even when there is nothing to save. Emulator: HDFC Mid Cap, ₹5,000 on the 10th → "The 10 Oct 2026 instalment can be added once its NAV is published." (10 Oct was a Saturday).
 - **Final verification (11 Oct 2026):** `npm run check` 26 suites, 215 tests; Android export clean; `expo-doctor` 21/21; dependencies match SDK 57; rule greps clean; `src/app` holds route files only. README screenshots in `docs/screenshots` (emulator, Expo Go's tools button turned off).
+
+## Round: compare scrubbing (persona: Vikram)
+
+- *"At the 2024 peak, which fund was ahead?"* The compare chart only showed end values. Now a drag (or touch and hold) reads both funds on any date, and the legend shows the exact rupees (`growthAt` in `src/domain/compare.ts`, BigInt from the two NAVs, tested against `endA`/`endB` on the last point). The legend says which date it shows ("Value on …" / "On …").
+- The dashed baseline is labelled ₹10,000.
+- Bug found on the way: the compare screen used React Native's `ScrollView`, so a chart gesture would have fought the page scroll. Switched to Gesture Handler's, as the fund page does. Checked on the emulator: horizontal drag scrubs, vertical swipe over the chart scrolls, release restores end values.

@@ -1,8 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Line, Path } from 'react-native-svg';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
 
-import { GROWTH_BASE, type GrowthComparison } from '@/domain/compare';
+import { GROWTH_BASE, growthAt, type GrowthComparison } from '@/domain/compare';
 import { formatDate } from '@/domain/dates';
 import { formatInr } from '@/domain/format';
 import { lttbIndices } from '@/domain/lttb';
@@ -25,7 +26,8 @@ export interface CompareChartProps {
 /**
  * Growth of ₹10,000 in two funds on one axis, with the starting ₹10,000 as a dashed
  * baseline. Each line is named in the legend with what the money became, so the colours
- * are never the only way to tell the funds apart.
+ * are never the only way to tell the funds apart. Drag across the chart (as on the NAV
+ * chart) to read both values on any date; the legend shows them exactly.
  */
 export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
   const { colors, spacing } = useTheme();
@@ -34,6 +36,7 @@ export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
     const next = Math.round(event.nativeEvent.layout.width);
     setWidth((current) => (current === next ? current : next));
   }, []);
+  const [active, setActive] = useState<number | null>(null);
   const colourA = colors.chart[0];
   const colourB = colors.chart[1];
 
@@ -59,29 +62,87 @@ export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
       a: line((i) => pts[i]?.a ?? GROWTH_BASE),
       b: line((i) => pts[i]?.b ?? GROWTH_BASE),
       base: y(GROWTH_BASE),
+      x,
+      y,
     };
   }, [growth, width]);
+
+  const count = growth.points.length;
+  const scrubTo = useCallback(
+    (px: number) => {
+      if (width === 0) return;
+      const index = Math.min(count - 1, Math.max(0, Math.round((px / width) * (count - 1))));
+      setActive((current) => (current === index ? current : index));
+    },
+    [width, count],
+  );
+  const release = useCallback(() => setActive(null), []);
+  const gesture = useMemo(() => {
+    // Same feel as the NAV chart: a horizontal drag scrubs, a vertical swipe scrolls the page.
+    const drag = Gesture.Pan()
+      .runOnJS(true)
+      .activeOffsetX([-6, 6])
+      .failOffsetY([-10, 10])
+      .onStart((event) => scrubTo(event.x))
+      .onUpdate((event) => scrubTo(event.x))
+      .onFinalize(release);
+    const hold = Gesture.Pan()
+      .runOnJS(true)
+      .activateAfterLongPress(250)
+      .onStart((event) => scrubTo(event.x))
+      .onUpdate((event) => scrubTo(event.x))
+      .onFinalize(release);
+    return Gesture.Race(drag, hold);
+  }, [scrubTo, release]);
+
+  const activePoint = active === null ? null : growth.points[active];
+  const activeValues = active === null ? null : growthAt(growth, active);
+  const valueA = activeValues?.a ?? growth.endA;
+  const valueB = activeValues?.b ?? growth.endB;
+  const shownDate = activePoint?.date ?? growth.end;
 
   return (
     <View style={{ gap: spacing.md }}>
       <View style={{ gap: spacing.xs }}>
-        <LegendRow colour={colourA} label={labelA} value={formatInr(growth.endA, 2)} />
-        <LegendRow colour={colourB} label={labelB} value={formatInr(growth.endB, 2)} />
+        <AppText variant="caption" tone="muted" numeric>
+          {active === null ? `Value on ${formatDate(shownDate)}` : `On ${formatDate(shownDate)}`}
+        </AppText>
+        <LegendRow colour={colourA} label={labelA} value={formatInr(valueA, 2)} />
+        <LegendRow colour={colourB} label={labelB} value={formatInr(valueB, 2)} />
       </View>
-      <View
-        onLayout={onLayout}
-        style={{ height: HEIGHT }}
-        accessible
-        accessibilityLabel={`₹10,000 on ${formatDate(growth.start)} became ${formatInr(growth.endA, 2)} in ${labelA} and ${formatInr(growth.endB, 2)} in ${labelB} by ${formatDate(growth.end)}`}
-      >
-        {paths !== null && (
-          <Svg width={width} height={HEIGHT}>
-            <Line x1={0} x2={width} y1={paths.base} y2={paths.base} stroke={colors.border} strokeDasharray="4 4" strokeWidth={1} />
-            <Path d={paths.b} stroke={colourB} strokeWidth={2} fill="none" strokeLinejoin="round" />
-            <Path d={paths.a} stroke={colourA} strokeWidth={2} fill="none" strokeLinejoin="round" />
-          </Svg>
-        )}
-      </View>
+      <GestureDetector gesture={gesture}>
+        <View
+          onLayout={onLayout}
+          style={{ height: HEIGHT }}
+          accessible
+          accessibilityLabel={`₹10,000 on ${formatDate(growth.start)} became ${formatInr(growth.endA, 2)} in ${labelA} and ${formatInr(growth.endB, 2)} in ${labelB} by ${formatDate(growth.end)}`}
+        >
+          {paths !== null && (
+            <Svg width={width} height={HEIGHT}>
+              <Line x1={0} x2={width} y1={paths.base} y2={paths.base} stroke={colors.border} strokeDasharray="4 4" strokeWidth={1} />
+              <Path d={paths.b} stroke={colourB} strokeWidth={2} fill="none" strokeLinejoin="round" />
+              <Path d={paths.a} stroke={colourA} strokeWidth={2} fill="none" strokeLinejoin="round" />
+              {active !== null && activePoint && (
+                <>
+                  <Line x1={paths.x(active)} x2={paths.x(active)} y1={0} y2={HEIGHT} stroke={colors.textMuted} strokeWidth={1} />
+                  <Circle cx={paths.x(active)} cy={paths.y(activePoint.b)} r={4} fill={colourB} stroke={colors.surface} strokeWidth={2} />
+                  <Circle cx={paths.x(active)} cy={paths.y(activePoint.a)} r={4} fill={colourA} stroke={colors.surface} strokeWidth={2} />
+                </>
+              )}
+            </Svg>
+          )}
+          {paths !== null && (
+            <AppText
+              variant="caption"
+              tone="muted"
+              numeric
+              style={[styles.baseLabel, { top: paths.base > 20 ? paths.base - 18 : paths.base + 2 }]}
+            >
+              ₹10,000
+            </AppText>
+          )}
+        </View>
+      </GestureDetector>
       <View style={styles.axis}>
         <AppText variant="caption" tone="muted">
           {formatDate(growth.start)}
@@ -114,4 +175,5 @@ const styles = StyleSheet.create({
   swatch: { width: 12, height: 3, borderRadius: 2 },
   flex: { flex: 1 },
   axis: { flexDirection: 'row', justifyContent: 'space-between' },
+  baseLabel: { position: 'absolute', right: 0 },
 });
