@@ -54,7 +54,7 @@ export const SchemeRow = memo(function SchemeRow({ scheme, first = false, last =
         onPress={() =>
           router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })
         }
-        style={({ pressed }) => [styles.main, styles.withMark, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [styles.main, styles.withMark, { gap: spacing.md, opacity: pressed ? 0.7 : 1 }]}
       >
         <FundMark schemeName={schemeName} />
         <View style={[styles.text, { gap: spacing.xs }]}>

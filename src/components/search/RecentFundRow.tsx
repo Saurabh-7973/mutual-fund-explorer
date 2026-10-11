@@ -52,10 +52,14 @@ export const RecentFundRow = memo(function RecentFundRow({
       onPress={() =>
         router.push({ pathname: '/fund/[code]', params: { code: String(fund.schemeCode), name: fund.schemeName } })
       }
-      style={({ pressed }) => [styles.row, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
+      // Pressed rows fill with the muted tint, the same feedback as every list row in the app.
+      style={({ pressed }) => [
+        styles.row,
+        { gap: spacing.md, backgroundColor: pressed ? colors.surfaceMuted : 'transparent', marginHorizontal: -spacing.lg, paddingHorizontal: spacing.lg },
+      ]}
     >
       <FundMark schemeName={fund.schemeName} size={36} />
-      {!last && <View style={[styles.separator, { left: 36 + spacing.md, backgroundColor: colors.hairline }]} />}
+      {!last && <View style={[styles.separator, { left: spacing.lg + 36 + spacing.md, right: spacing.lg, backgroundColor: colors.hairline }]} />}
       <View style={[styles.flex, { gap: 2 }]}>
         <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {label.title}
@@ -98,7 +102,7 @@ export const RecentFundRow = memo(function RecentFundRow({
 
 const styles = StyleSheet.create({
   row: { height: RECENT_ROW_HEIGHT, flexDirection: 'row', alignItems: 'center' },
-  separator: { position: 'absolute', right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
+  separator: { position: 'absolute', bottom: 0, height: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   right: { alignItems: 'flex-end' },
   line: { flexDirection: 'row', alignItems: 'center' },
