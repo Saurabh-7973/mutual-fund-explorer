@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 
 import type { AssetClass } from '@/domain/assetClass';
 import { formatPercentHundredths } from '@/domain/format';
@@ -41,6 +41,8 @@ export interface AllocationCardProps {
  */
 export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
   const { colors, spacing } = useTheme();
+  // The switch needs the full width at large text sizes, so it moves under the label.
+  const stacked = useWindowDimensions().fontScale > 1.3;
   const [view, setView] = useState<'class' | 'fund'>('class');
   if (byFund.length === 0) return null;
 
@@ -64,11 +66,11 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
 
   return (
     <View style={{ gap: spacing.md }}>
-      <View style={styles.header}>
-        <View style={styles.flex}>
+      <View style={stacked ? styles.headerStacked : styles.header}>
+        <View style={stacked ? undefined : styles.flex}>
           <Term term="assetClass" label="Allocation" />
         </View>
-        <View style={styles.switch}>
+        <View style={stacked ? undefined : styles.switch}>
           <SegmentedRow
             variant="track"
             accessibilityLabel="Allocation by"
@@ -108,15 +110,15 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
         {rows.map((row) => (
           <View key={row.key} style={[styles.legend, { gap: spacing.sm }]}>
             <View style={[styles.swatch, { backgroundColor: colour(row.slot) }]} />
-            <AppText variant="label" numberOfLines={1} style={styles.flex}>
+            <AppText variant="label" maxFontSizeMultiplier={1.3} numberOfLines={1} style={styles.flex}>
               {row.label}
               {row.detail !== undefined && (
-                <AppText variant="caption" tone="muted">
+                <AppText variant="caption" maxFontSizeMultiplier={1.3} tone="muted">
                   {`  ${row.detail}`}
                 </AppText>
               )}
             </AppText>
-            <AppText variant="label" numeric>
+            <AppText variant="label" maxFontSizeMultiplier={1.3} numeric style={styles.share}>
               {share(row)}
             </AppText>
           </View>
@@ -128,9 +130,12 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
+  headerStacked: { gap: 8 },
   flex: { flex: 1 },
   switch: { width: 196 },
   bar: { flexDirection: 'row', height: 12 },
   legend: { flexDirection: 'row', alignItems: 'center' },
+  // Right-aligned in a fixed column, so shares line up at every text size.
+  share: { minWidth: 72, textAlign: 'right' },
   swatch: { width: 10, height: 10, borderRadius: 3 },
 });

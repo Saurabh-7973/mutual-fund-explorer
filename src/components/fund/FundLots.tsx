@@ -480,7 +480,7 @@ function TodayRow({ last, average }: { last: NavPoint; average: bigint | null })
         {average !== null && (
           <View style={[styles.line, { gap: 4 }]}>
             <Term term="averageCost" label="Your average cost" variant="caption" />
-            <AppText variant="caption" tone="muted" numeric>
+            <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
               is {navText(average)} a unit
             </AppText>
           </View>

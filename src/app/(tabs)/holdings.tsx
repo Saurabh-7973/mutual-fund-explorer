@@ -9,6 +9,7 @@ import {
   RefreshControl,
   StyleSheet,
   View,
+  useWindowDimensions,
   type LayoutChangeEvent,
   type ListRenderItem,
 } from 'react-native';
@@ -320,7 +321,7 @@ export default function HoldingsScreen() {
           style={[styles.inline, { gap: spacing.xs }]}
         >
           <Ionicons name="swap-vertical" size={14} color={colors.primary} />
-          <AppText variant="label" tone="primary" numberOfLines={1}>
+          <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" numberOfLines={1}>
             {sortOption.short}
           </AppText>
           <Ionicons name={direction === 'desc' ? 'arrow-down' : 'arrow-up'} size={12} color={colors.primary} />
@@ -334,7 +335,7 @@ export default function HoldingsScreen() {
           style={[styles.inline, { gap: spacing.xs }]}
         >
           <Ionicons name="code-outline" size={14} color={colors.primary} />
-          <AppText variant="label" tone="primary" style={[styles.dotted, { borderBottomColor: colors.primary }]}>
+          <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" style={[styles.dotted, { borderBottomColor: colors.primary }]}>
             {columnLabel}
           </AppText>
         </Pressable>
@@ -401,13 +402,16 @@ export default function HoldingsScreen() {
 }
 
 function Row({ label, term, children }: { label: string; term?: GlossaryKey; children: ReactNode }) {
+  // At large text sizes a label and a long figure can't share a line: the label goes above.
+  const stacked = useWindowDimensions().fontScale > 1.3;
   return (
-    <View style={styles.kv}>
-      <View style={styles.flex}>
+    <View style={stacked ? styles.kvStacked : styles.kv}>
+      <View style={stacked ? undefined : styles.flex}>
         {term !== undefined ? (
           <Term term={term} label={label} />
         ) : (
-          <AppText variant="label" tone="muted">
+          // Capped like the glossary labels, so every label in the card is one size.
+          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
             {label}
           </AppText>
         )}
@@ -424,6 +428,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   rule: { borderTopWidth: 1, borderStyle: 'dashed' },
   kv: { flexDirection: 'row', alignItems: 'center', minHeight: 22 },
+  kvStacked: { gap: 2 },
   inline: { flexDirection: 'row', alignItems: 'center' },
   listHeader: { flexDirection: 'row', alignItems: 'center' },
   // A dotted underline marks the column label as tappable, as Groww does.

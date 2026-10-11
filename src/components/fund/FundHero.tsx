@@ -48,7 +48,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
           {label.plan !== null && <Term term="direct" label={label.plan} />}
           {label.option !== null && <Term term="idcw" label={label.option} />}
           {category !== null && (
-            <AppText variant="label" tone="muted">
+            <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
               {category}
             </AppText>
           )}

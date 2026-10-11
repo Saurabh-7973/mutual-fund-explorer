@@ -91,11 +91,17 @@ function FundContent({ schemeCode, paramName }: { schemeCode: number; paramName:
           headerTitle: () =>
             titleScrolledAway ? (
               <View>
-                <AppText variant="heading" numberOfLines={1}>
+                <AppText variant="heading" numberOfLines={1} maxFontSizeMultiplier={1.3}>
                   {shortTitle}
                 </AppText>
                 {headline !== null && headline.percent !== null && (
-                  <AppText variant="caption" tone={headline.percent >= 0 ? 'gain' : 'loss'} numeric>
+                  <AppText
+                    variant="caption"
+                    tone={headline.percent >= 0 ? 'gain' : 'loss'}
+                    numeric
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.3}
+                  >
                     {formatPercent(headline.percent)}{' '}
                     {headline.key === 'ALL' ? 'a year since start' : `${headline.key} annualised`}
                   </AppText>

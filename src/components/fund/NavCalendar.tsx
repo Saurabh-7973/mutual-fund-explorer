@@ -98,7 +98,7 @@ export function NavCalendar({ points }: { points: readonly NavPoint[] }) {
       <View style={{ gap: 4 }}>
         <View style={[styles.row, { gap: 4 }]} importantForAccessibility="no-hide-descendants">
           {weekdays.map((day) => (
-            <AppText key={day} variant="caption" tone="muted" style={[styles.flex, styles.center]}>
+            <AppText key={day} variant="caption" tone="muted" maxFontSizeMultiplier={1.2} style={[styles.flex, styles.center]}>
               {day}
             </AppText>
           ))}
@@ -231,7 +231,8 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   center: { textAlign: 'center' },
   faint: { opacity: 0.5 },
-  cell: { flex: 1, height: CELL_HEIGHT, padding: 4, justifyContent: 'space-between', overflow: 'hidden' },
+  // A minimum, not a fixed height: at large text sizes the cell grows instead of clipping its figure.
+  cell: { flex: 1, minHeight: CELL_HEIGHT, padding: 4, justifyContent: 'space-between', overflow: 'hidden' },
   nav: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
   detail: { borderWidth: StyleSheet.hairlineWidth, gap: 2 },
 });
