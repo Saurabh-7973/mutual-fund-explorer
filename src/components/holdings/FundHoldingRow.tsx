@@ -9,7 +9,7 @@ import { describeScheme } from '@/domain/schemeName';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { PrivateAmount } from '../ui/PrivateAmount';
+import { PrivateAmount, useAmountsHidden } from '../ui/PrivateAmount';
 import { Skeleton } from '../ui/Skeleton';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
@@ -61,9 +61,13 @@ export const FundHoldingRow = memo(function FundHoldingRow({
   const label = useMemo(() => describeScheme(fund.schemeName), [fund.schemeName]);
   const remove = useCallback(() => onRemove(fund), [onRemove, fund]);
 
+  // The SIP amount is money too: with amounts hidden the row just says "SIP".
+  const hidden = useAmountsHidden();
   const held =
     sipRupees !== null
-      ? `SIP ${formatInr(BigInt(sipRupees) * 100n, 2).replace(/\.00$/, '')}`
+      ? hidden
+        ? 'SIP'
+        : `SIP ${formatInr(BigInt(sipRupees) * 100n, 2).replace(/\.00$/, '')}`
       : `${fund.lotCount} ${fund.lotCount === 1 ? 'purchase' : 'purchases'}`;
   const meta = [label.plan, label.option, held]
     .filter((part): part is string => part !== null)

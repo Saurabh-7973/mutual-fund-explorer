@@ -193,7 +193,8 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
             ]}
           >
             <AppText variant="labelStrong" numeric>
-              SIP of {rupeesText(sip.amountRupees)} on the {ordinalDay(sip.dayOfMonth)} of each month
+              {hideAmounts ? 'SIP' : `SIP of ${rupeesText(sip.amountRupees)}`} on the {ordinalDay(sip.dayOfMonth)} of each
+              month
             </AppText>
             <AppText variant="caption" tone="muted" numeric>
               {sipDue
