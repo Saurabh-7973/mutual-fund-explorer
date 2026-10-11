@@ -38,7 +38,7 @@ function NavHistoryContent({ schemeCode, paramName }: { schemeCode: number; para
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
       <Stack.Screen options={{ title: 'NAV history' }} />
-      <FundGate schemeCode={schemeCode} series={series} loading={<SkeletonRows count={12} rowHeight={NAV_ROW_HEIGHT} />}>
+      <FundGate schemeCode={schemeCode} series={series} loading={<SkeletonRows count={12} rowHeight={NAV_ROW_HEIGHT} fundRows={false} />}>
         {(ready) => <NavList ready={ready} schemeCode={schemeCode} name={name} />}
       </FundGate>
     </View>
