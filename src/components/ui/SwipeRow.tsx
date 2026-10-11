@@ -6,6 +6,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
+import { haptic } from './haptics';
 
 /** How far to drag before letting go removes the row. */
 const COMMIT_DISTANCE = 96;
@@ -35,6 +36,7 @@ export function SwipeRow({ children, actionLabel, onAction }: SwipeRowProps) {
     const settle = (toValue: number) =>
       Animated.spring(translateX, { toValue, useNativeDriver: true, bounciness: 0, speed: 20 }).start();
     const commit = async () => {
+      haptic.tap();
       Animated.timing(translateX, { toValue: -COMMIT_DISTANCE, duration: 120, useNativeDriver: true }).start();
       const done = await onAction();
       if (!done) settle(0);

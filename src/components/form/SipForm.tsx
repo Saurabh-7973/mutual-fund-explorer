@@ -22,6 +22,7 @@ import { Card } from '../ui/Card';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { DateField } from './DateField';
+import { haptic } from '../ui/haptics';
 
 export interface SipFormProps {
   schemeCode: number;
@@ -108,6 +109,7 @@ export function SipForm({
         createdAt,
       });
     }
+    haptic.done();
     router.back();
   };
 

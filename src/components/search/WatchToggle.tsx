@@ -5,6 +5,7 @@ import { usePortfolioStore } from '@/store/portfolioStore';
 import { useTheme } from '@/theme/useTheme';
 
 import { IconButton } from '../ui/IconButton';
+import { haptic } from '../ui/haptics';
 
 export interface WatchToggleProps {
   schemeCode: number;
@@ -20,6 +21,7 @@ export function WatchToggle({ schemeCode, schemeName }: WatchToggleProps) {
   const title = describeScheme(schemeName).title;
 
   const toggle = useCallback(() => {
+    haptic.tap();
     if (watched) unwatch(schemeCode);
     else watch({ schemeCode, schemeName });
   }, [watched, watch, unwatch, schemeCode, schemeName]);

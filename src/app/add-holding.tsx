@@ -28,6 +28,7 @@ import { newLotId } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { haptic } from '@/components/ui/haptics';
 
 export default function AddHoldingScreen() {
   const params = useLocalSearchParams<{
@@ -146,6 +147,7 @@ function AddHoldingForm({
       ...(amount.normalized !== null ? { amount: amount.normalized } : {}),
       createdAt: new Date().toISOString(),
     });
+    haptic.done();
     router.back();
   };
 

@@ -10,6 +10,7 @@ import { lttbIndices } from '@/domain/lttb';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { haptic } from '../ui/haptics';
 
 const HEIGHT = 180;
 const MAX_POINTS = 150;
@@ -72,7 +73,11 @@ export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
     (px: number) => {
       if (width === 0) return;
       const index = Math.min(count - 1, Math.max(0, Math.round((px / width) * (count - 1))));
-      setActive((current) => (current === index ? current : index));
+      setActive((current) => {
+        if (current === index) return current;
+        haptic.tick();
+        return index;
+      });
     },
     [width, count],
   );

@@ -10,6 +10,7 @@ import { navChange } from '@/domain/nav';
 import type { NavPoint } from '@/domain/types';
 import { fonts, tabularNumbers } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { haptic } from '../ui/haptics';
 
 /**
  * NAV line chart: react-native-svg for drawing, Gesture Handler for scrubbing.
@@ -66,7 +67,11 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
     (x: number) => {
       if (geometry === null) return;
       const index = nearestIndex(geometry.xs, x);
-      setActiveIndex((current) => (current === index ? current : index));
+      setActiveIndex((current) => {
+        if (current === index) return current;
+        haptic.tick();
+        return index;
+      });
     },
     [geometry],
   );

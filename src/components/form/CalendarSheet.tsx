@@ -11,6 +11,7 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 import { BottomSheet } from '../ui/BottomSheet';
 import { Button } from '../ui/Button';
+import { haptic } from '../ui/haptics';
 
 const MONTHS = [
   'January',
@@ -194,6 +195,7 @@ export function CalendarSheet({
                     key={date}
                     disabled={!enabled}
                     onPress={() => {
+                      haptic.tick();
                       onSelect(date);
                       onClose();
                     }}

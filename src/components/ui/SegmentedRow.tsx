@@ -6,6 +6,7 @@ import { MIN_TOUCH, motion } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
+import { haptic } from './haptics';
 
 export interface SegmentedOption<K extends string> {
   key: K;
@@ -118,7 +119,10 @@ export function SegmentedRow<K extends string>({
         return (
           <Pressable
             key={option.key}
-            onPress={() => onSelect(option.key)}
+            onPress={() => {
+              if (option.key !== selected) haptic.tick();
+              onSelect(option.key);
+            }}
             disabled={option.disabled}
             accessibilityRole="tab"
             accessibilityLabel={`${accessibilityLabel}: ${option.label}`}

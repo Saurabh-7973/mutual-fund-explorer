@@ -25,6 +25,7 @@ import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
+import { haptic } from '../ui/haptics';
 
 export interface FundLotsProps {
   schemeCode: number;
@@ -100,7 +101,10 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
           </View>
           <IconButton
             name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
-            onPress={toggleHideAmounts}
+            onPress={() => {
+              haptic.tap();
+              toggleHideAmounts();
+            }}
             selected={hideAmounts}
             accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
           />

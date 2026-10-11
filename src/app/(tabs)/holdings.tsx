@@ -58,6 +58,7 @@ import { latestNavQuery, queryKeys, recentNavQuery } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
+import { haptic } from '@/components/ui/haptics';
 
 const keyExtractor = (fund: FundHolding) => String(fund.schemeCode);
 
@@ -350,7 +351,10 @@ export default function HoldingsScreen() {
           <IconButton
             name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
             size={24}
-            onPress={toggleHideAmounts}
+            onPress={() => {
+              haptic.tap();
+              toggleHideAmounts();
+            }}
             selected={hideAmounts}
             accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
           />

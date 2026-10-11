@@ -8,6 +8,7 @@ import { MIN_TOUCH, motion } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
+import { haptic } from './haptics';
 
 export interface SectionProps {
   title: string;
@@ -41,6 +42,7 @@ export function Section({ title, summary, initiallyOpen = false, children }: Sec
     return () => animation.stop();
   }, [open, reduced, turn]);
   const toggle = () => {
+    haptic.tap();
     if (!reduced) {
       LayoutAnimation.configureNext(LayoutAnimation.create(motion.base, 'easeInEaseOut', 'opacity'));
     }
