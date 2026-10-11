@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { TextField } from '@/components/ui/TextField';
 import { MAX_BACKUP_CHARS, holdingsCsv, makeBackup, readBackup } from '@/store/backup';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
@@ -108,7 +109,7 @@ export default function BackupScreen() {
           <AppText variant="label" tone="muted">
             Paste the whole backup text, from {'{'} to {'}'}.
           </AppText>
-          <TextInput
+          <TextField
             value={pasted}
             onChangeText={(text) => {
               setPasted(text);
@@ -117,21 +118,11 @@ export default function BackupScreen() {
             multiline
             maxLength={MAX_BACKUP_CHARS}
             placeholder="Paste your backup here"
-            placeholderTextColor={colors.textMuted}
             accessibilityLabel="Backup text"
             autoCorrect={false}
             autoCapitalize="none"
-            style={[
-              typography.caption,
-              styles.input,
-              {
-                color: colors.text,
-                backgroundColor: colors.background,
-                borderColor: error !== null ? colors.danger : colors.border,
-                borderRadius: radius.md,
-                padding: spacing.md,
-              },
-            ]}
+            error={error !== null}
+            onSurface
           />
           {error !== null && (
             <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
@@ -148,5 +139,4 @@ export default function BackupScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   // A pasted backup runs to thousands of lines: the box scrolls inside itself instead of pushing Restore off screen.
-  input: { minHeight: 120, maxHeight: 220, textAlignVertical: 'top', borderWidth: StyleSheet.hairlineWidth },
 });

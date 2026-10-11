@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatDate } from '@/domain/dates';
 import type { IsoDate } from '@/domain/types';
-import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { CalendarSheet } from './CalendarSheet';
@@ -59,10 +58,11 @@ export function DateField({
         style={({ pressed }) => [
           styles.field,
           {
-            borderColor: message?.tone === 'error' ? colors.danger : colors.border,
+            // Same shape as the text fields: no outline at rest, green while its calendar is open, red when invalid.
+            borderColor: message?.tone === 'error' ? colors.danger : open ? colors.primary : 'transparent',
             backgroundColor: colors.surface,
-            borderRadius: radius.md,
-            paddingHorizontal: spacing.md,
+            borderRadius: radius.control,
+            paddingHorizontal: spacing.lg,
             opacity: disabled ? 0.5 : pressed ? 0.7 : 1,
           },
         ]}
@@ -94,8 +94,8 @@ export function DateField({
 
 const styles = StyleSheet.create({
   field: {
-    minHeight: MIN_TOUCH,
-    borderWidth: StyleSheet.hairlineWidth,
+    minHeight: 52,
+    borderWidth: 1.5,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

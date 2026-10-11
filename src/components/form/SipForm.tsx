@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { formatDate } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
@@ -23,6 +23,7 @@ import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { DateField } from './DateField';
 import { haptic } from '../ui/haptics';
+import { TextField } from '../ui/TextField';
 
 export interface SipFormProps {
   schemeCode: number;
@@ -119,26 +120,15 @@ export function SipForm({
     <View style={{ gap: spacing.lg }}>
       <View style={{ gap: spacing.xs }}>
         <AppText variant="label">Amount every month</AppText>
-        <TextInput
+        <TextField
           value={amountText}
           onChangeText={setAmountText}
           onBlur={() => setAmountTouched(true)}
           keyboardType="number-pad"
           inputMode="numeric"
           placeholder="e.g. 5000"
-          placeholderTextColor={colors.textMuted}
           accessibilityLabel="Amount every month, in rupees"
-          style={[
-            typography.body,
-            styles.input,
-            {
-              color: colors.text,
-              backgroundColor: colors.surface,
-              borderColor: showAmountError ? colors.danger : colors.border,
-              borderRadius: radius.md,
-              paddingHorizontal: spacing.md,
-            },
-          ]}
+          error={showAmountError}
         />
         <AppText variant="caption" tone={showAmountError ? 'danger' : 'muted'} accessibilityLiveRegion="polite">
           {showAmountError && !amount.ok ? amount.error : 'Whole rupees, as set in your SIP mandate.'}
@@ -203,6 +193,5 @@ export function SipForm({
 }
 
 const styles = StyleSheet.create({
-  input: { minHeight: MIN_TOUCH, borderWidth: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap' },
 });

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 
 import { fundDisplayName } from '@/components/fund/FundGate';
 import { DateField } from '@/components/form/DateField';
@@ -14,6 +14,7 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { SignedAmount } from '@/components/ui/SignedAmount';
 import { SignedPercent } from '@/components/ui/SignedPercent';
 import { SegmentedRow } from '@/components/ui/SegmentedRow';
+import { TextField } from '@/components/ui/TextField';
 import { formatDate, parseIsoDate, todayInIndia } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
 import { formatInr, formatNav, formatUnits } from '@/domain/format';
@@ -200,26 +201,15 @@ function AddHoldingForm({
           <>
             <View style={{ gap: spacing.xs }}>
               <AppText variant="label">Units</AppText>
-              <TextInput
+              <TextField
                 value={unitsText}
                 onChangeText={setUnitsText}
                 onBlur={() => setUnitsTouched(true)}
                 keyboardType="decimal-pad"
                 inputMode="decimal"
                 placeholder="e.g. 125.432"
-                placeholderTextColor={colors.textMuted}
                 accessibilityLabel="Units"
-                style={[
-                  typography.body,
-                  styles.input,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                    borderColor: showUnitsError ? colors.danger : colors.border,
-                    borderRadius: radius.md,
-                    paddingHorizontal: spacing.md,
-                  },
-                ]}
+                error={showUnitsError}
               />
               {showUnitsError ? (
                 <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
@@ -234,26 +224,15 @@ function AddHoldingForm({
 
             <View style={{ gap: spacing.xs }}>
               <AppText variant="label">Amount paid (optional)</AppText>
-              <TextInput
+              <TextField
                 value={amountText}
                 onChangeText={setAmountText}
                 onBlur={() => setAmountTouched(true)}
                 keyboardType="decimal-pad"
                 inputMode="decimal"
                 placeholder="e.g. 9390.91"
-                placeholderTextColor={colors.textMuted}
                 accessibilityLabel="Amount paid in rupees, optional"
-                style={[
-                  typography.body,
-                  styles.input,
-                  {
-                    color: colors.text,
-                    backgroundColor: colors.surface,
-                    borderColor: showAmountError ? colors.danger : colors.border,
-                    borderRadius: radius.md,
-                    paddingHorizontal: spacing.md,
-                  },
-                ]}
+                error={showAmountError}
               />
               {showAmountError && !amount.ok ? (
                 <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
@@ -348,7 +327,6 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center' },
-  input: { minHeight: MIN_TOUCH, borderWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center' },
   inline: { flexDirection: 'row', alignItems: 'baseline' },
 });
