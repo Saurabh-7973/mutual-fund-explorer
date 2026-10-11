@@ -20,9 +20,18 @@ function splitAmount(formatted: string): { sign: string; rupees: string; paise: 
  * the paise in the secondary colour, so the eye lands on the rupees. Read whole by screen
  * readers; dots while amounts are hidden.
  */
-export function MoneyHero({ value, scale }: { value: bigint; scale: number }) {
+export function MoneyHero({
+  value,
+  scale,
+  private: isPrivate = true,
+}: {
+  value: bigint;
+  scale: number;
+  /** Your own money (the default) hides with the eye; a hypothetical amount stays visible. */
+  private?: boolean;
+}) {
   const { colors } = useTheme();
-  const hidden = useAmountsHidden();
+  const hidden = useAmountsHidden() && isPrivate;
   const formatted = formatInr(value, scale);
   const parts = splitAmount(formatted);
   return (

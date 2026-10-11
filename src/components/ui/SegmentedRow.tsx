@@ -40,7 +40,7 @@ export function SegmentedRow<K extends string>({
   selected,
   onSelect,
   accessibilityLabel,
-  variant = 'plain',
+  variant = 'track',
 }: SegmentedRowProps<K>) {
   const { colors, radius } = useTheme();
   const reduced = useReducedMotion();

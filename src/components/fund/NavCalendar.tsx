@@ -130,7 +130,7 @@ export function NavCalendar({ points }: { points: readonly NavPoint[] }) {
       </View>
 
       {selected !== null && (
-        <View style={[styles.detail, { borderColor: colors.border, borderRadius: radius.md, padding: spacing.md }]}>
+        <View style={[styles.detail, { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md }]}>
           <AppText variant="label" numeric>
             {formatDate(selected.date)}
           </AppText>
@@ -234,5 +234,5 @@ const styles = StyleSheet.create({
   // A minimum, not a fixed height: at large text sizes the cell grows instead of clipping its figure.
   cell: { flex: 1, minHeight: CELL_HEIGHT, padding: 4, justifyContent: 'space-between', overflow: 'hidden' },
   nav: { width: MIN_TOUCH, height: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
-  detail: { borderWidth: StyleSheet.hairlineWidth, gap: 2 },
+  detail: { gap: 2 },
 });

@@ -11,8 +11,8 @@ import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
 import { SegmentedRow } from '../ui/SegmentedRow';
-import { SignedAmount } from '../ui/SignedAmount';
-import { SignedPercent } from '../ui/SignedPercent';
+import { ChangeChip } from '../ui/ChangeChip';
+import { MoneyHero } from '../ui/MoneyHero';
 
 const AMOUNTS: Record<InvestMode, number[]> = { sip: [1000, 5000, 10000], lumpsum: [10000, 50000, 100000] };
 const PERIODS = [
@@ -81,15 +81,13 @@ export function InvestReplay({ points }: { points: NavPoint[] }) {
               ? `${rupees(amount)} a month for ${years} would be worth`
               : `${rupees(amount)} invested ${years} ago would be worth`}
           </AppText>
-          <AppText variant="figure" numeric>
-            {formatInr(replay.current, VALUE_SCALE)}
-          </AppText>
-          <View style={[styles.line, { gap: spacing.sm }]}>
+          {/* A hypothetical, not your money: it stays visible when amounts are hidden. */}
+          <MoneyHero value={replay.current} scale={VALUE_SCALE} private={false} />
+          <View style={[styles.line, { gap: spacing.sm, alignItems: 'center' }]}>
+            <ChangeChip amount={replay.gain} scale={VALUE_SCALE} pctHundredths={replay.returnHundredths} />
             <AppText variant="label" tone="muted" numeric>
               on {formatInr(replay.invested, VALUE_SCALE)} invested
             </AppText>
-            <SignedAmount value={replay.gain} scale={VALUE_SCALE} variant="label" />
-            <SignedPercent hundredths={replay.returnHundredths} variant="label" />
           </View>
           {replay.xirrPercent !== null && (
             <AppText

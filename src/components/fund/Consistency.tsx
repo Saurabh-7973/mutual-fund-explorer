@@ -91,7 +91,7 @@ export function Consistency({ points }: { points: NavPoint[] }) {
         <View
           style={[
             styles.fall,
-            { borderColor: colors.border, borderRadius: radius.md, padding: spacing.md, gap: spacing.xs },
+            { backgroundColor: colors.lossSurface, borderRadius: radius.md, padding: spacing.md, gap: spacing.xs },
           ]}
         >
           <Term term="drawdown" label="Worst fall" variant="labelStrong" tone="default" />
@@ -152,5 +152,5 @@ const styles = StyleSheet.create({
   median: { position: 'absolute', width: 14, height: 14, marginLeft: -7, borderRadius: 7, borderWidth: 2 },
   legend: { flexDirection: 'row' },
   figure: { flex: 1 },
-  fall: { borderWidth: StyleSheet.hairlineWidth },
+  fall: {},
 });

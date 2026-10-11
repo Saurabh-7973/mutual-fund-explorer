@@ -55,7 +55,7 @@ function Centered({ children }: { children: ReactNode }) {
 
 /** Pick the second fund from the ones you already follow, hold or looked at. */
 function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
-  const { colors, spacing } = useTheme();
+  const { colors, radius, spacing } = useTheme();
   const watchlist = usePortfolioStore((s) => s.watchlist);
   const lots = usePortfolioStore((s) => s.lots);
   const recent = usePreferencesStore((s) => s.recentlyViewed);
@@ -91,8 +91,8 @@ function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
       <AppText variant="heading" accessibilityRole="header">
         Compare {nameA !== undefined ? describeScheme(nameA).title : 'this fund'} with
       </AppText>
-      <View>
-        {candidates.map((fund) => {
+      <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: spacing.lg }}>
+        {candidates.map((fund, i) => {
           const label = describeScheme(fund.schemeName);
           return (
             <Pressable
@@ -101,13 +101,13 @@ function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
               onPress={() => router.setParams({ b: String(fund.schemeCode) })}
               style={({ pressed }) => [
                 styles.choice,
-                { borderBottomColor: colors.border, gap: 2, paddingVertical: spacing.sm, opacity: pressed ? 0.6 : 1 },
+                { borderBottomColor: colors.hairline, borderBottomWidth: i === candidates.length - 1 ? 0 : StyleSheet.hairlineWidth, gap: 2, paddingVertical: spacing.sm, opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {label.title}
               </AppText>
-              <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
                 {[label.plan, label.option, fund.why].filter((part): part is string => part !== null).join(' · ')}
               </AppText>
             </Pressable>
@@ -285,7 +285,7 @@ function Comparison({ a, b }: { a: number; b: number }) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center' },
-  choice: { minHeight: 60, justifyContent: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
+  choice: { minHeight: 64, justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center' },
   divider: { borderTopWidth: StyleSheet.hairlineWidth },
   labelCol: { flex: 1.3 },
