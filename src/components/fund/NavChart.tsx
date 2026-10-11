@@ -1,5 +1,5 @@
-import { memo, useCallback, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Defs, Line, LinearGradient, Path, Stop, Text as SvgText } from 'react-native-svg';
 
@@ -8,7 +8,8 @@ import { formatDate } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
 import { navChange } from '@/domain/nav';
 import type { NavPoint } from '@/domain/types';
-import { fonts, tabularNumbers } from '@/theme/tokens';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { fonts, motion, tabularNumbers } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 import { haptic } from '../ui/haptics';
 
@@ -58,6 +59,35 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
   const extremes = useMemo(() => lowAndHigh(points), [points]);
 
   const lineColor = change !== null && change.diff < 0n ? colors.loss : colors.gain;
+
+  // A new range draws in from the left, the way time runs; a cover in the page colour slides away.
+  const reduced = useReducedMotion();
+  const reveal = useRef(new Animated.Value(1)).current;
+  const running = useRef<Animated.CompositeAnimation | null>(null);
+  // Only a different range draws in again: a refetch or re-layout of the same data never
+  // restarts it, and an interrupted reveal is finished rather than left half drawn.
+  const signature = `${points[0]?.date ?? ''}|${points.length}`;
+  const shown = useRef<string | null>(null);
+  useEffect(() => {
+    if (width === 0 || shown.current === signature) return;
+    const first = shown.current === null;
+    shown.current = signature;
+    running.current?.stop();
+    if (reduced || first) {
+      reveal.setValue(1);
+      return;
+    }
+    reveal.setValue(0);
+    running.current = Animated.timing(reveal, {
+      toValue: 1,
+      duration: motion.slow * 2,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    running.current.start(({ finished }) => {
+      if (!finished) reveal.setValue(1);
+    });
+  }, [signature, reduced, width, reveal]);
   const markers = useMemo(
     () => (geometry !== null && extremes !== null ? placeExtremes(geometry, extremes, height) : null),
     [geometry, extremes, height],
@@ -141,7 +171,7 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
       <GestureDetector gesture={gesture}>
         <View
           onLayout={onLayout}
-          style={{ height }}
+          style={{ height, overflow: 'hidden' }}
           accessible
           accessibilityRole="image"
           accessibilityLabel={summary ?? 'NAV chart'}
@@ -174,6 +204,16 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
               )}
             </Svg>
           )}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                backgroundColor: colors.background,
+                transform: [{ translateX: reveal.interpolate({ inputRange: [0, 1], outputRange: [0, width] }) }],
+              },
+            ]}
+          />
         </View>
       </GestureDetector>
 
