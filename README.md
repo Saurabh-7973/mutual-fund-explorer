@@ -31,6 +31,23 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 2. **Development build:** `npx expo run:android` (needs Android Studio) or `npx expo run:ios` (needs Xcode on macOS).
 3. **Upgrade:** once SDK 58 is stable, run `npx expo install expo@^58.0.0 --fix`, then `npm run check`.
 
+## Where to look
+
+One row per evaluation criterion in the brief, pointing to where it shows best.
+
+| Criterion | Start here |
+|---|---|
+| Code quality and readability | `src/domain/valuation.ts` and `src/domain/nav.ts` (small pure functions, each rule documented and tested); `CLAUDE.md` (the rules the code follows) |
+| Application and component structure | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) "Shape of the app"; the layer table in `CLAUDE.md` |
+| State management | `src/query/hooks.ts` (server data: TanStack Query keys and options); `src/store/portfolioStore.ts` with `portfolioSchema.ts` (user data: Zustand, pure transitions, validated on every load) |
+| API integration and real-world data | `src/api/client.ts` and `src/api/parse.ts` (timeouts, typed errors, untrusted JSON checked field by field); `src/api/__fixtures__/mfapi.ts` (real payloads) |
+| Returns computation and date handling | `src/domain/valuation.ts`, `returns.ts`, `xirr.ts`, `dates.ts`; [AI_CONTEXT.md](AI_CONTEXT.md) "An example where I overrode the AI" (which NAV a purchase gets) |
+| Loading, empty, error and edge-case states | `src/components/fund/FundGate.tsx` (loading, not found, offline, no NAV); `src/api/errors.ts` (`describeError`) |
+| List and rendering performance with large data | `src/app/fund/[code]/navs.tsx` (a `FlatList` of thousands of fixed-height rows) and `src/domain/lttb.ts` (chart downsampling); [docs/BUILD_LOG.md](docs/BUILD_LOG.md) "P1-3. Large portfolio" (600 purchases, measured) |
+| Input validation and formatting | `src/domain/validation.ts`; `src/domain/format.ts` (₹ with Indian grouping, true minus sign) |
+| Engineering judgment | "Beyond the brief, and why" below; [docs/DESIGN.md](docs/DESIGN.md) "What we deliberately left out"; [docs/SECURITY.md](docs/SECURITY.md) |
+| Explaining decisions | [docs/BUILD_LOG.md](docs/BUILD_LOG.md) (every decision and fix, in order); [AI_CONTEXT.md](AI_CONTEXT.md); [docs/DESIGN.md](docs/DESIGN.md) (each component's data, form and reference) |
+
 ## Checks
 
 | Command | What it does |
