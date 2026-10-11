@@ -58,7 +58,7 @@ export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: Recen
               maxFontSizeMultiplier={1.3}
               tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}
             >
-              {formatPercentHundredths(change.pctHundredths)} 1D
+              {formatPercentHundredths(change.pctHundredths)}
             </AppText>
           )}
         </View>

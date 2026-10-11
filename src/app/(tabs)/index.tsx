@@ -134,9 +134,14 @@ export default function ExploreScreen() {
           )}
           {recentlyViewed.length > 0 && (
             <View style={{ gap: spacing.xs, marginBottom: spacing.md }}>
-              <AppText variant="heading" accessibilityRole="header">
-                Recently viewed
-              </AppText>
+              <View style={styles.sectionHead}>
+                <AppText variant="heading" accessibilityRole="header" style={styles.flexOne}>
+                  Recently viewed
+                </AppText>
+                <AppText variant="caption" tone="muted">
+                  NAV · 1D
+                </AppText>
+              </View>
               <View>
                 {recentlyViewed.map((fund) => (
                   <RecentFundRow key={fund.schemeCode} fund={fund} />
@@ -147,9 +152,14 @@ export default function ExploreScreen() {
           <AppText variant="heading" accessibilityRole="header">
             Start with a collection
           </AppText>
-          <View style={[styles.wrap, { gap: spacing.sm }]}>
-            {SEARCH_SUGGESTIONS.map((item) => (
-              <Chip key={item.query} label={item.label} onPress={() => setText(item.query)} />
+          <View style={[styles.grid, { gap: spacing.sm }]}>
+            {SEARCH_SUGGESTIONS.map((item, i) => (
+              <CollectionCard
+                key={item.query}
+                item={item}
+                icon={COLLECTION_ICONS[i] ?? 'search'}
+                onPress={() => setText(item.query)}
+              />
             ))}
           </View>
         </ScrollView>
@@ -276,7 +286,65 @@ export default function ExploreScreen() {
   );
 }
 
+/** One icon per collection, in the order of SEARCH_SUGGESTIONS. */
+const COLLECTION_ICONS = [
+  'leaf-outline',
+  'layers-outline',
+  'trending-up-outline',
+  'shield-checkmark-outline',
+  'water-outline',
+  'diamond-outline',
+] as const;
+
+/** A collection as a card in a two-column grid: icon, name, and one line on what it holds. */
+function CollectionCard({
+  item,
+  icon,
+  onPress,
+}: {
+  item: { label: string; blurb: string };
+  icon: (typeof COLLECTION_ICONS)[number] | 'search';
+  onPress: () => void;
+}) {
+  const { colors, radius, spacing } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.label}: ${item.blurb}`}
+      style={({ pressed }) => [
+        styles.card,
+        {
+          backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
+          borderColor: colors.border,
+          borderRadius: radius.lg,
+          padding: spacing.md,
+          gap: spacing.sm,
+        },
+      ]}
+    >
+      <View style={[styles.cardIcon, { backgroundColor: colors.primarySoft, borderRadius: radius.md }]}>
+        <Ionicons name={icon} size={18} color={colors.primary} />
+      </View>
+      <View style={{ gap: 2 }}>
+        <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {item.label}
+        </AppText>
+        <AppText variant="caption" tone="muted" numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          {item.blurb}
+        </AppText>
+      </View>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  sectionHead: { flexDirection: 'row', alignItems: 'baseline' },
+  flexOne: { flex: 1 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  // Two per row: each takes just under half, then grows to fill what the gap leaves.
+  card: { flexBasis: '45%', flexGrow: 1, minHeight: 116, borderWidth: StyleSheet.hairlineWidth },
+  cardIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center' },
   field: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH, borderWidth: StyleSheet.hairlineWidth },

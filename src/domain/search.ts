@@ -13,6 +13,8 @@ export const MIN_QUERY_LENGTH = 2;
 export interface SearchSuggestion {
   label: string;
   query: string;
+  /** One line on what the collection holds, in plain words. */
+  blurb: string;
 }
 
 /**
@@ -20,12 +22,12 @@ export interface SearchSuggestion {
  * Each one only runs a search: no hard-coded scheme codes that go stale, and no return claims.
  */
 export const SEARCH_SUGGESTIONS: readonly SearchSuggestion[] = [
-  { label: 'Parag Parikh', query: 'parag parikh' },
-  { label: 'Flexi cap', query: 'flexi cap' },
-  { label: 'Nifty 50 index', query: 'nifty 50 index' },
-  { label: 'Tax saver (ELSS)', query: 'elss' },
-  { label: 'Liquid', query: 'liquid' },
-  { label: 'Gold', query: 'gold' },
+  { label: 'Parag Parikh', query: 'parag parikh', blurb: 'Value investing, at home and abroad' },
+  { label: 'Flexi cap', query: 'flexi cap', blurb: 'Any company size, one fund' },
+  { label: 'Nifty 50 index', query: 'nifty 50 index', blurb: "India's 50 largest companies" },
+  { label: 'Tax saver (ELSS)', query: 'elss', blurb: 'Tax deduction, 3-year lock-in' },
+  { label: 'Liquid', query: 'liquid', blurb: 'Parking money for days or weeks' },
+  { label: 'Gold', query: 'gold', blurb: 'Gold without a locker' },
 ];
 
 /** Trims, collapses spaces and lowercases, so "  Parag  Parikh" and "parag parikh" share one cache entry. */
