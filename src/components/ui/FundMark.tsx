@@ -6,6 +6,7 @@ import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
 
+/** 40 in rows; the fund page uses 44 and compact places 36. */
 export const FUND_MARK_SIZE = 40;
 
 /**
@@ -21,7 +22,7 @@ export const FundMark = memo(function FundMark({ schemeName, size = FUND_MARK_SI
     <View
       importantForAccessibility="no-hide-descendants"
       accessibilityElementsHidden
-      style={[styles.mark, { width: size, height: size, borderRadius: size * 0.25, backgroundColor: background }]}
+      style={[styles.mark, { width: size, height: size, borderRadius: size / 2, backgroundColor: background }]}
     >
       <AppText
         variant="labelStrong"

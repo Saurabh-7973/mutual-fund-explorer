@@ -27,10 +27,9 @@ export function Chip({ label, onPress, selected = false, disabled = false }: Chi
       style={({ pressed }) => [
         styles.chip,
         {
-          borderRadius: radius.sm,
-          paddingHorizontal: spacing.md,
-          borderColor: selected ? colors.primary : colors.border,
-          backgroundColor: selected ? colors.infoSurface : colors.surface,
+          borderRadius: radius.pill,
+          paddingHorizontal: spacing.md + 2,
+          backgroundColor: selected ? colors.primarySoft : colors.surfaceMuted,
           opacity: disabled ? 0.4 : pressed ? 0.7 : 1,
         },
       ]}
@@ -46,6 +45,5 @@ const styles = StyleSheet.create({
   chip: {
     minHeight: CHIP_HEIGHT,
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
   },
 });

@@ -475,3 +475,17 @@ The user asked whether the to-do list held anything I'd found myself; mostly it 
 - **Key facts no longer repeat the NAV.** The first cell repeated the NAV and date from the hero just above; it now shows the ISIN (growth, else IDCW reinvestment; selectable like every value there), and the ISIN left the source footnote. The NAV ⓘ moved to the hero's "NAV" label, as its own control so screen readers reach it, with the figures beside it read as one ("₹88.9258 as of 09 Oct 2026, up 1.45% on the day"). `KeyFacts` no longer takes the latest NAV. Checked on the emulator, including the accessibility labels.
 - **README "Where to look".** Right after "Run it": one row per evaluation criterion in the brief, each pointing to the one or two files or doc sections that show it best. Every path was checked to exist.
 - **Screenshots retaken** where content changed: 02 (the hero's "NAV ⓘ", ISIN in key facts), 03 (the SIP banner's new wording), 06 ("3,289 NAVs"), 09 ("Typical 3-year hold (p.a.)"); 03, 04 and 05 from a scroll position where the card starts just under the header, so no text is sliced. The tour GIF shows no tab press, so it stays as recorded.
+
+## Visual pass (target: a claude.ai redesign canvas, approved by the user)
+
+Presentation only: nothing in `src/domain`, `src/api`, `src/query` or `src/store` changes; accessibility labels, gain/loss words, hidden amounts, the 1.3× caps, reduced motion and dark mode all stay.
+
+- **V1. Tokens and shared components.**
+  - Palette: warm page `#F3F4F0`, white surfaces, one secondary grey `#59665F`, deeper primary `#1E4D40`, gain/loss/stale each with a tinted surface for chips. New `hairline`, `gainSurface`, `lossSurface` and `shadow` tokens; dark mode re-derived with the same roles. WCAG contrast checked for every text/background pair in both modes (lowest: gain on its chip, 4.64:1 light; muted on surfaceMuted, 6.02:1 dark).
+  - Chart colours: indigo `#3D5A98` and saffron `#D29A2E` first (allocation and Compare), plus teal and berry. The dataviz validator passes all checks in both modes; saffron is under 3:1 on white, so it is only ever shown with a text label (legend, table header), as the validator requires. Dark: `#5F7FCC, #BB8522, #2BAA9C, #A93C68` on `#18201C` (teal and berry separated by lightness, which first failed the colour-blind check at ΔE 5).
+  - Type: tab title 30/36, `money` 42/48, `hero` 46/52, fund name 22/28, section 17/22, new `rowTitle` 15/20.
+  - Radius: cards 20, range pills 12, search field 16; chips that carry a figure are full pills.
+  - Cards and collapsible sections lose their border; no dashed line remains (the Compare ₹10,000 baseline is a solid hairline, the chart crosshair a half-opacity line). Monograms are circles. Selector tracks lose their outline, the thumb keeps a soft shadow; the plain selector's pill is 36 tall. Chips are tonal pills.
+  - New `MoneyHero` (₹ and paise smaller, paise in the secondary grey; read as the whole amount; dots when hidden) and `ChangeChip` / `StatusChip` (tinted pills; sign printed, "gain of"/"loss of" spoken). Three component tests added.
+  - The sample banner is a slim 44-tall bar on `surfaceMuted` with a text Clear.
+  - Checked on the emulator in light and dark.

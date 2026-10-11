@@ -50,7 +50,7 @@ export function Section({ title, summary, initiallyOpen = false, children }: Sec
   };
   return (
     <View
-      style={[styles.box, { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radius.lg }]}
+      style={[styles.box, { backgroundColor: colors.surface, borderRadius: radius.lg }]}
     >
       <Pressable
         onPress={toggle}
@@ -80,7 +80,7 @@ export function Section({ title, summary, initiallyOpen = false, children }: Sec
 }
 
 const styles = StyleSheet.create({
-  box: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
+  box: { overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH },
   flex: { flex: 1 },
 });

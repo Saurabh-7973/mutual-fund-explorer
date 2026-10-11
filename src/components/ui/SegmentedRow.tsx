@@ -86,8 +86,6 @@ export function SegmentedRow<K extends string>({
           padding: inset,
           borderRadius: radius.sm + inset,
           backgroundColor: colors.surfaceMuted,
-          borderColor: colors.border,
-          borderWidth: StyleSheet.hairlineWidth,
         },
       ]}
     >
@@ -107,10 +105,9 @@ export function SegmentedRow<K extends string>({
               ? {
                   borderRadius: radius.sm,
                   backgroundColor: colors.raised,
-                  borderColor: colors.border,
-                  borderWidth: StyleSheet.hairlineWidth,
+                  shadowColor: colors.shadow,
                 }
-              : { borderRadius: radius.sm, backgroundColor: colors.primarySoft },
+              : { borderRadius: radius.control, backgroundColor: colors.primarySoft },
           ]}
         />
       )}
@@ -150,7 +147,8 @@ const styles = StyleSheet.create({
   cell: { flex: 1, minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
   cellTrack: { minHeight: MIN_TOUCH - 2 * TRACK_INSET },
   // The plain pill sits inside its cell, not edge to edge, so neighbouring ranges stay apart.
-  thumbPlain: { position: 'absolute', marginVertical: 6 },
+  // 36 tall inside a 44 cell.
+  thumbPlain: { position: 'absolute', marginVertical: 4 },
   thumbTrack: {
     position: 'absolute',
     elevation: 1,

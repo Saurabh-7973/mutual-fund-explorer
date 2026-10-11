@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/theme/useTheme';
 
@@ -14,9 +14,8 @@ export function Card({ children, style }: CardProps) {
     <View
       style={[
         {
+          // White on the warm page: no border, no shadow. Lines appear only inside, as inset hairlines.
           backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderWidth: StyleSheet.hairlineWidth,
           borderRadius: radius.lg,
           padding: spacing.lg,
         },

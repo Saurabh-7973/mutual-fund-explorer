@@ -12,13 +12,22 @@ export interface Palette {
   surfaceMuted: string;
   /** Lifted above surfaceMuted: the sliding thumb of a selector track. */
   raised: string;
+  /** Shadow colour for the few lifted things (a selector thumb), used at 8% opacity. */
+  shadow: string;
+  /** Input outlines and the tab bar's top edge; cards have no border. */
   border: string;
+  /** Inset separators inside a card, the only lines on a page. */
+  hairline: string;
   text: string;
   textMuted: string;
   primary: string;
   onPrimary: string;
   gain: string;
+  /** Tint behind a gain chip. */
+  gainSurface: string;
   loss: string;
+  /** Tint behind a loss chip. */
+  lossSurface: string;
   warning: string;
   warningSurface: string;
   danger: string;
@@ -47,26 +56,30 @@ export const palettes: { light: Palette; dark: Palette } = {
   // "Patient money": a deep banyan green and ink on cool paper. Gains and losses are
   // muted, because long-term money shouldn't flash like a trading screen.
   light: {
-    background: '#F2F5F1',
+    background: '#F3F4F0',
     surface: '#FFFFFF',
-    surfaceMuted: '#E6EBE5',
+    surfaceMuted: '#E9ECE7',
     raised: '#FFFFFF',
-    border: '#D5DCD3',
-    text: '#15211C',
-    textMuted: '#5A6A62',
-    primary: '#2F5D50',
+    shadow: '#111B17',
+    border: '#E3E7E2',
+    hairline: '#EEF1ED',
+    text: '#111B17',
+    textMuted: '#59665F',
+    primary: '#1E4D40',
     onPrimary: '#FFFFFF',
-    gain: '#1E7650',
-    loss: '#B0473D',
-    warning: '#85580A',
-    warningSurface: '#FAF0D7',
+    gain: '#127A4C',
+    gainSurface: '#E3F2EA',
+    loss: '#B53A2E',
+    lossSurface: '#FBEAE7',
+    warning: '#7A4F09',
+    warningSurface: '#F8EDD3',
     danger: '#B2362D',
     dangerSurface: '#FBE8E5',
     info: '#2C5D7C',
     infoSurface: '#E4EEF3',
-    star: '#C08A1E',
-    primarySoft: '#DCE9E3',
-    chart: ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100'],
+    star: '#C68A12',
+    primarySoft: '#E2EDE7',
+    chart: ['#3D5A98', '#D29A2E', '#2AA198', '#B23A6E'],
     chartOther: '#A3ADA7',
     mark: [
       ['#DCEBE3', '#2F5D50'],
@@ -78,26 +91,30 @@ export const palettes: { light: Palette; dark: Palette } = {
     ],
   },
   dark: {
-    background: '#0D1311',
-    surface: '#151D1A',
-    surfaceMuted: '#1F2925',
-    raised: '#2E3A35',
-    border: '#2A3530',
-    text: '#E5ECE8',
-    textMuted: '#93A39A',
-    primary: '#83BCA7',
-    onPrimary: '#0D1311',
-    gain: '#5DBE8C',
-    loss: '#EE8A7E',
-    warning: '#E0B44C',
-    warningSurface: '#32290F',
+    background: '#0E1412',
+    surface: '#18201C',
+    surfaceMuted: '#222B27',
+    raised: '#2E3833',
+    shadow: '#000000',
+    border: '#2A332F',
+    hairline: '#232C28',
+    text: '#E8EEEA',
+    textMuted: '#9CAAA2',
+    primary: '#8CC3AE',
+    onPrimary: '#0E1412',
+    gain: '#63C793',
+    gainSurface: '#183326',
+    loss: '#F08E81',
+    lossSurface: '#3A201C',
+    warning: '#E6BE5E',
+    warningSurface: '#33290F',
     danger: '#F08A80',
     dangerSurface: '#3A1E1B',
     info: '#8CB8D4',
     infoSurface: '#16283A',
     star: '#E3B04B',
-    primarySoft: '#1E3A31',
-    chart: ['#3987E5', '#D95926', '#199E70', '#C98500'],
+    primarySoft: '#1F3A31',
+    chart: ['#5F7FCC', '#BB8522', '#2BAA9C', '#A93C68'],
     chartOther: '#5B6862',
     mark: [
       ['#1E3A31', '#9FD0BC'],
@@ -113,10 +130,11 @@ export const palettes: { light: Palette; dark: Palette } = {
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 /**
- * A boxy scale, one step per size of thing: xs for tags, sm for chips and selector thumbs,
- * md for buttons, inputs and tracks, lg for cards. pill is kept for data bars only.
+ * One step per size of thing: xs for small tags, sm for selector thumbs, md for buttons,
+ * inputs and tracks, control for range pills, field for the search field, lg for cards.
+ * pill for chips that carry a figure (change, stale) and data bars.
  */
-export const radius = { xs: 4, sm: 6, md: 10, lg: 14, pill: 999 } as const;
+export const radius = { xs: 4, sm: 8, md: 10, control: 12, field: 16, lg: 20, pill: 999 } as const;
 
 /**
  * Motion, in milliseconds. Movement answers a touch (a thumb sliding to the choice, a
@@ -141,10 +159,16 @@ export const fonts = {
 
 export const typography = {
   /** A tab's large title. */
-  display: { fontSize: 28, lineHeight: 34, fontFamily: fonts.bold, letterSpacing: -0.3 },
+  display: { fontSize: 30, lineHeight: 36, fontFamily: fonts.bold, letterSpacing: -0.6 },
+  /** The one rupee amount a screen is about (MoneyHero sets the ₹ and paise smaller). */
+  money: { fontSize: 42, lineHeight: 48, fontFamily: fonts.bold, letterSpacing: -1.4 },
+  /** A fund's headline return. */
+  hero: { fontSize: 46, lineHeight: 52, fontFamily: fonts.bold, letterSpacing: -1.6 },
   figure: { fontSize: 32, lineHeight: 38, fontFamily: fonts.bold, letterSpacing: -0.5 },
-  title: { fontSize: 20, lineHeight: 26, fontFamily: fonts.bold },
-  heading: { fontSize: 16, lineHeight: 22, fontFamily: fonts.semibold },
+  title: { fontSize: 22, lineHeight: 28, fontFamily: fonts.bold },
+  heading: { fontSize: 17, lineHeight: 22, fontFamily: fonts.semibold },
+  /** A fund's name in a list row. */
+  rowTitle: { fontSize: 15, lineHeight: 20, fontFamily: fonts.semibold },
   body: { fontSize: 15, lineHeight: 21, fontFamily: fonts.regular },
   label: { fontSize: 13, lineHeight: 18, fontFamily: fonts.medium },
   /** Row titles: a fund's name in a list. */

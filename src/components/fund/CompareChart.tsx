@@ -26,7 +26,7 @@ export interface CompareChartProps {
 }
 
 /**
- * Growth of ₹10,000 in two funds on one axis, with the starting ₹10,000 as a dashed
+ * Growth of ₹10,000 in two funds on one axis, with the starting ₹10,000 as a solid hairline
  * baseline. Each line is named in the legend with what the money became, so the colours
  * are never the only way to tell the funds apart. Drag across the chart (as on the NAV
  * chart) to read both values on any date; the legend shows them exactly.
@@ -136,7 +136,7 @@ export function CompareChart({ growth, labelA, labelB }: CompareChartProps) {
         >
           {paths !== null && (
             <Svg width={width} height={HEIGHT}>
-              <Line x1={0} x2={width} y1={paths.base} y2={paths.base} stroke={colors.border} strokeDasharray="4 4" strokeWidth={1} />
+              <Line x1={0} x2={width} y1={paths.base} y2={paths.base} stroke={colors.border} strokeWidth={1} />
               <Path d={paths.b} stroke={colourB} strokeWidth={2} fill="none" strokeLinejoin="round" />
               <Path d={paths.a} stroke={colourA} strokeWidth={2} fill="none" strokeLinejoin="round" />
               {active !== null && activePoint && (

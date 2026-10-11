@@ -217,7 +217,7 @@ export function NavChart({ points, rangeLabel, height = DEFAULT_HEIGHT }: NavCha
               )}
               {activeX !== undefined && activeY !== undefined && (
                 <>
-                  <Line x1={activeX} y1={0} x2={activeX} y2={height} stroke={colors.textMuted} strokeWidth={1} strokeDasharray="4 4" />
+                  <Line x1={activeX} y1={0} x2={activeX} y2={height} stroke={colors.textMuted} strokeOpacity={0.5} strokeWidth={1} />
                   <Circle cx={activeX} cy={activeY} r={5} fill={lineColor} stroke={colors.surface} strokeWidth={2} />
                 </>
               )}

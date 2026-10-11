@@ -7,6 +7,8 @@ import { VALUE_SCALE } from '../../domain/decimal';
 import type { IsoDate, NavPoint, SchemeMeta } from '../../domain/types';
 import { latestNavQuery, recentNavQuery } from '../../query/hooks';
 import { usePreferencesStore } from '../../store/preferencesStore';
+import { ChangeChip } from '../ui/ChangeChip';
+import { MoneyHero } from '../ui/MoneyHero';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
@@ -36,6 +38,32 @@ describe('signed amounts', () => {
   it('gives a gain a plus sign and the word "gain"', async () => {
     await render(<SignedAmount value={rupees(176324n)} scale={VALUE_SCALE} />);
     expect(screen.getByText('+₹1,763.24').props.accessibilityLabel).toMatch(/^gain of ₹1,763\.24/);
+  });
+});
+
+describe('hero money and change chips', () => {
+  it('sets the rupees large but reads the whole amount, and hides it with the eye', async () => {
+    await render(<MoneyHero value={rupees(69821458n)} scale={VALUE_SCALE} />);
+    expect(screen.getByLabelText('₹6,98,214.58')).toBeTruthy();
+    expect(screen.getByText('6,98,214', { exact: false })).toBeTruthy();
+    await cleanup();
+    usePreferencesStore.setState({ hideAmounts: true });
+    await render(<MoneyHero value={rupees(69821458n)} scale={VALUE_SCALE} />);
+    expect(screen.getByLabelText('Amount hidden')).toBeTruthy();
+    expect(screen.queryByText(/6,98,214/)).toBeNull();
+  });
+
+  it('prints a loss chip with minus signs and says "loss of" and "down"', async () => {
+    await render(<ChangeChip amount={rupees(-47540n)} scale={VALUE_SCALE} pctHundredths={-58n} />);
+    expect(screen.getByText(`${MINUS}₹475.40 · ${MINUS}0.58%`)).toBeTruthy();
+    expect(screen.getByLabelText('loss of ₹475.40, down 0.58%')).toBeTruthy();
+  });
+
+  it('keeps the percentage but hides your own rupees in a gain chip', async () => {
+    usePreferencesStore.setState({ hideAmounts: true });
+    await render(<ChangeChip amount={rupees(13121458n)} scale={VALUE_SCALE} pctHundredths={2314n} private />);
+    expect(screen.getByText('••••• · +23.14%')).toBeTruthy();
+    expect(screen.getByLabelText('gain, amount hidden, up 23.14%')).toBeTruthy();
   });
 });
 
