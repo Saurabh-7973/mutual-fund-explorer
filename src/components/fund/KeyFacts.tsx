@@ -25,11 +25,13 @@ export function KeyFacts({ meta, last, first, skipped }: { meta: SchemeMeta; las
             {'term' in fact && fact.term !== undefined ? (
               <Term term={fact.term} label={fact.label} variant="caption" />
             ) : (
-              <AppText variant="caption" tone="muted">
+              // Capped like the glossary labels beside it, so the four labels stay one size.
+              <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
                 {fact.label}
               </AppText>
             )}
-            <AppText variant="label" numeric numberOfLines={1} selectable>
+            {/* Wraps rather than truncates: with selectable, Android clips a one-line value at large text sizes. */}
+            <AppText variant="label" numeric selectable>
               {fact.value}
             </AppText>
           </View>

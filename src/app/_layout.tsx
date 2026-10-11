@@ -8,6 +8,12 @@ import { usePendingLotResolver } from '@/hooks/usePendingLotResolver';
 import { QueryProvider } from '@/query/QueryProvider';
 import { useTheme } from '@/theme/useTheme';
 
+/**
+ * A link straight to a fund (or any stacked screen) opens with the tabs beneath it, so
+ * Back leads into the app instead of out of it.
+ */
+export const unstable_settings = { anchor: '(tabs)' };
+
 /** Work that must run whichever screen is open. Rendered inside the providers. */
 function BackgroundTasks() {
   usePendingLotResolver();

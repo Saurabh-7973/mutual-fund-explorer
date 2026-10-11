@@ -25,11 +25,13 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 - *"Which of my SIPs is dragging?"* → Holdings already sorts by XIRR; with SIPs entered in one go, the XIRR is meaningful.
 - *"The preview says ₹2,84,999.97 invested, but I paid ₹2,85,000."* Units are rounded to 4 decimals, so units × NAV fell 3 paise short. → The SIP preview shows the rupees actually paid and the gain against them (`sipGain`).
 - *"My fund page is a 57-row list now."* → The purchase timeline shows the latest 4 and "Show 53 earlier purchases".
+- *"If I sell now, is it short-term?"* → For equity schemes, "Short-term ⓘ 1,254.3219 of 1,379.7539 units · Next turns long-term 28 Oct 2026". Index funds and FoFs get nothing, since their tax rules can't be told apart from this data.
 - *"Next month I have to come back and type the new instalment."* → The app spots a running SIP (3 or more monthly purchases of the same amount on the same day, month-ends included: `detectSip`) and shows "SIP of ₹5,000 on the 10th of each month". Once a NAV on or after the next date is out, "Add instalments due" opens the SIP form prefilled from that date; before then it says when the instalment can be added.
 - *"The date picker looks like a different app, and scrolling back to 2022 takes forever."* → The app's own calendar: tap the month to jump to a year; dates outside the fund's data are greyed out.
 
 ### Meena (near retirement)
 - *"How badly can this fall?"* Returns were shown, risk was not. → **Worst fall (maximum drawdown):** how far the NAV fell from a peak, when, and how long it took to recover, in the consistency section and its collapsed summary. For Parag Parikh Flexi Cap: −31.20% from 13 Feb to 24 Mar 2020, back above the old high by 7 Jul 2020.
+- *"At the biggest text size the numbers break in half."* (font scale 2.0) → The Invested · 1D · Units strip stacks into rows; key facts wrap instead of clipping; tab labels and the search hint stop colliding.
 - *"The text in the calendar is too small / too big for the circles."* → Calendar text is capped at 1.3× like every fixed-size cell.
 - *"My IDCW fund's returns look low."* → Already footnoted (NAV-based, IDCW payouts not added back); the glossary repeats it in plain words.
 
@@ -37,6 +39,7 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 - Amounts hide with the eye and stay hidden after a restart; the watchlist and holdings work offline from saved NAVs with their dates. No new issue found.
 
 ### Kavya (screen reader)
+- *"Which of my ELSS instalments are still locked?"* → **Lock-in per purchase:** "In lock-in" with how many units, when the next unlocks and when all are free, and "Lock-in ends …" on each ELSS purchase (from the allotment date).
 - Swipe-to-remove has a matching accessibility action; gains and losses are spoken as "gain of" and "loss of"; the chart has a spoken summary. → Checked that new controls (selectors, sections, glossary terms) announce role and state.
 
 ### Everyone
@@ -46,4 +49,6 @@ Six people who would use a long-term mutual fund tracker, from a first-time inve
 - *"Show me the drawdown and recovery, not just CAGR."* → The maximum drawdown above.
 - *"I want the ISIN and code without hunting."* → Key facts show the code, the footnote the ISIN; both are selectable text.
 - *"Ten-year return?"* → Added 3M and 10Y periods in the earlier pass.
+- *"At the 2024 peak, which fund was ahead?"* → Drag the compare chart to read both funds' exact value on any date.
+- *"A friend sent me a link to a fund and there's no way back into the app."* → Links open with the tabs beneath them.
 - *"Let me put two funds side by side."* → **Compare:** growth of ₹10,000 from the same day on one axis, and a table with returns next to risk. Parag Parikh Flexi Cap against HDFC Mid Cap over 3 years: ₹14,206 against ₹15,561, but a worst fall of −31.20% against −39.51%, and 4% of the mid cap's 3-year holds lost money.

@@ -16,7 +16,9 @@ export type GlossaryKey =
   | 'rolling'
   | 'drawdown'
   | 'assetClass'
-  | 'averageCost';
+  | 'averageCost'
+  | 'lockIn'
+  | 'longTerm';
 
 export interface GlossaryEntry {
   title: string;
@@ -75,5 +77,13 @@ export const GLOSSARY: Record<GlossaryKey, GlossaryEntry> = {
   averageCost: {
     title: 'Average cost',
     body: 'What you paid per unit on average across all your purchases. When the NAV is above it, your holding is in profit.',
+  },
+  lockIn: {
+    title: 'ELSS lock-in',
+    body: "ELSS (tax-saving) funds lock each purchase for 3 years from the day it was made, so a monthly SIP unlocks one instalment at a time. Until then those units can't be redeemed or switched.",
+  },
+  longTerm: {
+    title: 'Long-term units',
+    body: 'Units of an equity fund held for more than 12 months count as long-term for capital gains tax, which is usually taxed lower than short-term gains. Each purchase has its own date. Check the current rules before you sell.',
   },
 };

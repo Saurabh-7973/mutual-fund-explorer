@@ -9,6 +9,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  useWindowDimensions,
   type ListRenderItem,
 } from 'react-native';
 
@@ -52,6 +53,8 @@ const layoutOneHeader = layoutWithHeader(1);
 
 export default function ExploreScreen() {
   const { colors, radius, spacing, typography } = useTheme();
+  // The example name doesn't fit one line at large text sizes; the short hint does.
+  const largeText = useWindowDimensions().fontScale > 1.3;
   const params = useLocalSearchParams<{ q?: string }>();
   const [text, setText] = useState('');
   const [directOnly, setDirectOnly] = useState(false);
@@ -254,7 +257,7 @@ export default function ExploreScreen() {
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Search funds, e.g. Parag Parikh Flexi Cap"
+            placeholder={largeText ? 'Search funds' : 'Search funds, e.g. Parag Parikh Flexi Cap'}
             placeholderTextColor={colors.textMuted}
             autoCorrect={false}
             autoCapitalize="none"

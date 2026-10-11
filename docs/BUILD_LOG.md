@@ -326,3 +326,19 @@ The user asked for the best UI/UX possible, with every component decided by the 
 - *"At the 2024 peak, which fund was ahead?"* The compare chart only showed end values. Now a drag (or touch and hold) reads both funds on any date, and the legend shows the exact rupees (`growthAt` in `src/domain/compare.ts`, BigInt from the two NAVs, tested against `endA`/`endB` on the last point). The legend says which date it shows ("Value on …" / "On …").
 - The dashed baseline is labelled ₹10,000.
 - Bug found on the way: the compare screen used React Native's `ScrollView`, so a chart gesture would have fought the page scroll. Switched to Gesture Handler's, as the fund page does. Checked on the emulator: horizontal drag scrubs, vertical swipe over the chart scrolls, release restores end values.
+
+## Round: holding periods, large text, links (personas: Kavya, Arjun, Vikram, Meena)
+
+- **ELSS lock-in and long-term units** (`src/domain/holdingPeriod.ts`, tested). Kavya holds ELSS: *"Which of my SIP instalments can I redeem?"* Arjun: *"If I sell now, is it short-term?"* "Your investment" now shows, only when it applies, one line: "In lock-in ⓘ 1,390.3029 of 1,766.57 units · Next unlocks 05 Nov 2026 · all free by 05 Oct 2029" for ELSS, or "Short-term ⓘ … Next turns long-term …" for equity schemes; each ELSS purchase says when its lock-in ends. Decisions:
+  - Periods run from the **allotment** date (the applied NAV's date), not the order date: a Sunday order is allotted Monday.
+  - Long-term = held more than 12 months, so from the day after the 12-month anniversary.
+  - Only categories AMFI files as "Equity Scheme(s)" get the long-term line. Index funds and FoFs ("Other Scheme") and hybrids are taxed by rules this data can't separate, so the app says nothing rather than something wrong. No tax amounts are computed.
+  - ELSS shows no short-term line: the 3-year lock-in outlasts 12 months.
+  - Found on the way: mfapi.in writes both "Equity Scheme - …" and "Equity Schemes - ELSS- Tax Saver Fund"; the first regex missed the plural (caught by checking real categories with curl before the emulator run; tested).
+- **Large text (Meena, font scale 2.0 on the emulator):**
+  - The Invested · 1D · Units strip broke figures mid-number ("₹1,29,521.\n33"). Above 1.3× it now stacks as label/value rows.
+  - Key facts: a selectable one-line value was clipped by Android ("PPFAS Mutual" with "Fund" cut). Values now wrap; plain labels are capped at 1.3× like the glossary labels beside them.
+  - Tab labels ran into the gesture bar: capped at 1.3× (the bar has a fixed height).
+  - Explore's placeholder is "Search funds" at large sizes (the example name was cut).
+- **Links straight to a fund** (cold start) had no back arrow, because nothing was beneath the fund screen. `unstable_settings = { anchor: '(tabs)' }` in the root layout puts the tabs underneath; Back now lands on Explore. (Small change to pre-built `_layout.tsx`.)
+- Process slip: running `npx prettier` without a repo config reformatted files to double quotes; the files were restored from git and edited again without a formatter.

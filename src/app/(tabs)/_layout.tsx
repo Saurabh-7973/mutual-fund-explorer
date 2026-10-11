@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs } from 'expo-router/js-tabs';
 import type { ComponentProps } from 'react';
-import { StyleSheet, View, type ColorValue } from 'react-native';
+import { StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/useTheme';
@@ -35,7 +35,17 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: typography.caption.fontSize, fontWeight: '600', marginTop: 2 },
+        // The bar has a fixed height, so labels grow with the system text size only up to 1.3×
+        // (like list rows); beyond that they'd run into the gesture bar.
+        tabBarLabel: ({ color, children }) => (
+          <Text
+            maxFontSizeMultiplier={1.3}
+            numberOfLines={1}
+            style={{ color, fontSize: typography.caption.fontSize, fontWeight: '600', marginTop: 2 }}
+          >
+            {children}
+          </Text>
+        ),
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
