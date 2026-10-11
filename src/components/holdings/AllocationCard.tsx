@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import type { AssetClass } from '@/domain/assetClass';
 import { formatPercentHundredths } from '@/domain/format';
@@ -7,6 +7,7 @@ import type { AllocationSlice, AssetClassSlice } from '@/domain/holdings';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { SegmentedRow } from '../ui/SegmentedRow';
 import { Term } from '../ui/Term';
 
 /** Colour follows the class, never its rank, so Equity is the same blue on every screen. */
@@ -39,7 +40,7 @@ export interface AllocationCardProps {
  * fund split is one tap away.
  */
 export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
-  const { colors, radius, spacing } = useTheme();
+  const { colors, spacing } = useTheme();
   const [view, setView] = useState<'class' | 'fund'>('class');
   if (byFund.length === 0) return null;
 
@@ -67,24 +68,17 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
         <View style={styles.flex}>
           <Term term="assetClass" label="Allocation" />
         </View>
-        <View style={[styles.segment, { backgroundColor: colors.surfaceMuted, borderRadius: radius.pill }]}>
-          {(['class', 'fund'] as const).map((option) => (
-            <Pressable
-              key={option}
-              onPress={() => setView(option)}
-              accessibilityRole="button"
-              accessibilityState={{ selected: view === option }}
-              hitSlop={8}
-              style={[
-                styles.segmentItem,
-                { borderRadius: radius.pill, backgroundColor: view === option ? colors.surface : 'transparent' },
-              ]}
-            >
-              <AppText variant="labelStrong" tone={view === option ? 'default' : 'muted'}>
-                {option === 'class' ? 'Asset class' : 'Fund'}
-              </AppText>
-            </Pressable>
-          ))}
+        <View style={styles.switch}>
+          <SegmentedRow
+            variant="track"
+            accessibilityLabel="Allocation by"
+            options={[
+              { key: 'class', label: 'Asset class' },
+              { key: 'fund', label: 'Fund' },
+            ]}
+            selected={view}
+            onSelect={setView}
+          />
         </View>
       </View>
 
@@ -135,8 +129,7 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center' },
   flex: { flex: 1 },
-  segment: { flexDirection: 'row', padding: 2 },
-  segmentItem: { paddingHorizontal: 12, paddingVertical: 4 },
+  switch: { width: 196 },
   bar: { flexDirection: 'row', height: 12 },
   legend: { flexDirection: 'row', alignItems: 'center' },
   swatch: { width: 10, height: 10, borderRadius: 3 },

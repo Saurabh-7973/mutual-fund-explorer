@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { MIN_TOUCH } from '@/theme/tokens';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { MIN_TOUCH, motion } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
@@ -17,16 +19,100 @@ export interface SegmentedRowProps<K extends string> {
   onSelect: (key: K) => void;
   /** Read before each option, e.g. "Chart range". */
   accessibilityLabel: string;
+  /**
+   * 'track' (a mode switch: two or three choices that change what the screen shows): a
+   * recessed track with a raised thumb. 'plain' (a picker among many, like chart ranges):
+   * text only, with a soft pill on the choice.
+   */
+  variant?: 'track' | 'plain';
 }
 
+const TRACK_INSET = 3;
+
 /**
- * A row of equal-width text options with a soft pill on the chosen one: lighter than a row
- * of bordered chips, and seven ranges still fit a small phone.
+ * Equal-width options with one marker that slides to the choice, so the eye follows the
+ * change instead of seeing one pill vanish and another appear. The slide is skipped when
+ * the system asks for reduced motion, and on first layout.
  */
-export function SegmentedRow<K extends string>({ options, selected, onSelect, accessibilityLabel }: SegmentedRowProps<K>) {
+export function SegmentedRow<K extends string>({
+  options,
+  selected,
+  onSelect,
+  accessibilityLabel,
+  variant = 'plain',
+}: SegmentedRowProps<K>) {
   const { colors, radius } = useTheme();
+  const reduced = useReducedMotion();
+  const [width, setWidth] = useState(0);
+  const x = useRef(new Animated.Value(0)).current;
+  const placed = useRef(false);
+  const track = variant === 'track';
+  const inset = track ? TRACK_INSET : 0;
+  const cell = width > 0 ? (width - 2 * inset) / options.length : 0;
+  const index = Math.max(0, options.findIndex((option) => option.key === selected));
+
+  useEffect(() => {
+    if (cell === 0) return;
+    const to = index * cell;
+    if (reduced || !placed.current) {
+      x.setValue(to);
+      placed.current = true;
+      return;
+    }
+    const animation = Animated.timing(x, {
+      toValue: to,
+      duration: motion.base,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [cell, index, reduced, x]);
+
+  const onLayout = (event: LayoutChangeEvent) => {
+    const next = Math.round(event.nativeEvent.layout.width);
+    setWidth((current) => (current === next ? current : next));
+  };
+
   return (
-    <View style={styles.row} accessibilityRole="tablist" accessibilityLabel={accessibilityLabel}>
+    <View
+      onLayout={onLayout}
+      accessibilityRole="tablist"
+      accessibilityLabel={accessibilityLabel}
+      style={[
+        styles.row,
+        track && {
+          padding: inset,
+          borderRadius: radius.md + inset,
+          backgroundColor: colors.surfaceMuted,
+          borderColor: colors.border,
+          borderWidth: StyleSheet.hairlineWidth,
+        },
+      ]}
+    >
+      {cell > 0 && (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            track ? styles.thumbTrack : styles.thumbPlain,
+            {
+              left: inset,
+              top: inset,
+              bottom: inset,
+              width: cell,
+              transform: [{ translateX: x }],
+            },
+            track
+              ? {
+                  borderRadius: radius.md,
+                  backgroundColor: colors.raised,
+                  borderColor: colors.border,
+                  borderWidth: StyleSheet.hairlineWidth,
+                }
+              : { borderRadius: radius.pill, backgroundColor: colors.primarySoft },
+          ]}
+        />
+      )}
       {options.map((option) => {
         const isSelected = option.key === selected;
         return (
@@ -37,23 +123,17 @@ export function SegmentedRow<K extends string>({ options, selected, onSelect, ac
             accessibilityRole="tab"
             accessibilityLabel={`${accessibilityLabel}: ${option.label}`}
             accessibilityState={{ selected: isSelected, disabled: option.disabled }}
-            style={styles.cell}
+            style={[styles.cell, track && styles.cellTrack]}
           >
-            <View
-              style={[
-                styles.pill,
-                { borderRadius: radius.pill, backgroundColor: isSelected ? colors.primarySoft : 'transparent' },
-              ]}
+            <AppText
+              variant="labelStrong"
+              tone={isSelected ? (track ? 'default' : 'primary') : 'muted'}
+              maxFontSizeMultiplier={1.3}
+              numberOfLines={1}
+              style={option.disabled && styles.disabled}
             >
-              <AppText
-                variant="labelStrong"
-                tone={isSelected ? 'primary' : 'muted'}
-                maxFontSizeMultiplier={1.3}
-                style={option.disabled && styles.disabled}
-              >
-                {option.label}
-              </AppText>
-            </View>
+              {option.label}
+            </AppText>
           </Pressable>
         );
       })}
@@ -63,7 +143,16 @@ export function SegmentedRow<K extends string>({ options, selected, onSelect, ac
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row' },
-  cell: { flex: 1, minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center' },
-  pill: { paddingHorizontal: 10, paddingVertical: 6 },
+  cell: { flex: 1, minHeight: MIN_TOUCH, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  cellTrack: { minHeight: MIN_TOUCH - 2 * TRACK_INSET },
+  // The plain pill sits inside its cell, not edge to edge, so neighbouring ranges stay apart.
+  thumbPlain: { position: 'absolute', marginVertical: 6 },
+  thumbTrack: {
+    position: 'absolute',
+    elevation: 1,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+  },
   disabled: { opacity: 0.35 },
 });

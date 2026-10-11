@@ -10,6 +10,8 @@ export interface Palette {
   background: string;
   surface: string;
   surfaceMuted: string;
+  /** Lifted above surfaceMuted: the sliding thumb of a selector track. */
+  raised: string;
   border: string;
   text: string;
   textMuted: string;
@@ -43,6 +45,7 @@ export const palettes: { light: Palette; dark: Palette } = {
     background: '#F2F5F1',
     surface: '#FFFFFF',
     surfaceMuted: '#E6EBE5',
+    raised: '#FFFFFF',
     border: '#D5DCD3',
     text: '#15211C',
     textMuted: '#5A6A62',
@@ -65,6 +68,7 @@ export const palettes: { light: Palette; dark: Palette } = {
     background: '#0D1311',
     surface: '#151D1A',
     surfaceMuted: '#1F2925',
+    raised: '#2E3A35',
     border: '#2A3530',
     text: '#E5ECE8',
     textMuted: '#93A39A',
@@ -88,6 +92,13 @@ export const palettes: { light: Palette; dark: Palette } = {
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 } as const;
 
 export const radius = { sm: 6, md: 10, lg: 14, pill: 999 } as const;
+
+/**
+ * Motion, in milliseconds. Movement answers a touch (a thumb sliding to the choice, a
+ * section opening) and is short enough never to make anyone wait. Everything respects the
+ * system's "remove animations" setting (`useReducedMotion`).
+ */
+export const motion = { fast: 150, base: 220, slow: 320 } as const;
 
 /** Minimum touch target (Apple HIG 44 pt; Android recommends 48 dp, reached with hitSlop). */
 export const MIN_TOUCH = 44;

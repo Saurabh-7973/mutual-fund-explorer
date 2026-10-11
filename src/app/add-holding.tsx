@@ -164,6 +164,7 @@ function AddHoldingForm({
 
         <SegmentedRow
           accessibilityLabel="What to add"
+          variant="track"
           options={[
             { key: 'once', label: 'One purchase' },
             { key: 'sip', label: 'Monthly SIP' },

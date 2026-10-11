@@ -355,3 +355,10 @@ The user asked how real apps handle "invested". Answer: an account statement (CA
 - Old purchases are not back-filled. Inferring an amount from a detected SIP could be wrong for a one-off purchase of the same size.
 - Checked on the emulator: 125.432 units on 09 Oct 2026 with ₹10,000 typed → warning "125.432 units × this NAV is ₹11,154.14"; ₹11,154.70 → no warning, gain −₹0.56 (the stamp-duty-sized gap real apps also show); "9,390" → save blocked with the commas message; a new ₹1,500 SIP in UTI Nifty 50 from 07 Feb 2024 → 33 instalments, fund page Invested ₹49,500.00, value and XIRR the same as the preview.
 
+
+## Round: studio pass, part 1 (selectors and motion)
+
+- Research (user's phone, with permission, view only; no orders; screenshots showing personal details deleted): Groww holdings has a sort sheet (Current value, Returns %, Day change %, XIRR %, Fund name, each High to low / Low to high), a column that cycles Current (Invested) → Returns (%) → Day change (%), and per-holding details with Long term (>1Y) / Short term (<1Y) in rupees and "Invested for N months". The PPFAS app needs a login; only its welcome screen was seen (pill buttons, bold statement type).
+- `motion` tokens (150/220/320 ms) and `useReducedMotion` (system "remove animations").
+- `SegmentedRow` now has one marker that slides to the choice (native-driver `Animated`), with a `track` variant (a raised thumb on a recessed track, new `raised` colour token for dark mode) for mode switches: One purchase / Monthly SIP and the allocation Asset class / Fund switch (which had its own hand-made control). The `plain` variant keeps the chart ranges light.
+- Next (not done yet): Groww-style sort sheet and Day change column on Holdings; long/short-term in rupees and "Invested for"; NAV history calendar view; section open/close animation; pill buttons; alignment audit.
