@@ -101,13 +101,13 @@ function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
               onPress={() => router.setParams({ b: String(fund.schemeCode) })}
               style={({ pressed }) => [
                 styles.choice,
-                { borderBottomColor: colors.border, gap: 2, opacity: pressed ? 0.6 : 1 },
+                { borderBottomColor: colors.border, gap: 2, paddingVertical: spacing.sm, opacity: pressed ? 0.6 : 1 },
               ]}
             >
-              <AppText variant="labelStrong" numberOfLines={1}>
+              <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {label.title}
               </AppText>
-              <AppText variant="caption" tone="muted">
+              <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
                 {[label.plan, label.option, fund.why].filter((part): part is string => part !== null).join(' · ')}
               </AppText>
             </Pressable>
