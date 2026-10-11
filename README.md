@@ -41,7 +41,7 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 
 ## Screenshots
 
-Android emulator, light mode, Expo Go (SDK 57), with the sample portfolio loaded.
+Android emulator, light mode, Expo Go (SDK 57), with the sample portfolio loaded. Every screen was also checked on the iOS 26 simulator, in light and dark and at large text sizes.
 
 | Explore | Fund | Your investment |
 |---|---|---|

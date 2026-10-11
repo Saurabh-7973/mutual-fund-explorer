@@ -73,6 +73,7 @@ Every component below was decided by the data it shows, then checked against how
 | Fund hero | the NAV and its date | "NAV ₹88.9258 +₹1.2703 (+1.45%) as of 09 Oct 2026" under the 3Y figure, above the chart | Groww, Kite | the NAV was below the fold before |
 | Yearly figures | annualised returns | "p.a." on screen ("+12.40% p.a.", "since start, p.a."), "per year" for screen readers | AMC factsheets | one convention instead of five |
 | Disclaimers | — | SEBI's past-performance sentence on every returns footnote; the market-risk line once, at the foot of the fund page | SEBI advertisement code | — |
+| Platform chrome | the same screens on Android and iOS | everything the app draws (layout, type, colour, spacing, figures) is identical; the system's own chrome follows each platform: iOS 26's glass capsules for header buttons, centred stack titles, the edge swipe back and sheet-style modals on iOS; plain icons, left titles and system Back on Android | Apple's and Google's platform guidelines | the Add holding sheet gets a Cancel button on iOS, where a sheet has no back arrow |
 | Sample portfolio | real funds priced from real NAVs | a secondary button on the empty Holdings screen; a blue banner with Clear on Holdings and Watchlist while any sample item is saved | product tours | priced by the same domain rules as a typed purchase; Clear removes only what it added |
 
 ### Motion and haptics, as built

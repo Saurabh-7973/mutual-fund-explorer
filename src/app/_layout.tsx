@@ -1,8 +1,8 @@
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type ErrorBoundaryProps, type Theme } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider, type ErrorBoundaryProps, type Theme } from 'expo-router';
 import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { usePendingLotResolver } from '@/hooks/usePendingLotResolver';
@@ -70,7 +70,25 @@ export default function RootLayout() {
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="fund/[code]/index" options={{ title: '' }} />
             <Stack.Screen name="fund/[code]/navs" options={{ title: 'NAV history' }} />
-            <Stack.Screen name="add-holding" options={{ presentation: 'modal', title: 'Add holding' }} />
+            <Stack.Screen
+              name="add-holding"
+              options={{
+                presentation: 'modal',
+                title: 'Add holding',
+                // An iOS sheet has no back arrow, only a swipe down; forms there close with Cancel.
+                // Android keeps its back arrow and the system Back.
+                headerLeft:
+                  Platform.OS === 'ios'
+                    ? () => (
+                        <Pressable onPress={() => router.back()} accessibilityRole="button" hitSlop={12} style={styles.cancel}>
+                          <Text style={[theme.typography.label, { color: theme.colors.primary, fontSize: theme.typography.body.fontSize }]}>
+                            Cancel
+                          </Text>
+                        </Pressable>
+                      )
+                    : undefined,
+              }}
+            />
             <Stack.Screen name="compare" options={{ title: 'Compare funds' }} />
             <Stack.Screen name="backup" options={{ title: 'Your data' }} />
           </Stack>
@@ -101,5 +119,6 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   error: { flex: 1, justifyContent: 'center' },
+  cancel: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 8 },
   button: { minHeight: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
 });
