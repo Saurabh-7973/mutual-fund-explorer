@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 
 import type { IsoDate } from '../../domain/types';
-import { holdingsCsv, makeBackup, readBackup } from '../backup';
+import { MAX_BACKUP_CHARS, holdingsCsv, makeBackup, readBackup } from '../backup';
 import type { HoldingLot, PortfolioData } from '../portfolioSchema';
 
 const lot: HoldingLot = {
@@ -63,5 +63,17 @@ describe('holdingsCsv', () => {
 
   it('quotes names with commas', () => {
     expect(holdingsCsv([{ ...lot, schemeName: 'A, B Fund' }]).split('\n')[1]?.startsWith('"A, B Fund",')).toBe(true);
+  });
+});
+
+describe('readBackup size cap', () => {
+  it('refuses text at the cap without parsing it, and keeps the counts for a real backup', () => {
+    expect(readBackup('x'.repeat(MAX_BACKUP_CHARS))).toEqual({
+      ok: false,
+      error: 'That text is too long to be a backup from this app.',
+    });
+    const backup = makeBackup({ watchlist: [], lots: [lot] }, '2026-10-11T10:00:00.000Z');
+    expect(backup.length).toBeLessThan(MAX_BACKUP_CHARS);
+    expect(readBackup(backup)).toMatchObject({ ok: true, dropped: 0 });
   });
 });

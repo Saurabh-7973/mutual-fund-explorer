@@ -6,7 +6,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { holdingsCsv, makeBackup, readBackup } from '@/store/backup';
+import { MAX_BACKUP_CHARS, holdingsCsv, makeBackup, readBackup } from '@/store/backup';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { useTheme } from '@/theme/useTheme';
 import { haptic } from '@/components/ui/haptics';
@@ -92,6 +92,9 @@ export default function BackupScreen() {
           <AppText variant="caption" tone="muted">
             The CSV opens in any spreadsheet: one row per purchase with units, the NAV applied and the amount invested.
           </AppText>
+          <AppText variant="caption" tone="muted">
+            A backup is plain text: anyone with it can see your holdings. Keep it somewhere private.
+          </AppText>
         </Card>
 
         <Card style={{ gap: spacing.md }}>
@@ -108,6 +111,7 @@ export default function BackupScreen() {
               setError(null);
             }}
             multiline
+            maxLength={MAX_BACKUP_CHARS}
             placeholder="Paste your backup here"
             placeholderTextColor={colors.textMuted}
             accessibilityLabel="Backup text"

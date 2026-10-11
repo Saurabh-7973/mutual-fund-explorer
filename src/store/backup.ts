@@ -10,6 +10,11 @@ import { sanitizePortfolio, type HoldingLot, type PortfolioData } from './portfo
 
 export const BACKUP_APP = 'mutual-fund-explorer';
 export const BACKUP_VERSION = 1;
+/**
+ * The most text the restore box takes. A backup of 600 purchases is about 150,000
+ * characters; the cap keeps a stray paste of something huge from stalling the parse.
+ */
+export const MAX_BACKUP_CHARS = 1_000_000;
 
 export function makeBackup(data: PortfolioData, exportedAt: string): string {
   return JSON.stringify(
@@ -23,6 +28,10 @@ export type BackupCheck =
   { ok: true; data: PortfolioData; dropped: number; exportedAt: string | null } | { ok: false; error: string };
 
 export function readBackup(text: string): BackupCheck {
+  // At the cap, the paste was cut off by the field (or is far bigger than any real backup).
+  if (text.length >= MAX_BACKUP_CHARS) {
+    return { ok: false, error: 'That text is too long to be a backup from this app.' };
+  }
   let json: unknown;
   try {
     json = JSON.parse(text.trim());
