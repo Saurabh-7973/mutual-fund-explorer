@@ -6,10 +6,10 @@ Every component below was decided by the data it shows, then checked against how
 
 ## Direction: patient money
 
-- **Palette:** a deep "banyan" green as the primary colour, ink text on a cool paper background, and saffron-gold only for the watch star. Gains and losses are muted, because long-term money shouldn't flash like a trading screen. Dark mode has its own tuned values, not an inverted palette. The colours are tokens in `src/theme/tokens.ts`; no screen hard-codes a colour.
-- **Type scale** (system font, tabular figures so numbers line up): `display` 28 for a tab's title, `figure` 32 for the one number a screen is about, `title` 20 for a fund's name, `heading` 16 for section titles, `body` 15, `labelStrong` 13/600 for a fund's name in a list, `label` 13 for values and meta, `caption` 12 for dates and footnotes. No screen sets its own font size or weight.
+- **Palette:** a deep "banyan" green as the primary colour, ink text on a warm paper background with white cards, and saffron-gold only for the watch star. Gains and losses are muted, because long-term money shouldn't flash like a trading screen. Dark mode has its own tuned values, not an inverted palette. The colours are tokens in `src/theme/tokens.ts`; no screen hard-codes a colour.
+- **Type scale** (Inter, tabular figures so numbers line up): `display` 30 for a tab's title, `money` 42 and `hero` 46 for the one figure a screen is about, `figure` 32, `title` 22 for a fund's name, `heading` 17 for section titles, `rowTitle` 15/600 for a fund's name in a list, `body` 15, `labelStrong` 13/600, `label` 13 for values and meta, `caption` 12 for dates and footnotes. No screen sets its own font size or weight.
 - **Chrome:** no separate header bar. Each tab draws a large title on the page with its one action on the right (Holdings: hide amounts); stacked screens use a header the colour of the page, without a shadow. The tab bar uses the surface colour with a soft pill behind the active icon, the pattern Android users know from Material 3, and clears the gesture bar.
-- **One selector style:** ranges, amounts, periods and holding views all use the same equal-width row with a soft pill on the choice, instead of a mix of bordered chips.
+- **One selector style:** ranges, amounts, periods and modes all use the same toggle: a grey track with a white thumb that slides to the choice.
 - **Show the takeaway first, the detail on request.** Nothing is put on screen just because the data exists.
 
 ## Components
@@ -96,6 +96,25 @@ Motion tokens are `fast` 150 ms, `base` 220 ms and `slow` 320 ms, on the native 
 | Button press | scales to 0.97 and back | — |
 
 Never animated: money and percentages (a counting number shows wrong values on the way), and screen transitions (they stay native to each platform).
+
+## Visual pass (12 Oct 2026)
+
+The app was correct and clean but read like a careful template: every block in an outlined card on a grey page, one grey for every secondary job, money set in one size, dashed rules, and a chart-library blue and orange fighting the green. The visual pass followed a redesign drawn in claude.ai (`MF Explorer redesign`), approved by the user. Presentation only: no domain, API, query or store code changed.
+
+| Element | Before | After | Why |
+|---|---|---|---|
+| Surfaces | outlined cards on a grey page | white cards with radius 20 on a warm page, no border, no shadow; lines only as inset hairlines inside a card | one surface level reads calmer, and nothing competes with the figures |
+| Secondary text | several greys | one, `#59665F` (5.4:1 on the page) | consistent hierarchy, AA everywhere |
+| Money | one size | `MoneyHero`: rupees 42, ₹ and paise smaller, paise grey | the eye lands on the rupees, as on a price tag; read whole by screen readers |
+| Changes | coloured text | `ChangeChip`: a tinted pill "+₹1,31,214.58 · +23.14%" | gain or loss is seen at a glance; the sign and "gain of"/"loss of" stay |
+| Status | a "Stale" badge beside a date | one chip, "Stale · 01 Jun 2018" | the status and its reason together |
+| Chart colours | `#2A78D6`, `#EB6834` | indigo `#3D5A98`, saffron `#D29A2E` (then teal, berry); validated for colour blindness in both modes | calmer next to the green, still distinct; saffron always has a text label |
+| Monograms | rounded squares | circles (44 on the fund page, 40 in rows, 36 compact) | reads as a logo stand-in, not a button |
+| Selectors | a pill on text, or a track | always a toggle: grey track, sliding white thumb | one control to learn; the user asked for the chart ranges to look like a toggle |
+| Holdings | value in a card, rows on the page, "<> Current (invested)" | the value as the hero on the page, one strip for Invested, Today and XIRR, "Your funds" with two small buttons, rows in one card | the one number first; every figure has one place |
+| Fund page | three ⓘ tags, return 32 pt, chart with side margins, key facts as a grid with lines | tag chips that open the glossary, return 46 pt with "p.a.", chart edge to edge, key facts in a card | the return is the headline; the chart gets the full width |
+| Explore and Watchlist | rows on the page, the fund house as a third line, every row dated | rows in one card, two lines, the shared NAV date in the list header | denser and calmer; a date appears only where it differs |
+| Sample banner | an info alert | a slim 44-pt bar with a text Clear | nothing is wrong, so it shouldn't look like a warning |
 
 ## What we deliberately left out
 

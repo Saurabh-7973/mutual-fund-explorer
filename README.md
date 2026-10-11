@@ -2,7 +2,7 @@
 
 Search Indian mutual funds, read a fund's NAV history, keep a watchlist, and record holdings to see their current value and return. Built with Expo (managed workflow) and TypeScript on the free [mfapi.in](https://www.mfapi.in/) API.
 
-<img src="docs/screenshots/tour.gif" alt="A 27-second tour: Holdings, a fund with a running SIP, a fund chart that opens on 3 years, scrubbing it, the 1Y and All ranges, the watchlist" width="280">
+<img src="docs/screenshots/tour.gif" alt="A 27-second tour: Holdings, a fund with a running SIP, a fund chart that opens on 3 years, scrubbing it, the 1Y and All ranges, the watchlist, then a tab press to Explore" width="280">
 
 ## Two-minute tour
 
