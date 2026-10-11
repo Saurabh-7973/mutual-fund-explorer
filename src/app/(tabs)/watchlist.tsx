@@ -183,7 +183,7 @@ export default function WatchlistScreen() {
         scrollEventThrottle={16}
         ListHeaderComponent={
           <View onLayout={onHeaderLayout} style={{ paddingBottom: spacing.sm, gap: spacing.sm }}>
-            <LargeTitle title="Watchlist" subtitle={`${watchlist.length} ${watchlist.length === 1 ? 'fund' : 'funds'}`} />
+            <LargeTitle scrollY={scrollY} title="Watchlist" subtitle={`${watchlist.length} ${watchlist.length === 1 ? 'fund' : 'funds'}`} />
             {!online && (
               <View style={{ paddingHorizontal: spacing.lg }}>
                 <Banner tone="info" text="Offline: showing saved NAVs" />

@@ -41,9 +41,13 @@ export function ScreenHeader({ title, subtitle, right }: ScreenHeaderProps) {
 }
 
 
-/** How far the list scrolls before the top bar's small title has fully faded in. */
-const COLLAPSE_START = 24;
-const COLLAPSE_END = 56;
+/**
+ * How far the list scrolls while the top bar's small title fades in. The large title starts
+ * sliding under the bar at once, so the small one is fully in by the time the large one's
+ * 36-pt line is covered: the name is never half-sliced with nothing in its place.
+ */
+const COLLAPSE_START = 4;
+const COLLAPSE_END = 30;
 
 /**
  * A large title that scrolls away with the content, and a slim bar that keeps the screen's
@@ -85,14 +89,22 @@ export function TopBar({ title, right, scrollY }: { title: string; right?: React
   );
 }
 
-/** The large title and its status line, placed at the top of the scrolling content. */
-export function LargeTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+/**
+ * The large title and its status line, placed at the top of the scrolling content. Given the
+ * list's `scrollY`, the title fades out as it slides under the bar while the bar's small
+ * title fades in, so the name is never shown sliced.
+ */
+export function LargeTitle({ title, subtitle, scrollY }: { title: string; subtitle?: string; scrollY?: Animated.Value }) {
   const { spacing } = useTheme();
+  const opacity =
+    scrollY?.interpolate({ inputRange: [COLLAPSE_START, COLLAPSE_END], outputRange: [1, 0], extrapolate: 'clamp' }) ?? 1;
   return (
     <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, gap: 2 }}>
-      <AppText variant="display" accessibilityRole="header">
-        {title}
-      </AppText>
+      <Animated.View style={{ opacity }}>
+        <AppText variant="display" accessibilityRole="header">
+          {title}
+        </AppText>
+      </Animated.View>
       {subtitle !== undefined && (
         <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
           {subtitle}

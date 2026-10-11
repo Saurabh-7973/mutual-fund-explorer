@@ -253,6 +253,7 @@ export default function HoldingsScreen() {
   const summary = (
     <View onLayout={onHeaderLayout}>
       <LargeTitle
+        scrollY={scrollY}
         title="Holdings"
         subtitle={[
           funds.length === 1 ? '1 fund' : `${funds.length} funds`,
