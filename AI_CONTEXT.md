@@ -57,4 +57,4 @@ The app uses the first NAV on or after the purchase date, and saves a purchase a
 
 ## With more time
 
-Import from a CAS statement; component tests (React Native Testing Library) and Maestro end-to-end tests; a development build with app-switcher privacy tied to the hide-amounts toggle; multiple portfolios (for example, one per family member).
+Import from a CAS statement; Maestro end-to-end tests and more screen tests; a development build with app-switcher privacy tied to the hide-amounts toggle; multiple portfolios (for example, one per family member).

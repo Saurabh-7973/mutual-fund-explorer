@@ -2,7 +2,7 @@
 
 Search Indian mutual funds, read a fund's NAV history, keep a watchlist, and record holdings to see their current value and return. Built with Expo (managed workflow) and TypeScript on the free [mfapi.in](https://www.mfapi.in/) API.
 
-<img src="docs/screenshots/tour.gif" alt="A 28-second tour: Holdings, a fund with a running SIP, scrubbing the NAV chart, the 3Y and All ranges, the watchlist" width="280">
+<img src="docs/screenshots/tour.gif" alt="A 27-second tour: Holdings, a fund with a running SIP, a fund chart that opens on 3 years, scrubbing it, the 1Y and All ranges, the watchlist" width="280">
 
 ## Two-minute tour
 
@@ -36,7 +36,7 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 | Command | What it does |
 |---|---|
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Jest: 265 tests in 30 suites on dates, money, NAV rules, parsing, the API client, the sample portfolio and the store |
+| `npm test` | Jest: 278 tests in 33 suites on dates, money, NAV rules, links, parsing, the API client, the sample portfolio and the store, plus component tests (React Native Testing Library) for amounts, hidden amounts, the watchlist row and Add holding |
 | `npm run check` | Both |
 
 ## Screenshots
@@ -112,11 +112,12 @@ What was left out on purpose: notifications, CAS import, more calculators and an
 ```
 src/
   app/          routes (Expo Router): (tabs)/index, watchlist, holdings; fund/[code]/index, navs; add-holding,
-                compare, backup
-  components/   ui/, search/, fund/, form/, watchlist/, holdings/
+                compare, backup; +native-intent (incoming-link guard)
+  components/   ui/, search/, fund/ (lots/ for the purchase timeline), form/, watchlist/, holdings/;
+                __tests__/ for component tests
   domain/       pure rules: dates, calendar, decimal, format, nav, navCalendar, returns, longTerm, xirr, sip,
                 sample, compare, holdings, holdingPeriod, assetClass, fundHouse, valuation, validation, chart,
-                lttb, search, schemeName, signed, glossary
+                lttb, links, search, schemeName, signed, glossary
   api/          mfapi.in client, response parsing, typed errors, real-payload fixtures
   query/        TanStack Query client, keys, options, data hooks, persistence
   store/        Zustand portfolio and preferences stores, their pure transitions, backup and CSV
