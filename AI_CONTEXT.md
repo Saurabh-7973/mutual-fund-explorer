@@ -4,7 +4,7 @@
 
 ## AI tools used
 
-- **Claude (claude.ai):** research and fact-checking, then writing and testing the domain core (dates, money, NAV rules, the API client, the store's rules).
+- **Claude (claude.ai):** research and fact-checking, then writing and testing the domain core (dates, money, NAV rules, the API client, the store's rules); later an audit of the whole app, the polish plan (`docs/POLISH_PLAN.md`) and a review of each Claude Code round before I accepted it.
 - **Claude Code:** building the screens from a phased plan (`docs/BUILD_PROMPT.md`) under project rules in `CLAUDE.md`, then the product, design and polish rounds. I reviewed each phase before the next.
 - **[YOU]** Name the tools behind the three earlier research reports I started from (for example ChatGPT or Gemini deep research).
 

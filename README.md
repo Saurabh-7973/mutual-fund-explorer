@@ -14,7 +14,7 @@ Search Indian mutual funds, read a fund's NAV history, keep a watchlist, and rec
 
 ## Run it
 
-**You need:** Node.js ^20.19.4, ^22.13.0 or ^24.3.0 (22 LTS recommended); the **Expo Go** app (SDK 57) on an Android or iOS phone, or an emulator; and internet access to `https://api.mfapi.in`. There are no API keys and no environment variables.
+**You need:** Node.js ^22.13.0 or ^24.3.0 (22 LTS recommended; Node ^20.19.4 runs the app, but the component tests' library needs 22.13 or later); the **Expo Go** app (SDK 57) on an Android or iOS phone, or an emulator; and internet access to `https://api.mfapi.in`. There are no API keys and no environment variables.
 
 ```bash
 npm install
