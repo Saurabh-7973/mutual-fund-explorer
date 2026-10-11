@@ -10,61 +10,84 @@ export interface HoldingsListHeaderProps {
   sortShort: string;
   sortLabel: string;
   direction: 'asc' | 'desc';
+  /** Short name of the figure the rows show ("Current"), and the full ones for screen readers. */
+  columnShort: string;
   columnLabel: string;
   nextColumnLabel: string;
   onSort: () => void;
   onSwitchColumn: () => void;
 }
 
-/** Above the Holdings rows: how they're ordered on the left, which figure they show on the right. */
+/** "Your funds", with how the list is ordered and which figure the rows show as two small buttons. */
 export function HoldingsListHeader({
   sortShort,
   sortLabel,
   direction,
+  columnShort,
   columnLabel,
   nextColumnLabel,
   onSort,
   onSwitchColumn,
 }: HoldingsListHeaderProps) {
   const { colors, spacing } = useTheme();
-  // One figure per row keeps the list calm; this switches which one.
-  // Groww's layout: how the list is ordered on the left, which figure the rows show on the right.
   return (
-    <View style={[styles.listHeader, { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}>
-      <Pressable
-        onPress={onSort}
-        accessibilityRole="button"
+    <View style={[styles.row, { paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.md, gap: spacing.sm }]}>
+      <AppText variant="heading" accessibilityRole="header" maxFontSizeMultiplier={1.3} style={styles.flex}>
+        Your funds
+      </AppText>
+      <SmallButton
+        label={sortShort}
         accessibilityLabel={`Sorted by ${sortLabel}. Change sort`}
-        hitSlop={12}
-        style={[styles.inline, { gap: spacing.xs }]}
-      >
-        <Ionicons name="swap-vertical" size={14} color={colors.primary} />
-        <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" numberOfLines={1}>
-          {sortShort}
-        </AppText>
-        <Ionicons name={direction === 'desc' ? 'arrow-down' : 'arrow-up'} size={12} color={colors.primary} />
-      </Pressable>
-      <View style={styles.flex} />
-      <Pressable
-        onPress={onSwitchColumn}
-        accessibilityRole="button"
+        icon={direction === 'desc' ? 'arrow-down' : 'arrow-up'}
+        onPress={onSort}
+        colors={colors}
+      />
+      <SmallButton
+        label={columnShort}
         accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumnLabel}`}
-        hitSlop={12}
-        style={[styles.inline, { gap: spacing.xs }]}
-      >
-        <Ionicons name="code-outline" size={14} color={colors.primary} />
-        <AppText variant="label" maxFontSizeMultiplier={1.3} tone="primary" style={[styles.dotted, { borderBottomColor: colors.primary }]}>
-          {columnLabel}
-        </AppText>
-      </Pressable>
+        icon="chevron-down"
+        onPress={onSwitchColumn}
+        colors={colors}
+      />
     </View>
   );
 }
 
+function SmallButton({
+  label,
+  accessibilityLabel,
+  icon,
+  onPress,
+  colors,
+}: {
+  label: string;
+  accessibilityLabel: string;
+  icon: 'arrow-down' | 'arrow-up' | 'chevron-down';
+  onPress: () => void;
+  colors: ReturnType<typeof useTheme>['colors'];
+}) {
+  const { radius, spacing } = useTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={6}
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: colors.surface, borderRadius: radius.control, paddingHorizontal: spacing.md, gap: 6, opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      <AppText variant="labelStrong" tone="primary" maxFontSizeMultiplier={1.3} numberOfLines={1}>
+        {label}
+      </AppText>
+      <Ionicons name={icon} size={14} color={colors.primary} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center' },
   flex: { flex: 1 },
-  inline: { flexDirection: 'row', alignItems: 'center' },
-  listHeader: { flexDirection: 'row', alignItems: 'center' },
-  // A dotted underline marks the column label as tappable, as Groww does.
-  dotted: { borderBottomWidth: 1, borderStyle: 'dashed' },
+  button: { flexDirection: 'row', alignItems: 'center', minHeight: 36 },
 });

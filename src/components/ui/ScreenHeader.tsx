@@ -94,7 +94,7 @@ export function LargeTitle({ title, subtitle }: { title: string; subtitle?: stri
         {title}
       </AppText>
       {subtitle !== undefined && (
-        <AppText variant="caption" tone="muted">
+        <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
           {subtitle}
         </AppText>
       )}

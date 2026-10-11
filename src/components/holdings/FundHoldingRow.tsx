@@ -14,7 +14,7 @@ import { Skeleton } from '../ui/Skeleton';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
-import { FundMark } from '../ui/FundMark';
+import { FUND_MARK_SIZE, FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 76 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
@@ -24,11 +24,11 @@ export const FUND_HOLDING_ROW_HEIGHT = PixelRatio.roundToNearestPixel(76);
 export type HoldingColumn = 'value' | 'returns' | 'day' | 'xirr';
 
 export const HOLDING_COLUMNS = [
-  { key: 'value', label: 'Current (invested)' },
-  { key: 'returns', label: 'Returns (%)' },
-  { key: 'day', label: 'Day change (%)' },
-  { key: 'xirr', label: 'XIRR' },
-] as const satisfies readonly { key: HoldingColumn; label: string }[];
+  { key: 'value', label: 'Current (invested)', short: 'Current' },
+  { key: 'returns', label: 'Returns (%)', short: 'Returns' },
+  { key: 'day', label: 'Day change (%)', short: 'Today' },
+  { key: 'xirr', label: 'XIRR', short: 'XIRR' },
+] as const satisfies readonly { key: HoldingColumn; label: string; short: string }[];
 
 export type FundRowNav = 'ready' | 'loading' | 'failed';
 
@@ -45,6 +45,9 @@ export interface FundHoldingRowProps {
   onRetry: (schemeCode: number) => void;
   /** Resolves true when the user confirmed and the lots were removed. */
   onRemove: (fund: FundHolding) => Promise<boolean>;
+  /** Where the row sits in the card that holds the list: rounds its corners and drops the last separator. */
+  first?: boolean;
+  last?: boolean;
 }
 
 /**
@@ -60,8 +63,10 @@ export const FundHoldingRow = memo(function FundHoldingRow({
   isinOption,
   onRetry,
   onRemove,
+  first = false,
+  last = false,
 }: FundHoldingRowProps) {
-  const { colors, spacing } = useTheme();
+  const { colors, radius, spacing } = useTheme();
   const label = useMemo(() => describeScheme(fund.schemeName), [fund.schemeName]);
   const remove = useCallback(() => onRemove(fund), [onRemove, fund]);
 
@@ -111,16 +116,16 @@ export const FundHoldingRow = memo(function FundHoldingRow({
     primary = (
       <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} />
     );
+    // Invested, under the value: the column switch's "Current" says which is which.
     secondary = (
-      <View style={styles.line}>
-        <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
-          (
-        </AppText>
-        <PrivateAmount value={fund.invested} scale={VALUE_SCALE} variant="caption" tone="muted" maxFontSizeMultiplier={1.3} />
-        <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
-          )
-        </AppText>
-      </View>
+      <PrivateAmount
+        value={fund.invested}
+        scale={VALUE_SCALE}
+        variant="label"
+        tone="muted"
+        maxFontSizeMultiplier={1.3}
+        accessibilityLabel={`invested ${formatInr(fund.invested, VALUE_SCALE)}`}
+      />
     );
   } else if (column === 'returns') {
     primary = (
@@ -168,55 +173,70 @@ export const FundHoldingRow = memo(function FundHoldingRow({
   }
 
   return (
-    <SwipeRow actionLabel="Remove" onAction={remove}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint="Opens the fund and your purchases. Swipe left to remove."
-        onPress={() =>
-          router.push({ pathname: '/fund/[code]', params: { code: String(fund.schemeCode), name: fund.schemeName } })
-        }
-        style={({ pressed }) => [
-          styles.row,
-          {
-            borderBottomColor: colors.border,
-            paddingHorizontal: spacing.lg,
-            gap: spacing.md,
-            backgroundColor: pressed ? colors.surfaceMuted : colors.background,
-          },
-        ]}
-      >
-        <FundMark schemeName={fund.schemeName} />
-        <View style={[styles.flex, { gap: 2 }]}>
-          <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {label.title}
-          </AppText>
-          <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3}>
-            {meta}
-            {waiting !== null && (
-              <AppText variant="caption" tone="warning" maxFontSizeMultiplier={1.3}>
-                {` · ${waiting}`}
-              </AppText>
-            )}
-          </AppText>
-        </View>
-        <View style={[styles.right, { gap: 2 }]}>
-          {primary}
-          {secondary}
-        </View>
-      </Pressable>
-    </SwipeRow>
+    <View
+      style={[
+        styles.card,
+        {
+          marginHorizontal: spacing.lg,
+          backgroundColor: colors.surface,
+          borderTopLeftRadius: first ? radius.lg : 0,
+          borderTopRightRadius: first ? radius.lg : 0,
+          borderBottomLeftRadius: last ? radius.lg : 0,
+          borderBottomRightRadius: last ? radius.lg : 0,
+        },
+      ]}
+    >
+      <SwipeRow actionLabel="Remove" onAction={remove}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityHint="Opens the fund and your purchases. Swipe left to remove."
+          onPress={() =>
+            router.push({ pathname: '/fund/[code]', params: { code: String(fund.schemeCode), name: fund.schemeName } })
+          }
+          style={({ pressed }) => [
+            styles.row,
+            {
+              paddingHorizontal: spacing.lg,
+              gap: spacing.md,
+              backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
+            },
+          ]}
+        >
+          <FundMark schemeName={fund.schemeName} />
+          <View style={[styles.flex, { gap: 2 }]}>
+            <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              {label.title}
+            </AppText>
+            <AppText variant="label" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+              {meta}
+              {waiting !== null && (
+                <AppText variant="caption" tone="warning" maxFontSizeMultiplier={1.3}>
+                  {` · ${waiting}`}
+                </AppText>
+              )}
+            </AppText>
+          </View>
+          <View style={[styles.right, { gap: 2 }]}>
+            {primary}
+            {secondary}
+          </View>
+        </Pressable>
+        {/* An inset hairline from the name's edge, not under the monogram; none after the last row. */}
+        {!last && <View style={[styles.separator, { left: spacing.lg + FUND_MARK_SIZE + spacing.md, right: spacing.lg, backgroundColor: colors.hairline }]} />}
+      </SwipeRow>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  card: { overflow: 'hidden' },
   row: {
     height: FUND_HOLDING_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  separator: { position: 'absolute', bottom: 0, height: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   right: { alignItems: 'flex-end' },
-  line: { flexDirection: 'row' },
 });

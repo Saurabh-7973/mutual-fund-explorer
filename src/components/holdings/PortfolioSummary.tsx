@@ -9,6 +9,9 @@ import type { PortfolioTotals } from '@/domain/valuation';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { Card } from '../ui/Card';
+import { ChangeChip } from '../ui/ChangeChip';
+import { MoneyHero } from '../ui/MoneyHero';
 import { PrivateAmount } from '../ui/PrivateAmount';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
@@ -29,10 +32,14 @@ export interface PortfolioSummaryProps {
   excluded: number;
 }
 
-/** The Holdings summary card: current value, today's and total returns, invested, XIRR and allocation. */
+/**
+ * The top of Holdings. The current value is the hero, on the page itself rather than in a
+ * card, with the total return as a tinted chip under it; then one card with invested,
+ * today's change and XIRR side by side; then allocation.
+ */
 export function PortfolioSummary({
   fundCount,
-  loading: anyFirstLoad,
+  loading,
   totals,
   dayGain,
   xirr,
@@ -40,123 +47,134 @@ export function PortfolioSummary({
   slices,
   excluded,
 }: PortfolioSummaryProps) {
-  const { colors, radius, spacing } = useTheme();
-  return (
-    <View
-      style={[
-        styles.summary,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          borderRadius: radius.lg,
-          margin: spacing.lg,
-          padding: spacing.lg,
-        },
-      ]}
-    >
-      <View style={styles.headerRow}>
-        <AppText variant="label" tone="muted" style={styles.flex}>
-          {fundCount === 1 ? '1 fund' : `${fundCount} funds`} · current value
-        </AppText>
+  const { colors, spacing } = useTheme();
+  // At large text sizes three figures can't share a row: each gets its own line.
+  const stacked = useWindowDimensions().fontScale > 1.3;
+
+  if (loading) {
+    // Never show partial totals while a fund's latest NAV is still on its first load.
+    return (
+      <View accessible accessibilityLabel="Loading totals" style={{ padding: spacing.lg, gap: spacing.sm }}>
+        <Skeleton width={110} height={14} />
+        <Skeleton width={240} height={44} />
+        <Skeleton width={200} height={28} />
       </View>
-      {anyFirstLoad ? (
-        // Never show partial totals while a fund's latest NAV is still on its first load.
-        <View accessible accessibilityLabel="Loading totals" style={{ gap: spacing.sm, marginTop: spacing.xs }}>
-          <Skeleton width={200} height={34} />
-          <Skeleton width={240} height={16} />
+    );
+  }
+
+  return (
+    <View style={{ paddingHorizontal: spacing.lg, gap: spacing.lg }}>
+      <View style={{ gap: spacing.xs, paddingTop: spacing.md }}>
+        <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+          Current value
+        </AppText>
+        <MoneyHero value={totals.current} scale={VALUE_SCALE} />
+        <View style={[styles.inline, { gap: spacing.sm, marginTop: spacing.xs }]}>
+          <ChangeChip amount={totals.gain} scale={VALUE_SCALE} pctHundredths={totals.returnHundredths} private />
+          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+            total return
+          </AppText>
         </View>
-      ) : (
-        <>
-          <PrivateAmount value={totals.current} scale={VALUE_SCALE} variant="figure" />
-          <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
-          <View style={{ gap: spacing.sm }}>
-            <Row label="1D returns" term="oneDay">
-              {dayGain !== null ? (
-                <View style={[styles.inline, { gap: spacing.xs }]}>
-                  <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="label" private />
-                  <SignedPercent hundredths={dayGain.pctHundredths} variant="label" />
-                </View>
-              ) : (
-                <AppText variant="label" tone="muted">
-                  —
-                </AppText>
-              )}
-            </Row>
-            <Row label="Total returns">
-              <View style={[styles.inline, { gap: spacing.xs }]}>
-                <SignedAmount value={totals.gain} scale={VALUE_SCALE} variant="label" private />
-                {totals.returnHundredths !== null && (
-                  <SignedPercent hundredths={totals.returnHundredths} variant="label" />
-                )}
-              </View>
-            </Row>
-            <Row label="Invested">
-              <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="label" />
-            </Row>
-            <Row label="XIRR" term="xirr">
-              {xirr !== null ? (
+      </View>
+
+      <Card style={{ paddingVertical: spacing.md }}>
+        <View style={stacked ? { gap: spacing.md } : styles.strip}>
+          <Cell label="Invested" stacked={stacked}>
+            <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} />
+          </Cell>
+          {!stacked && <View style={[styles.divider, { backgroundColor: colors.hairline }]} />}
+          <Cell label="Today" term="oneDay" stacked={stacked}>
+            {dayGain !== null ? (
+              <>
+                <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} private />
+                <SignedPercent hundredths={dayGain.pctHundredths} variant="label" maxFontSizeMultiplier={1.3} />
+              </>
+            ) : (
+              <AppText variant="rowTitle" tone="muted" maxFontSizeMultiplier={1.3}>
+                —
+              </AppText>
+            )}
+          </Cell>
+          {!stacked && <View style={[styles.divider, { backgroundColor: colors.hairline }]} />}
+          <Cell label="XIRR" term="xirr" stacked={stacked}>
+            {xirr !== null ? (
+              <>
                 <AppText
-                  variant="label"
+                  variant="rowTitle"
                   numeric
+                  maxFontSizeMultiplier={1.3}
                   tone={xirr > 0 ? 'gain' : xirr < 0 ? 'loss' : 'muted'}
                   accessibilityLabel={`${formatPercent(xirr)} per year`}
                 >
-                  {formatPercent(xirr)} p.a.
+                  {formatPercent(xirr)}
                 </AppText>
-              ) : (
-                <AppText variant="label" tone="muted">
-                  after your first year
+                <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+                  p.a.
                 </AppText>
-              )}
-            </Row>
-          </View>
-          <View style={[styles.rule, { borderColor: colors.border, marginVertical: spacing.md }]} />
-          <AllocationCard byClass={classSlices} byFund={slices} />
-        </>
-      )}
-      {excluded > 0 && (
-        <View style={{ marginTop: spacing.md }}>
-          <AppText variant="caption" tone="warning">
-            {[
-              totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
-              totals.unavailableCount > 0 ? `${totals.unavailableCount} not loaded` : null,
-            ]
-              .filter((part): part is string => part !== null)
-              .join(' and ')}{' '}
-            {excluded === 1 ? "isn't" : "aren't"} in these totals.
-          </AppText>
+              </>
+            ) : (
+              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+                after your first year
+              </AppText>
+            )}
+          </Cell>
         </View>
+      </Card>
+
+      {fundCount > 0 && slices.length > 0 && (
+        <Card>
+          <AllocationCard byClass={classSlices} byFund={slices} />
+        </Card>
+      )}
+
+      {excluded > 0 && (
+        <AppText variant="caption" tone="warning">
+          {[
+            totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
+            totals.unavailableCount > 0 ? `${totals.unavailableCount} not loaded` : null,
+          ]
+            .filter((part): part is string => part !== null)
+            .join(' and ')}{' '}
+          {excluded === 1 ? "isn't" : "aren't"} in these totals.
+        </AppText>
       )}
     </View>
   );
 }
 
-function Row({ label, term, children }: { label: string; term?: GlossaryKey; children: ReactNode }) {
-  // At large text sizes a label and a long figure can't share a line: the label goes above.
-  const stacked = useWindowDimensions().fontScale > 1.3;
-  return (
-    <View style={stacked ? styles.kvStacked : styles.kv}>
-      <View style={stacked ? undefined : styles.flex}>
-        {term !== undefined ? (
-          <Term term={term} label={label} />
-        ) : (
-          // Capped like the glossary labels, so every label in the card is one size.
-          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
-            {label}
-          </AppText>
-        )}
+/** One figure in the strip: its label above, the value under it (a label/value row at large text). */
+function Cell({ label, term, stacked, children }: { label: string; term?: GlossaryKey; stacked: boolean; children: ReactNode }) {
+  const { spacing } = useTheme();
+  const heading =
+    term !== undefined ? (
+      <Term term={term} label={label} variant="label" />
+    ) : (
+      <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+        {label}
+      </AppText>
+    );
+  if (stacked) {
+    return (
+      <View style={styles.kvStacked}>
+        {heading}
+        <View style={styles.valueStacked}>{children}</View>
       </View>
+    );
+  }
+  return (
+    <View style={[styles.cell, { gap: 2, paddingHorizontal: spacing.xs }]}>
+      {heading}
       {children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  summary: { borderWidth: StyleSheet.hairlineWidth },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  rule: { borderTopWidth: 1, borderStyle: 'dashed' },
-  kv: { flexDirection: 'row', alignItems: 'center', minHeight: 22 },
+  inline: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
+  strip: { flexDirection: 'row', alignItems: 'stretch' },
+  // Each cell takes the width its figure needs, so a long amount isn't broken over two lines.
+  cell: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto' },
+  divider: { width: StyleSheet.hairlineWidth, marginHorizontal: 8 },
   kvStacked: { gap: 2 },
-  inline: { flexDirection: 'row', alignItems: 'center' },
+  valueStacked: { flexDirection: 'row', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' },
 });

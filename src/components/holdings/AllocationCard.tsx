@@ -68,7 +68,7 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
     <View style={{ gap: spacing.md }}>
       <View style={stacked ? styles.headerStacked : styles.header}>
         <View style={stacked ? undefined : styles.flex}>
-          <Term term="assetClass" label="Allocation" />
+          <Term term="assetClass" label="Allocation" variant="heading" tone="default" />
         </View>
         <View style={stacked ? undefined : styles.switch}>
           <SegmentedRow
@@ -97,10 +97,10 @@ export function AllocationCard({ byClass, byFund }: AllocationCardProps) {
               flexBasis: 0,
               minWidth: 4,
               backgroundColor: colour(row.slot),
-              borderTopLeftRadius: i === 0 ? 4 : 0,
-              borderBottomLeftRadius: i === 0 ? 4 : 0,
-              borderTopRightRadius: i === rows.length - 1 ? 4 : 0,
-              borderBottomRightRadius: i === rows.length - 1 ? 4 : 0,
+              borderTopLeftRadius: i === 0 ? 5 : 0,
+              borderBottomLeftRadius: i === 0 ? 5 : 0,
+              borderTopRightRadius: i === rows.length - 1 ? 5 : 0,
+              borderBottomRightRadius: i === rows.length - 1 ? 5 : 0,
             }}
           />
         ))}
@@ -133,9 +133,9 @@ const styles = StyleSheet.create({
   headerStacked: { gap: 8 },
   flex: { flex: 1 },
   switch: { width: 196 },
-  bar: { flexDirection: 'row', height: 12 },
+  bar: { flexDirection: 'row', height: 10 },
   legend: { flexDirection: 'row', alignItems: 'center' },
   // Right-aligned in a fixed column, so shares line up at every text size.
   share: { minWidth: 72, textAlign: 'right' },
-  swatch: { width: 10, height: 10, borderRadius: 3 },
+  swatch: { width: 10, height: 10, borderRadius: 5 },
 });

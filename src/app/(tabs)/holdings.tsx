@@ -196,9 +196,12 @@ export default function HoldingsScreen() {
     }),
     [headerHeight],
   );
+  const lastIndex = funds.length - 1;
   const renderItem = useCallback<ListRenderItem<FundHolding>>(
-    ({ item }) => (
+    ({ item, index }) => (
       <FundHoldingRow
+        first={index === 0}
+        last={index === lastIndex}
         fund={item}
         nav={navState.get(item.schemeCode) ?? 'loading'}
         column={column}
@@ -209,7 +212,7 @@ export default function HoldingsScreen() {
         onRemove={onRemove}
       />
     ),
-    [navState, column, fundDayGains, sips, isinOptions, onRetry, onRemove],
+    [navState, column, fundDayGains, sips, isinOptions, onRetry, onRemove, lastIndex],
   );
 
   if (!hydrated) {
@@ -243,13 +246,22 @@ export default function HoldingsScreen() {
   const columnIndex = HOLDING_COLUMNS.findIndex((c) => c.key === column);
   const nextColumn = HOLDING_COLUMNS[(columnIndex + 1) % HOLDING_COLUMNS.length] ?? HOLDING_COLUMNS[0];
   const columnLabel = HOLDING_COLUMNS[columnIndex]?.label ?? '';
+  const columnShort = HOLDING_COLUMNS[columnIndex]?.short ?? '';
   const sortOption = SORT_OPTIONS.find((option) => option.key === sortBy) ?? SORT_OPTIONS[0];
 
   const asOf = totals.oldestNavDate !== null ? formatAsOf(totals.oldestNavDate, totals.newestNavDate) : undefined;
   const summary = (
     <View onLayout={onHeaderLayout}>
-      <LargeTitle title="Holdings" subtitle={asOf === undefined ? undefined : asOf.startsWith('as of') ? `NAVs ${asOf}` : asOf} />
-      <View style={{ paddingHorizontal: spacing.lg }}>
+      <LargeTitle
+        title="Holdings"
+        subtitle={[
+          funds.length === 1 ? '1 fund' : `${funds.length} funds`,
+          asOf === undefined ? null : asOf.startsWith('as of') ? `NAVs ${asOf}` : asOf,
+        ]
+          .filter((part): part is string => part !== null)
+          .join(' · ')}
+      />
+      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.sm }}>
         <SampleBanner />
       </View>
       <PortfolioSummary
@@ -267,6 +279,7 @@ export default function HoldingsScreen() {
         sortShort={sortOption.short}
         sortLabel={`${sortOption.label}, ${directionLabels(sortBy)[direction]}`}
         direction={direction}
+        columnShort={columnShort}
         columnLabel={columnLabel}
         nextColumnLabel={nextColumn.label}
         onSort={() => setSorting(true)}
@@ -281,16 +294,19 @@ export default function HoldingsScreen() {
         title="Holdings"
         scrollY={scrollY}
         right={
-          <IconButton
-            name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
-            size={24}
-            onPress={() => {
-              haptic.tap();
-              toggleHideAmounts();
-            }}
-            selected={hideAmounts}
-            accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
-          />
+          <View style={[styles.eye, { backgroundColor: colors.surface }]}>
+            <IconButton
+              name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
+              size={22}
+              color={colors.text}
+              onPress={() => {
+                haptic.tap();
+                toggleHideAmounts();
+              }}
+              selected={hideAmounts}
+              accessibilityLabel={hideAmounts ? 'Show amounts' : 'Hide amounts'}
+            />
+          </View>
         }
       />
       <Animated.FlatList
@@ -336,4 +352,5 @@ export default function HoldingsScreen() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   centered: { justifyContent: 'center' },
+  eye: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 });
