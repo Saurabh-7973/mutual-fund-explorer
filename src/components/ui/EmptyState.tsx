@@ -21,7 +21,10 @@ export function EmptyState({ icon, title, body, action, children }: EmptyStatePr
   const { colors, spacing } = useTheme();
   return (
     <View style={[styles.root, { padding: spacing.xl, gap: spacing.md }]}>
-      <Ionicons name={icon} size={40} color={colors.textMuted} />
+      {/* The icon sits in a soft circle: a quiet focal point, not a bare glyph. */}
+      <View style={[styles.badge, { backgroundColor: colors.primarySoft }]}>
+        <Ionicons name={icon} size={30} color={colors.primary} />
+      </View>
       <AppText variant="heading" accessibilityRole="header" style={styles.center}>
         {title}
       </AppText>
@@ -38,5 +41,6 @@ export function EmptyState({ icon, title, body, action, children }: EmptyStatePr
 
 const styles = StyleSheet.create({
   root: { alignItems: 'center', justifyContent: 'center' },
+  badge: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
   center: { textAlign: 'center' },
 });

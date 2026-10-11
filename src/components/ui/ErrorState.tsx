@@ -39,7 +39,13 @@ export function ErrorState({ error, onRetry, compact = false }: ErrorStateProps)
 
   return (
     <View style={[styles.full, { padding: spacing.xl, gap: spacing.md }]} accessibilityRole="alert">
-      <Ionicons name={online ? 'alert-circle-outline' : 'cloud-offline-outline'} size={40} color={colors.danger} />
+      <View style={[styles.badge, { backgroundColor: online ? colors.dangerSurface : colors.surfaceMuted }]}>
+        <Ionicons
+          name={online ? 'alert-circle-outline' : 'cloud-offline-outline'}
+          size={30}
+          color={online ? colors.danger : colors.textMuted}
+        />
+      </View>
       <AppText variant="heading" style={styles.center}>
         {copy.title}
       </AppText>
@@ -56,4 +62,5 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   full: { alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
+  badge: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
 });
