@@ -1,5 +1,6 @@
 import { NAV_SCALE, UNITS_SCALE, parseScaled } from '../domain/decimal';
 import { parseIsoDate } from '../domain/dates';
+import { parseAmount } from '../domain/valuation';
 import type { AppliedNav, IsoDate } from '../domain/types';
 
 export type { AppliedNav };
@@ -29,6 +30,12 @@ export interface HoldingLot {
   units: string;
   purchaseDate: IsoDate;
   applied: AppliedNav | null;
+  /**
+   * Rupees paid, up to 2 decimals ("5000", "9390.91"): saved for SIP instalments and when
+   * typed from a statement. Absent for purchases entered by units alone (and for data saved
+   * before this field existed); those count units × NAV as invested.
+   */
+  amount?: string;
   /** ISO timestamp. */
   createdAt: string;
 }
@@ -82,6 +89,8 @@ function sanitizeLot(value: unknown): HoldingLot | null {
   if (units === null || units <= 0n || purchaseDate === null || applied === undefined) return null;
   // A NAV that applies before the purchase date breaks the purchase rule: treat the row as corrupt.
   if (applied !== null && applied.navDate < purchaseDate) return null;
+  // A bad amount loses only the amount: the purchase still counts, at units × NAV.
+  const amount = typeof value.amount === 'string' && parseAmount(value.amount) !== null ? value.amount : undefined;
   return {
     id: value.id,
     schemeCode: value.schemeCode,
@@ -89,6 +98,7 @@ function sanitizeLot(value: unknown): HoldingLot | null {
     units: value.units,
     purchaseDate,
     applied,
+    ...(amount !== undefined ? { amount } : {}),
     createdAt: isNonEmptyString(value.createdAt) ? value.createdAt : new Date(0).toISOString(),
   };
 }

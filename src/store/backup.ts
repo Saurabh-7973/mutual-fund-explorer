@@ -1,4 +1,5 @@
-import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, parseScaled, rescale, toPlainString } from '../domain/decimal';
+import { VALUE_SCALE, rescale, toPlainString } from '../domain/decimal';
+import { lotInvested } from '../domain/valuation';
 import { sanitizePortfolio, type HoldingLot, type PortfolioData } from './portfolioSchema';
 
 /**
@@ -55,13 +56,18 @@ function csvCell(value: string, numeric = false): string {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
+/** Plain rupees with exactly two decimals for a spreadsheet: "9391.00", never "9391". */
+function csvRupees(value: bigint): string {
+  const [whole, fraction = ''] = toPlainString(rescale(value, VALUE_SCALE, 2), 2).split('.');
+  return `${whole}.${fraction.padEnd(2, '0')}`;
+}
+
 /** Every purchase as a spreadsheet row; amounts in plain rupees with two decimals. */
 export function holdingsCsv(lots: readonly HoldingLot[]): string {
   const header = ['Fund', 'Scheme code', 'Purchase date', 'Units', 'NAV applied', 'NAV date', 'Invested (INR)'];
   const rows = lots.map((lot) => {
-    const units = parseScaled(lot.units, UNITS_SCALE);
-    const nav = lot.applied === null ? null : parseScaled(lot.applied.nav, NAV_SCALE);
-    const invested = units !== null && nav !== null ? toPlainString(rescale(units * nav, VALUE_SCALE, 2), 2) : '';
+    const cost = lotInvested(lot);
+    const invested = cost !== null ? csvRupees(cost) : '';
     return [
       lot.schemeName,
       String(lot.schemeCode),

@@ -31,6 +31,14 @@ describe('backup', () => {
     expect(result.ok && result.data.lots).toHaveLength(1);
   });
 
+  it('keeps the amount paid through a backup, and exports it as Invested', () => {
+    const paid = { ...lot, amount: '9391' };
+    const result = readBackup(makeBackup({ ...data, lots: [paid] }, 'x'));
+    expect(result.ok && result.data.lots[0]?.amount).toBe('9391');
+    expect(holdingsCsv([paid]).split('\n')[1]?.endsWith(',9391.00')).toBe(true);
+    expect(holdingsCsv([lot]).split('\n')[1]?.endsWith(',9390.91')).toBe(true);
+  });
+
   it('refuses text that is not a backup, or an empty one', () => {
     expect(readBackup('hello').ok).toBe(false);
     expect(readBackup('{"app":"other"}').ok).toBe(false);

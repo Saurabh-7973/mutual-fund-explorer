@@ -97,7 +97,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 - **Search matches whole words, up to 15 results.** That's how mfapi.in's search works: "parag" finds Parag Parikh funds, "par" finds nothing. The app tells you to type full words, and to add words when 15 results come back.
 - **Returns are NAV-based.** IDCW payouts aren't added back, and exit loads, stamp duty and taxes aren't modelled.
 - **Units use a dot for decimals.** Commas are rejected rather than guessed, because "1,254" could be a thousands separator.
-- **A SIP added in one go shows "invested" as units × NAV.** Units are kept to 4 decimals, so a ₹5,000 instalment can show as ₹4,999.99; the SIP preview shows the rupees actually paid. Recording the paid amount per purchase would need a change to the saved data format.
+- **"Invested" is the rupees paid when the app knows them, else units × NAV.** SIP instalments save their amount, and a single purchase can take the amount from your statement; a purchase entered by units alone (or saved before amounts were kept) counts units × NAV, which can sit a few paise under what you paid because units are rounded and stamp duty is deducted before units are allotted. Older purchases aren't back-filled: guessing an amount could be wrong.
 - **Totals are summed exactly, then rounded**, so they can differ from the sum of the rounded rows by a paisa.
 - Mobile only: web isn't a target.
 

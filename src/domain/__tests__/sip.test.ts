@@ -4,6 +4,7 @@ import { addDays } from '../dates';
 import { VALUE_SCALE } from '../decimal';
 import { formatInr } from '../format';
 import { MAX_SIP_INSTALMENTS, detectSip, planSip, sipGain } from '../sip';
+import { lotInvested } from '../valuation';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -26,6 +27,14 @@ describe('planSip', () => {
     expect(plan.instalments[9]?.purchaseDate).toBe('2025-10-05');
     expect(plan.problem).toBeNull();
     expect(formatInr(plan.paid, VALUE_SCALE)).toBe('₹50,000.00');
+  });
+
+  it('saves the amount paid on each instalment, so invested adds up to what was paid', () => {
+    const points = daily('2025-01-01', 300, '33.3333');
+    const plan = planSip(points, null, 5000, d('2025-01-05'), d('2025-10-20'));
+    expect(plan.instalments.every((i) => i.amount === '5000')).toBe(true);
+    const invested = plan.instalments.reduce((sum, i) => sum + (lotInvested(i) ?? 0n), 0n);
+    expect(invested).toBe(plan.paid);
   });
 
   it('prices a holiday instalment at the next NAV and keeps later dates on the same day of month', () => {
@@ -76,6 +85,12 @@ describe('detectSip', () => {
     const plan = planSip(points, null, 5000, d('2025-01-31'), d('2025-06-15'));
     const sip = detectSip(plan.instalments);
     expect(sip).toEqual({ amountRupees: 5000, dayOfMonth: 31, lastDate: '2025-05-31', nextDate: '2025-06-30' });
+  });
+
+  it('still recognises a SIP saved before amounts were kept (units × NAV)', () => {
+    const plan = planSip(points, null, 5000, d('2025-01-31'), d('2025-06-15'));
+    const old = plan.instalments.map(({ units, purchaseDate, applied }) => ({ units, purchaseDate, applied }));
+    expect(detectSip(old)?.amountRupees).toBe(5000);
   });
 
   it('needs three monthly purchases of the same amount', () => {

@@ -2,7 +2,7 @@ import { describe, expect, it } from '@jest/globals';
 
 import { VALUE_SCALE } from '../decimal';
 import { MINUS, formatInr, formatPercentHundredths } from '../format';
-import { evaluateLot, summarize, valueLot, type LotValuation } from '../valuation';
+import { evaluateLot, lotInvested, parseAmount, summarize, valueLot, type LotValuation } from '../valuation';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -13,6 +13,55 @@ function mustValue(input: Parameters<typeof valueLot>[0]): LotValuation {
   if (result === null) throw new Error('expected a valuation');
   return result;
 }
+
+describe('amount paid', () => {
+  const base = {
+    units: '125.432',
+    appliedNav: '74.86850',
+    appliedDate: d('2024-03-31'),
+    latestNav: '88.92580',
+    latestDate: d('2026-10-09'),
+  };
+
+  it('counts the rupees paid as invested when known, and values units at the latest NAV as before', () => {
+    const withoutAmount = mustValue(base);
+    const withAmount = mustValue({ ...base, amount: '9391' });
+    expect(inr(withAmount.invested)).toBe('₹9,391.00');
+    expect(withAmount.current).toBe(withoutAmount.current);
+    expect(withAmount.gain).toBe(withAmount.current - withAmount.invested);
+    // Paying a little more than units × NAV means a slightly lower annual return.
+    expect(withAmount.cagrPercent ?? 0).toBeLessThan(withoutAmount.cagrPercent ?? 0);
+  });
+
+  it('falls back to units × NAV when the amount is missing or unusable', () => {
+    const withoutAmount = mustValue(base);
+    for (const amount of ['', 'abc', '0', '-5', '1.234']) {
+      expect(mustValue({ ...base, amount }).invested).toBe(withoutAmount.invested);
+    }
+  });
+
+  it('parses saved amounts in paise precision', () => {
+    expect(parseAmount('5000')).toBe(parseAmount('5000.00'));
+    expect(parseAmount(undefined)).toBeNull();
+    expect(parseAmount('12.345')).toBeNull();
+  });
+
+  it('gives one purchase cost for every screen: paid, else units × NAV, null while awaiting', () => {
+    const applied = { navDate: d('2024-03-31'), nav: '74.86850' };
+    expect(inr(lotInvested({ units: '125.432', applied, amount: '9391' }) ?? 0n)).toBe('₹9,391.00');
+    expect(inr(lotInvested({ units: '125.432', applied }) ?? 0n)).toBe('₹9,390.91');
+    expect(lotInvested({ units: '125.432', applied: null, amount: '9391' })).toBeNull();
+  });
+
+  it('carries the amount through evaluateLot', () => {
+    const latest: NavPoint = { date: d('2026-10-09'), nav: '88.92580', value: 88.9258 };
+    const status = evaluateLot(
+      { units: '125.432', applied: { navDate: d('2024-03-31'), nav: '74.86850' }, amount: '9391' },
+      latest,
+    );
+    expect(status.status === 'valued' && inr(status.valuation.invested)).toBe('₹9,391.00');
+  });
+});
 
 describe('valueLot', () => {
   it('values a real PPFAS lot exactly (bought on the 31 Mar 2024 NAV)', () => {

@@ -104,6 +104,7 @@ export function SipForm({
         units: instalment.units,
         purchaseDate: instalment.purchaseDate,
         applied: instalment.applied,
+        amount: instalment.amount,
         createdAt,
       });
     }

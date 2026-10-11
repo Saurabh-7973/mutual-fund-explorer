@@ -1,22 +1,51 @@
-import { NAV_SCALE, UNITS_SCALE, divRound, parseScaled } from './decimal';
+import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, pow10 } from './decimal';
 import { diffDays } from './dates';
 import type { AppliedNav, IsoDate, NavPoint } from './types';
 
 /**
  * Holding valuation for one lot (one purchase on one date).
  *
- *   invested = units × applied NAV
+ *   invested = the rupees paid, when known (see `lotInvested`); else units × applied NAV
  *   current  = units × latest NAV
  *   gain     = current − invested
  *   return % = gain ÷ invested × 100            (always absolute)
- *   CAGR     = (latest NAV ÷ applied NAV)^(365 ÷ days) − 1, shown only from 365 days
+ *   CAGR     = (current ÷ invested)^(365 ÷ days) − 1, shown only from 365 days
+ *              (the same as latest NAV ÷ applied NAV when invested is units × NAV)
  *
  * For a single lot, CAGR equals XIRR, so no iterative solver is needed.
  * All rupee figures are exact BigInts at VALUE_SCALE; rounding happens at display.
  */
 
+/** Rupees paid are saved in paise precision: "5000", "9390.91". */
+export const AMOUNT_SCALE = 2;
+
+/** A saved rupee amount at VALUE_SCALE, or null when it's missing or not a positive amount. */
+export function parseAmount(amount: string | undefined): bigint | null {
+  if (amount === undefined) return null;
+  const paise = parseScaled(amount, AMOUNT_SCALE);
+  return paise === null || paise <= 0n ? null : paise * pow10(VALUE_SCALE - AMOUNT_SCALE);
+}
+
+/**
+ * What a purchase cost, at VALUE_SCALE. The rupees actually paid when the app knows them
+ * (a SIP instalment, or an amount copied from the statement), as real apps and account
+ * statements show it; otherwise units × the NAV applied. The two differ by a few paise
+ * because units are rounded and stamp duty is taken before units are allotted.
+ * Null while the purchase awaits its NAV.
+ */
+export function lotInvested(lot: { units: string; applied: AppliedNav | null; amount?: string }): bigint | null {
+  if (lot.applied === null) return null;
+  const paid = parseAmount(lot.amount);
+  if (paid !== null) return paid;
+  const units = parseScaled(lot.units, UNITS_SCALE);
+  const nav = parseScaled(lot.applied.nav, NAV_SCALE);
+  return units === null || nav === null ? null : units * nav;
+}
+
 export interface LotInput {
   units: string;
+  /** Rupees paid, when known; otherwise invested is units × applied NAV. */
+  amount?: string;
   appliedNav: string;
   appliedDate: IsoDate;
   latestNav: string;
@@ -47,11 +76,11 @@ export function valueLot(input: LotInput): LotValuation | null {
   if (units === null || applied === null || latest === null) return null;
   if (units <= 0n || applied <= 0n || latest <= 0n) return null;
 
-  const invested = units * applied;
+  const invested = parseAmount(input.amount) ?? units * applied;
   const current = units * latest;
   const gain = current - invested;
   const heldDays = Math.max(0, diffDays(input.appliedDate, input.latestDate));
-  const ratio = Number(latest) / Number(applied);
+  const ratio = Number(current) / Number(invested);
   const cagrPercent = heldDays >= DAYS_PER_YEAR ? (Math.pow(ratio, DAYS_PER_YEAR / heldDays) - 1) * 100 : null;
 
   return {
@@ -79,7 +108,7 @@ export type LotStatus =
  * time offline); then the applied NAV is the newest price known, and the lot shows no gain.
  */
 export function evaluateLot(
-  lot: { units: string; applied: AppliedNav | null },
+  lot: { units: string; applied: AppliedNav | null; amount?: string },
   latest: NavPoint | null | undefined,
 ): LotStatus {
   if (lot.applied === null) return { status: 'pending' };
@@ -87,6 +116,7 @@ export function evaluateLot(
   const newer = latest.date >= lot.applied.navDate;
   const valuation = valueLot({
     units: lot.units,
+    ...(lot.amount !== undefined ? { amount: lot.amount } : {}),
     appliedNav: lot.applied.nav,
     appliedDate: lot.applied.navDate,
     latestNav: newer ? latest.nav : lot.applied.nav,

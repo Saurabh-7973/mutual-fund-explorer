@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { describePurchaseDate, validateSipAmount, validateUnits } from '../validation';
+import { amountLooksOff, describePurchaseDate, validateAmountPaid, validateSipAmount, validateUnits } from '../validation';
 import type { IsoDate, NavPoint } from '../types';
 
 const d = (value: string) => value as IsoDate;
@@ -75,5 +75,33 @@ describe('validateSipAmount', () => {
     expect(error('500.50')).toBe('Enter whole rupees, such as 5000.');
     expect(error('50')).toBe('A SIP is at least ₹100 a month.');
     expect(error('2000000')).toBe('That is more than ₹10 lakh a month. Check the amount.');
+  });
+});
+
+describe('validateAmountPaid', () => {
+  it('accepts empty (optional) and rupees with up to 2 decimals', () => {
+    expect(validateAmountPaid('')).toEqual({ ok: true, normalized: null });
+    expect(validateAmountPaid(' 9390.91 ')).toEqual({ ok: true, normalized: '9390.91' });
+    expect(validateAmountPaid('₹5000.00')).toEqual({ ok: true, normalized: '5000' });
+    expect(validateAmountPaid('.5')).toEqual({ ok: true, normalized: '0.5' });
+  });
+
+  it('explains what is wrong', () => {
+    expect(validateAmountPaid('9,390.91')).toMatchObject({ ok: false, error: expect.stringContaining('without commas') });
+    expect(validateAmountPaid('12.345')).toMatchObject({ ok: false, error: expect.stringContaining('2 decimal') });
+    expect(validateAmountPaid('0')).toMatchObject({ ok: false, error: expect.stringContaining('greater than zero') });
+    expect(validateAmountPaid('-5')).toMatchObject({ ok: false });
+    expect(validateAmountPaid('abc')).toMatchObject({ ok: false });
+    expect(validateAmountPaid('99999999999')).toMatchObject({ ok: false, error: expect.stringContaining('crore') });
+  });
+});
+
+describe('amountLooksOff', () => {
+  it('allows stamp duty and rounding, flags a likely typo', () => {
+    expect(amountLooksOff(100_000n, 99_995n)).toBe(false);
+    expect(amountLooksOff(100_000n, 98_100n)).toBe(false);
+    expect(amountLooksOff(100_000n, 90_000n)).toBe(true);
+    expect(amountLooksOff(1_000_000n, 100_000n)).toBe(true);
+    expect(amountLooksOff(0n, 100n)).toBe(false);
   });
 });

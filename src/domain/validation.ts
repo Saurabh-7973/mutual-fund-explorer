@@ -85,3 +85,44 @@ export function validateSipAmount(raw: string): SipAmountCheck {
   if (rupees > MAX_SIP_AMOUNT) return { ok: false, error: 'That is more than ₹10 lakh a month. Check the amount.' };
   return { ok: true, rupees };
 }
+
+/**
+ * The optional "Amount paid" of a single purchase, copied from the statement. Empty is
+ * fine (the holding then counts units × NAV as invested); otherwise rupees with up to 2
+ * decimals.
+ */
+export const MAX_AMOUNT_DECIMALS = 2;
+/** ₹100 crore: beyond any one purchase in a personal folio, but catches pasted garbage. */
+const MAX_AMOUNT_PAISE = 100_00_00_000n * 100n;
+
+export type AmountCheck = { ok: true; normalized: string | null } | { ok: false; error: string };
+
+export function validateAmountPaid(raw: string): AmountCheck {
+  const text = raw.trim().replace(/^₹\s*/, '');
+  if (text === '') return { ok: true, normalized: null };
+  if (text.startsWith('-')) return { ok: false, error: 'The amount must be greater than zero.' };
+  if (text.includes(',')) return { ok: false, error: 'Enter digits only, without commas (for example 9390.91).' };
+  if (!/^\d*\.?\d*$/.test(text) || text === '.') return { ok: false, error: 'Enter an amount such as 9390.91.' };
+  const canonical = (text.startsWith('.') ? `0${text}` : text).replace(/\.$/, '');
+  if ((canonical.split('.')[1] ?? '').length > MAX_AMOUNT_DECIMALS) {
+    return { ok: false, error: 'Rupees can have at most 2 decimal places (paise).' };
+  }
+  const paise = parseScaled(canonical, MAX_AMOUNT_DECIMALS);
+  if (paise === null) return { ok: false, error: 'Enter an amount such as 9390.91.' };
+  if (paise === 0n) return { ok: false, error: 'The amount must be greater than zero.' };
+  if (paise > MAX_AMOUNT_PAISE) return { ok: false, error: 'That is more than ₹100 crore. Check the amount.' };
+  return { ok: true, normalized: toPlainString(paise, MAX_AMOUNT_DECIMALS) };
+}
+
+/** How far the amount paid may sit from units × NAV before the form asks you to check it. */
+export const AMOUNT_MISMATCH_PERCENT = 2n;
+
+/**
+ * Whether an amount paid and units × NAV (both at the same scale) differ by more than
+ * stamp duty and rounding could explain: usually a typo in one of the two.
+ */
+export function amountLooksOff(paid: bigint, unitsTimesNav: bigint): boolean {
+  if (paid <= 0n || unitsTimesNav <= 0n) return false;
+  const diff = paid > unitsTimesNav ? paid - unitsTimesNav : unitsTimesNav - paid;
+  return diff * 100n > unitsTimesNav * AMOUNT_MISMATCH_PERCENT;
+}

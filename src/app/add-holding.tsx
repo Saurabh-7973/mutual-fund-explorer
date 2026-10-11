@@ -16,13 +16,13 @@ import { SignedPercent } from '@/components/ui/SignedPercent';
 import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { formatDate, parseIsoDate, todayInIndia } from '@/domain/dates';
 import { VALUE_SCALE } from '@/domain/decimal';
-import { formatInr, formatNav } from '@/domain/format';
+import { formatInr, formatNav, formatUnits } from '@/domain/format';
 import { lastPoint, resolvePurchaseNavWithLatest } from '@/domain/nav';
 import { describeScheme } from '@/domain/schemeName';
 import { parseSchemeCode } from '@/domain/search';
 import type { IsoDate } from '@/domain/types';
-import { describePurchaseDate, validateUnits } from '@/domain/validation';
-import { valueLot } from '@/domain/valuation';
+import { amountLooksOff, describePurchaseDate, validateAmountPaid, validateUnits } from '@/domain/validation';
+import { lotInvested, parseAmount, valueLot } from '@/domain/valuation';
 import { useFundSeries } from '@/query/hooks';
 import { newLotId } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
@@ -82,12 +82,16 @@ function AddHoldingForm({
   const today = useMemo(() => todayInIndia(), []);
 
   const [unitsText, setUnitsText] = useState('');
+  const [amountText, setAmountText] = useState('');
+  const [amountTouched, setAmountTouched] = useState(false);
   const [unitsTouched, setUnitsTouched] = useState(false);
   const [purchaseDate, setPurchaseDate] = useState<IsoDate | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [mode, setMode] = useState<'once' | 'sip'>(sipPrefill !== null ? 'sip' : 'once');
 
   const units = validateUnits(unitsText);
+  const amount = validateAmountPaid(amountText);
+  const showAmountError = !amount.ok && (amountTouched || submitted);
   // Raw history points plus the /latest point separately: never the merged series.
   const resolution =
     history.data && purchaseDate
@@ -100,7 +104,7 @@ function AddHoldingForm({
         ? { tone: 'error' as const, text: 'Choose the purchase date.' }
         : null;
   const priceable = resolution !== null && (resolution.kind === 'matched' || resolution.kind === 'pending');
-  const canSave = units.ok && priceable;
+  const canSave = units.ok && amount.ok && priceable;
   const showUnitsError = !units.ok && (unitsTouched || submitted);
 
   const last = points !== null ? lastPoint(points) : null;
@@ -108,6 +112,7 @@ function AddHoldingForm({
     units.ok && resolution?.kind === 'matched' && last !== null
       ? valueLot({
           units: units.normalized,
+          ...(amount.ok && amount.normalized !== null ? { amount: amount.normalized } : {}),
           appliedNav: resolution.point.nav,
           appliedDate: resolution.point.date,
           latestNav: last.nav,
@@ -115,8 +120,19 @@ function AddHoldingForm({
         })
       : null;
 
+  // Units × NAV against the amount typed: far apart means a typo in one of them.
+  const unitsTimesNav =
+    units.ok && resolution?.kind === 'matched'
+      ? lotInvested({
+          units: units.normalized,
+          applied: { navDate: resolution.point.date, nav: resolution.point.nav },
+        })
+      : null;
+  const paid = amount.ok ? parseAmount(amount.normalized ?? undefined) : null;
+  const mismatch = paid !== null && unitsTimesNav !== null && amountLooksOff(paid, unitsTimesNav);
+
   const save = () => {
-    if (!units.ok || resolution === null || purchaseDate === null || !priceable) {
+    if (!units.ok || !amount.ok || resolution === null || purchaseDate === null || !priceable) {
       setSubmitted(true);
       return;
     }
@@ -127,6 +143,7 @@ function AddHoldingForm({
       units: units.normalized,
       purchaseDate,
       applied: resolution.kind === 'matched' ? { navDate: resolution.point.date, nav: resolution.point.nav } : null,
+      ...(amount.normalized !== null ? { amount: amount.normalized } : {}),
       createdAt: new Date().toISOString(),
     });
     router.back();
@@ -211,6 +228,40 @@ function AddHoldingForm({
             </View>
 
             <View style={{ gap: spacing.xs }}>
+              <AppText variant="label">Amount paid (optional)</AppText>
+              <TextInput
+                value={amountText}
+                onChangeText={setAmountText}
+                onBlur={() => setAmountTouched(true)}
+                keyboardType="decimal-pad"
+                inputMode="decimal"
+                placeholder="e.g. 9390.91"
+                placeholderTextColor={colors.textMuted}
+                accessibilityLabel="Amount paid in rupees, optional"
+                style={[
+                  typography.body,
+                  styles.input,
+                  {
+                    color: colors.text,
+                    backgroundColor: colors.surface,
+                    borderColor: showAmountError ? colors.danger : colors.border,
+                    borderRadius: radius.md,
+                    paddingHorizontal: spacing.md,
+                  },
+                ]}
+              />
+              {showAmountError && !amount.ok ? (
+                <AppText variant="caption" tone="danger" accessibilityLiveRegion="polite">
+                  {amount.error}
+                </AppText>
+              ) : (
+                <AppText variant="caption" tone="muted">
+                  From your statement, so invested matches it to the paisa. Leave empty to use units × NAV.
+                </AppText>
+              )}
+            </View>
+
+            <View style={{ gap: spacing.xs }}>
               <DateField
                 label="Purchase date"
                 value={purchaseDate}
@@ -243,7 +294,13 @@ function AddHoldingForm({
                 </AppText>
                 {preview !== null && (
                   <>
-                    <Row label="Invested">
+                    {mismatch && unitsTimesNav !== null && (
+                      <AppText variant="caption" tone="warning" accessibilityLiveRegion="polite">
+                        {formatUnits(units.ok ? units.scaled : 0n)} units × this NAV is {formatInr(unitsTimesNav, VALUE_SCALE)}. Check
+                        the units and the amount against your statement.
+                      </AppText>
+                    )}
+                    <Row label={paid !== null ? 'Invested (amount paid)' : 'Invested'}>
                       <AppText numeric>{formatInr(preview.invested, VALUE_SCALE)}</AppText>
                     </Row>
                     <Row label={`Value as of ${formatDate(preview.latestDate)}`}>

@@ -2,6 +2,7 @@ import { addMonths, daysInMonth, isoParts, toIsoDate } from './dates';
 import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, pow10, toPlainString } from './decimal';
 import { resolvePurchaseNavWithLatest } from './nav';
 import type { AppliedNav, IsoDate, NavPoint } from './types';
+import { lotInvested } from './valuation';
 
 /**
  * A monthly SIP entered in one go. Each instalment date is the start date plus whole
@@ -16,6 +17,8 @@ export interface SipInstalment {
   /** Canonical decimal string, like a typed-in purchase. */
   units: string;
   applied: AppliedNav;
+  /** Whole rupees paid, as a saved amount ("5000"): what the holding counts as invested. */
+  amount: string;
 }
 
 export interface SipPlan {
@@ -57,6 +60,7 @@ export function planSip(
         purchaseDate: date,
         units: toPlainString(units, UNITS_SCALE),
         applied: { navDate: resolution.point.date, nav: resolution.point.nav },
+        amount: String(amountRupees),
       });
     } else if (resolution.kind === 'pending') {
       plan.awaiting.push(date);
@@ -93,19 +97,19 @@ export const SIP_MIN_INSTALMENTS = 3;
 /**
  * Spots a running SIP in a fund's purchases: the latest run of monthly purchases on the
  * same day of the month (the 29th–31st may fall back to a month's last day), each worth
- * the same whole-rupee amount to within a rupee (units are rounded to 4 decimals).
+ * the same whole-rupee amount to within a rupee (the rupees paid when saved; otherwise
+ * units × NAV, which rounding leaves a few paise off).
  * Null when there is no such run of at least three.
  */
 export function detectSip(
-  lots: readonly { units: string; purchaseDate: IsoDate; applied: AppliedNav | null }[],
+  lots: readonly { units: string; purchaseDate: IsoDate; applied: AppliedNav | null; amount?: string }[],
 ): SipPattern | null {
   const priced = lots
     .filter((lot): lot is typeof lot & { applied: AppliedNav } => lot.applied !== null)
     .sort((a, b) => (a.purchaseDate < b.purchaseDate ? -1 : a.purchaseDate > b.purchaseDate ? 1 : 0));
   const amounts = priced.map((lot) => {
-    const units = parseScaled(lot.units, UNITS_SCALE);
-    const nav = parseScaled(lot.applied.nav, NAV_SCALE);
-    return units === null || nav === null ? null : Number(divRound(units * nav, pow10(VALUE_SCALE)));
+    const invested = lotInvested(lot);
+    return invested === null ? null : Number(divRound(invested, pow10(VALUE_SCALE)));
   });
 
   // Walk back from the latest purchase while each earlier one is the month before, on the

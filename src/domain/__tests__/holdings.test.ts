@@ -16,7 +16,7 @@ import {
 import { assetClassOf } from '../assetClass';
 import { navChange } from '../nav';
 import type { IsoDate } from '../types';
-import { evaluateLot } from '../valuation';
+import { evaluateLot, parseAmount } from '../valuation';
 
 const lot = (id: string, schemeName: string, purchaseDate: string) => ({
   id,
@@ -138,6 +138,13 @@ describe('purchaseTimeline', () => {
     units,
     purchaseDate: date as IsoDate,
     applied: nav === null ? null : { navDate: date as IsoDate, nav },
+  });
+
+  it('uses the amount paid as the purchase cost and in the average, when saved', () => {
+    const timeline = purchaseTimeline([{ ...lot('a', '100', '2024-01-10', '90.0000'), amount: '9100' }]);
+    expect(timeline[0]?.invested).toBe(parseAmount('9100'));
+    // ₹9,100 for 100 units: ₹91 a unit, at 8 decimals.
+    expect(timeline[0]?.averageNavAfter).toBe(9_100_000_000n);
   });
 
   it('orders purchases by date and keeps a running average cost per unit', () => {

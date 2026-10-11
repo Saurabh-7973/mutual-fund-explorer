@@ -4,7 +4,7 @@ import { NAV_SCALE, UNITS_SCALE, VALUE_SCALE, divRound, parseScaled, toNumber } 
 import { describeScheme } from './schemeName';
 import type { NavChange } from './nav';
 import type { AppliedNav, IsoDate } from './types';
-import type { LotStatus } from './valuation';
+import { lotInvested, type LotStatus } from './valuation';
 import { xirrPercent, type CashFlow } from './xirr';
 
 /**
@@ -214,7 +214,7 @@ export interface TimelineEntry {
  * the average.
  */
 export function purchaseTimeline(
-  lots: readonly { id: string; units: string; purchaseDate: IsoDate; applied: AppliedNav | null }[],
+  lots: readonly { id: string; units: string; purchaseDate: IsoDate; applied: AppliedNav | null; amount?: string }[],
 ): TimelineEntry[] {
   const ordered = [...lots].sort((a, b) =>
     a.purchaseDate === b.purchaseDate ? a.id.localeCompare(b.id) : a.purchaseDate < b.purchaseDate ? -1 : 1,
@@ -223,12 +223,12 @@ export function purchaseTimeline(
   let pricedCost = 0n;
   return ordered.map((lot) => {
     const units = parseScaled(lot.units, UNITS_SCALE) ?? 0n;
-    const nav = lot.applied === null ? null : parseScaled(lot.applied.nav, NAV_SCALE);
+    const cost = units > 0n ? lotInvested(lot) : null;
     let invested: bigint | null = null;
-    if (nav !== null && units > 0n) {
-      invested = units * nav;
+    if (cost !== null) {
+      invested = cost;
       pricedUnits += units;
-      pricedCost += invested;
+      pricedCost += cost;
     }
     return {
       id: lot.id,

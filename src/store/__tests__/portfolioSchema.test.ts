@@ -38,6 +38,18 @@ const lot = (overrides: Partial<HoldingLot> = {}): HoldingLot => ({
 });
 
 describe('sanitizePortfolio', () => {
+  it('keeps a valid amount paid, and drops only a bad amount (the purchase stays)', () => {
+    const data = { watchlist: [], lots: [lot({ amount: '9391' }), lot({ id: 'lot-2', amount: 'abc' })] };
+    const clean = sanitizePortfolio(data);
+    expect(clean.lots[0]?.amount).toBe('9391');
+    expect(clean.lots[1]).toBeDefined();
+    expect(clean.lots[1] && 'amount' in clean.lots[1]).toBe(false);
+  });
+
+  it('loads purchases saved before amounts existed unchanged', () => {
+    expect(sanitizePortfolio({ watchlist: [], lots: [lot()] }).lots[0]).toEqual(lot());
+  });
+
   const valid: PortfolioData = {
     watchlist: [watch(122639)],
     lots: [lot(), lot({ id: 'lot-2', purchaseDate: d('2026-10-09'), applied: null })],
