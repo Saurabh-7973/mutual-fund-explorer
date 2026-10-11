@@ -15,6 +15,7 @@ import { AppText } from '../ui/AppText';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { SwipeRow } from '../ui/SwipeRow';
+import { FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 92 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
@@ -126,28 +127,31 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
           {
             borderBottomColor: colors.border,
             paddingHorizontal: spacing.lg,
-            gap: spacing.xs,
+            gap: spacing.md,
             backgroundColor: pressed ? colors.surfaceMuted : colors.background,
           },
         ]}
       >
-        <View style={[styles.line, { gap: spacing.md }]}>
-          <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-            {title}
-          </AppText>
-          {nav}
-        </View>
-        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-          <View style={styles.flex}>
-            <SchemeBadges name={schemeName} size="sm" />
+        <FundMark schemeName={schemeName} />
+        <View style={[styles.flex, { gap: spacing.xs }]}>
+          <View style={[styles.line, { gap: spacing.md }]}>
+            <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+              {title}
+            </AppText>
+            {nav}
           </View>
-          {middle}
-        </View>
-        <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-          <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-            {fundHouse ?? ''}
-          </AppText>
-          {date}
+          <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
+            <View style={styles.flex}>
+              <SchemeBadges name={schemeName} size="sm" />
+            </View>
+            {middle}
+          </View>
+          <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
+            <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+              {fundHouse ?? ''}
+            </AppText>
+            {date}
+          </View>
         </View>
       </Pressable>
     </SwipeRow>
@@ -157,7 +161,8 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
 const styles = StyleSheet.create({
   row: {
     height: WATCH_ROW_HEIGHT,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },

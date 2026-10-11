@@ -9,6 +9,7 @@ import type { RecentFund } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
+import { FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 60 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
@@ -34,6 +35,7 @@ export const RecentFundRow = memo(function RecentFundRow({ fund }: { fund: Recen
         { borderBottomColor: colors.border, gap: spacing.md, opacity: pressed ? 0.6 : 1 },
       ]}
     >
+      <FundMark schemeName={fund.schemeName} size={36} />
       <View style={[styles.flex, { gap: 2 }]}>
         <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {label.title}

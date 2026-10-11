@@ -36,6 +36,11 @@ export interface Palette {
   chart: readonly [string, string, string, string];
   /** The "Other" slice: neutral, never a fifth hue. */
   chartOther: string;
+  /**
+   * Fund-house badges: [background, letters] pairs, muted so a list of them stays calm.
+   * Identity only, never meaning: always beside the fund's name.
+   */
+  mark: readonly (readonly [string, string])[];
 }
 
 export const palettes: { light: Palette; dark: Palette } = {
@@ -63,6 +68,14 @@ export const palettes: { light: Palette; dark: Palette } = {
     primarySoft: '#DCE9E3',
     chart: ['#2A78D6', '#EB6834', '#1BAF7A', '#EDA100'],
     chartOther: '#A3ADA7',
+    mark: [
+      ['#DCEBE3', '#2F5D50'],
+      ['#DDE7F5', '#2C4F7C'],
+      ['#F4E8D3', '#7A5518'],
+      ['#EBE0EE', '#5E3D6B'],
+      ['#D9ECEC', '#24605F'],
+      ['#F3E1DA', '#7D3F2C'],
+    ],
   },
   dark: {
     background: '#0D1311',
@@ -86,6 +99,14 @@ export const palettes: { light: Palette; dark: Palette } = {
     primarySoft: '#1E3A31',
     chart: ['#3987E5', '#D95926', '#199E70', '#C98500'],
     chartOther: '#5B6862',
+    mark: [
+      ['#1E3A31', '#9FD0BC'],
+      ['#1F2D42', '#A7C3E8'],
+      ['#3A2E1A', '#E3C48D'],
+      ['#33263A', '#D3B5DE'],
+      ['#183535', '#96D3D1'],
+      ['#3A2620', '#E7B4A3'],
+    ],
   },
 };
 

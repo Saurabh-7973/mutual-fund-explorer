@@ -14,6 +14,7 @@ import { Skeleton } from '../ui/Skeleton';
 import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
+import { FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 76 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
@@ -181,6 +182,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
           },
         ]}
       >
+        <FundMark schemeName={fund.schemeName} />
         <View style={[styles.flex, { gap: 2 }]}>
           <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
             {label.title}

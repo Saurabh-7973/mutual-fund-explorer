@@ -12,6 +12,7 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 import { Term } from '../ui/Term';
 import { Banner } from '../ui/Banner';
+import { FundMark } from '../ui/FundMark';
 
 /** "Equity Scheme - Flexi Cap Fund" → "Equity · Flexi Cap", the way investors name categories. */
 function shortCategory(category: string | null): string | null {
@@ -38,7 +39,8 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
   return (
     <View style={{ gap: spacing.sm }}>
       <View style={{ gap: spacing.xs }}>
-        <AppText variant="title" accessibilityRole="header">
+        <FundMark schemeName={name} size={48} />
+        <AppText variant="title" accessibilityRole="header" style={{ marginTop: spacing.sm }}>
           {label.title}
         </AppText>
         {/* Plan and option explain themselves on tap; the category is plain text. */}
