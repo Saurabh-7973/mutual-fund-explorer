@@ -2,6 +2,16 @@
 
 Search Indian mutual funds, read a fund's NAV history, keep a watchlist, and record holdings to see their current value and return. Built with Expo (managed workflow) and TypeScript on the free [mfapi.in](https://www.mfapi.in/) API.
 
+<img src="docs/screenshots/tour.gif" alt="A 28-second tour: Holdings, a fund with a running SIP, scrubbing the NAV chart, the 3Y and All ranges, the watchlist" width="280">
+
+## Two-minute tour
+
+1. Open **Holdings** and tap **Explore with a sample portfolio**. It prices five real funds from their published NAVs (one-time purchases and two monthly SIPs since 2022 and 2023), the same way a purchase you type in is priced, and stars three funds. **Clear** on the banner takes out only the sample.
+2. Open **Parag Parikh Flexi Cap**. Under *Your investment*, the purchase dated **Sunday 31 Mar 2024** got that day's NAV: AMFI published one that Sunday, the last day of the financial year. The October 2025 purchase was near the year's high, so it shows a loss.
+3. Open **HDFC Mid Cap**: the app spotted the ₹5,000 monthly SIP and offers **Add instalments due** for the months since the last one.
+4. Tap **Add another purchase**, enter any units and pick **Fri 2 Oct 2026** (Gandhi Jayanti, no NAV). It's priced at **Mon 5 Oct**, the first NAV on or after the date, and the form says so.
+5. Turn on airplane mode and reopen **Watchlist**: the saved NAVs show with their dates, and the closed HDFC Balanced Fund is flagged **Stale** with its last date, 01 Jun 2018.
+
 ## Run it
 
 **You need:** Node.js ^20.19.4, ^22.13.0 or ^24.3.0 (22 LTS recommended); the **Expo Go** app (SDK 57) on an Android or iOS phone, or an emulator; and internet access to `https://api.mfapi.in`. There are no API keys and no environment variables.
@@ -26,20 +36,24 @@ This project uses **Expo SDK 57**, which the store version of Expo Go runs as of
 | Command | What it does |
 |---|---|
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Jest: 150+ tests on dates, money, NAV rules, parsing, the API client and the store |
+| `npm test` | Jest: 265 tests in 30 suites on dates, money, NAV rules, parsing, the API client, the sample portfolio and the store |
 | `npm run check` | Both |
 
 ## Screenshots
 
-Android emulator, light mode, Expo Go (SDK 57). Inter typeface, fund-house monograms, haptics and motion throughout.
+Android emulator, light mode, Expo Go (SDK 57), with the sample portfolio loaded.
 
-| Explore | Fund | Your investment | Returns |
-|---|---|---|---|
-| ![Explore](docs/screenshots/01-explore.png) | ![Fund page](docs/screenshots/02-fund.png) | ![Your investment](docs/screenshots/03-your-investment.png) | ![Returns](docs/screenshots/04-returns.png) |
+| Explore | Fund | Your investment |
+|---|---|---|
+| ![Explore](docs/screenshots/01-explore.png) | ![Fund page](docs/screenshots/02-fund.png) | ![Your investment](docs/screenshots/03-your-investment.png) |
 
-| NAV calendar | Watchlist | Holdings | Compare |
-|---|---|---|---|
-| ![NAV calendar](docs/screenshots/05-nav-calendar.png) | ![Watchlist](docs/screenshots/06-watchlist.png) | ![Holdings](docs/screenshots/07-holdings.png) | ![Compare](docs/screenshots/08-compare.png) |
+| Returns | Consistency | NAV calendar |
+|---|---|---|
+| ![Returns](docs/screenshots/04-returns.png) | ![Consistency](docs/screenshots/05-consistency.png) | ![NAV calendar](docs/screenshots/06-nav-calendar.png) |
+
+| Watchlist | Holdings | Compare |
+|---|---|---|
+| ![Watchlist](docs/screenshots/07-watchlist.png) | ![Holdings](docs/screenshots/08-holdings.png) | ![Compare](docs/screenshots/09-compare.png) |
 
 ## Features
 
@@ -50,8 +64,30 @@ Android emulator, light mode, Expo Go (SDK 57). Inter typeface, fund-house monog
 - **Holdings:** one row per fund with value, returns or XIRR (switchable, sortable); a summary with today's change, total return, invested, XIRR across purchases, and allocation by asset class or by fund; an eye toggle that hides rupee amounts.
 - **Adding purchases:** one purchase by units and date, or a monthly SIP in one go (amount and start date; every instalment priced at its first NAV on or after the date). The app's own calendar jumps by year and greys out dates outside the fund's data.
 - **For newcomers:** a plain-language explanation behind an ⓘ wherever a term like NAV, XIRR, CAGR, IDCW or Direct appears.
+- **Your data:** back up everything as text, restore it on another phone (validated row by row), or share purchases as a CSV for a spreadsheet.
+- **Sample portfolio:** one tap from an empty Holdings screen, so every feature has data to show; Clear removes only what it added.
 
-Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md).
+Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md). The threat model is in [docs/SECURITY.md](docs/SECURITY.md).
+
+## Beyond the brief, and why
+
+The brief asks for search, NAV history, a watchlist and holdings. Each extra below came from walking through an investor persona ([docs/PERSONAS.md](docs/PERSONAS.md)), and each keeps its rule in `src/domain` with tests.
+
+| Extra | Who it's for | Rule lives in |
+|---|---|---|
+| Amount paid per purchase, so invested matches the statement | Arjun (SIP investor) | `valuation.ts` (`lotInvested`) |
+| A monthly SIP entered in one go, and "Add instalments due" | Arjun | `sip.ts` (`planSip`, `detectSip`) |
+| XIRR across purchases, today's change, allocation by asset class | Arjun, Vikram | `xirr.ts`, `holdings.ts`, `assetClass.ts` |
+| ELSS lock-in and long-term dates per purchase | Kavya, Arjun | `holdingPeriod.ts` |
+| Worst fall and recovery; rolling 3- and 5-year returns | Meena, Vikram | `returns.ts`, `longTerm.ts` |
+| Compare two funds | Vikram | `compare.ts` |
+| NAV history as a month calendar | everyone | `navCalendar.ts` |
+| Plain-language glossary behind ⓘ | Riya (beginner) | `glossary.ts` |
+| Hide amounts; offline watchlist | Farhan (privacy, offline) | `preferencesStore.ts`, `src/query` |
+| Backup, restore and CSV | everyone | `src/store/backup.ts` |
+| Sample portfolio | the person reviewing this app | `sample.ts` |
+
+What was left out on purpose: notifications, CAS import, more calculators and anything that projects future returns.
 
 ## Requirements and where they are handled
 
@@ -75,16 +111,19 @@ Design decisions, component by component, are in [docs/DESIGN.md](docs/DESIGN.md
 
 ```
 src/
-  app/          routes (Expo Router): (tabs)/index, watchlist, holdings; fund/[code]/index, navs; add-holding
+  app/          routes (Expo Router): (tabs)/index, watchlist, holdings; fund/[code]/index, navs; add-holding,
+                compare, backup
   components/   ui/, search/, fund/, form/, watchlist/, holdings/
-  domain/       pure rules: dates, calendar, decimal, format, nav, returns, longTerm, xirr, sip, compare, holdings,
-                assetClass, valuation, validation, chart, search, signed, glossary
+  domain/       pure rules: dates, calendar, decimal, format, nav, navCalendar, returns, longTerm, xirr, sip,
+                sample, compare, holdings, holdingPeriod, assetClass, fundHouse, valuation, validation, chart,
+                lttb, search, schemeName, signed, glossary
   api/          mfapi.in client, response parsing, typed errors, real-payload fixtures
   query/        TanStack Query client, keys, options, data hooks, persistence
-  store/        Zustand portfolio store and its pure transitions
-  hooks/        debounce, connectivity, refresh on focus, pending-lot resolver
+  store/        Zustand portfolio and preferences stores, their pure transitions, backup and CSV
+  hooks/        debounce, connectivity, refresh on focus, pending-lot resolver, reduced motion, sample portfolio
   theme/        tokens and useTheme
-docs/           ARCHITECTURE.md, DESIGN.md, PERSONAS.md, BUILD_PROMPT.md, BUILD_LOG.md, RUNBOOK.md
+docs/           ARCHITECTURE.md, DESIGN.md, SECURITY.md, PERSONAS.md, POLISH_PLAN.md, BUILD_PROMPT.md,
+                BUILD_LOG.md, RUNBOOK.md, screenshots/
 AI_CONTEXT.md   how AI tools were used and directed
 ```
 
@@ -100,6 +139,7 @@ The decisions behind this layout, the date and money rules, and the trade-offs a
 - **"Invested" is the rupees paid when the app knows them, else units × NAV.** SIP instalments save their amount, and a single purchase can take the amount from your statement; a purchase entered by units alone (or saved before amounts were kept) counts units × NAV, which can sit a few paise under what you paid because units are rounded and stamp duty is deducted before units are allotted. Older purchases aren't back-filled: guessing an amount could be wrong.
 - **Totals are summed exactly, then rounded**, so they can differ from the sum of the rounded rows by a paisa.
 - Mobile only: web isn't a target.
+- **Past performance may or may not be sustained in future.** Mutual fund investments are subject to market risks, read all scheme related documents carefully. This app shows published NAVs and what they imply; it makes no projections and gives no advice.
 
 ## Environment and data notes
 

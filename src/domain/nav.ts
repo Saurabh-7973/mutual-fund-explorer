@@ -151,16 +151,24 @@ export function isStale(lastDate: IsoDate, today: IsoDate): boolean {
 }
 
 /**
- * The date a list of latest NAVs is "as of": the newest one that isn't stale. A stale NAV
- * (a closed scheme) says its own date instead, so it never drags the shared date back.
+ * The date a list of latest NAVs is "as of": the date most of them share, the newest on a
+ * tie. A fund that publishes on other days (a liquid fund's weekend NAV) or a stale one (a
+ * closed scheme) then says its own date, instead of every other row having to.
  */
 export function currentNavDate(dates: readonly IsoDate[], today: IsoDate): IsoDate | null {
-  let newest: IsoDate | null = null;
+  const counts = new Map<IsoDate, number>();
   for (const date of dates) {
-    if (isStale(date, today)) continue;
-    if (newest === null || date > newest) newest = date;
+    if (!isStale(date, today)) counts.set(date, (counts.get(date) ?? 0) + 1);
   }
-  return newest;
+  let best: IsoDate | null = null;
+  let bestCount = 0;
+  for (const [date, count] of counts) {
+    if (count > bestCount || (count === bestCount && best !== null && date > best)) {
+      best = date;
+      bestCount = count;
+    }
+  }
+  return best;
 }
 
 /** One row of the NAV history list. */

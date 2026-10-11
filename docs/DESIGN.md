@@ -55,13 +55,42 @@ Every component below was decided by the data it shows, then checked against how
 | Holdings sort | any figure, either way | a sheet: one choice per row, direction under the chosen one ("A to Z" for names) | Groww's sort sheet | independent of the column shown; Day change added as a fourth column |
 | Large titles | the tab's name and status | the title scrolls away; a slim bar fades in a small title and a hairline | iOS / Material large titles | subtitle is status ("NAVs as of 09 Oct 2026"), never a tip |
 | NAV chart | NAV over a range | high and low marked on the line at their dates; a quiet fixed-height readout; draws in left to right on a new range | Groww, Kite | while scrubbing, the change from the range's start |
-| Returns | trailing returns | two groups headed by their glossary term (Absolute, A year), one line each, the zero line placed by the data | — | half the height of the earlier two-line rows |
+| Returns | trailing returns | two groups headed by their glossary term (Absolute, Annualised (CAGR)), one line each, the zero line placed by the data | — | half the height of the earlier two-line rows |
 | NAV history | every NAV | a month calendar of business days, each tinted by the size and direction of its move, the % always printed; List one tap away | the app's own purchase calendar | a month's rhythm at a glance; holidays and gaps visible |
 | Holding periods | allotment dates, AMFI category | "Short-term ₹1,11,541.58 of ₹1,22,695.72 · Next turns long-term 28 Oct 2026"; ELSS lock-in per purchase | Groww's investment details | from the allotment (NAV) date; silent where the tax class can't be told |
 | Sheets | a short task or explanation | the dim fades while the sheet glides up; reverses on close | Material bottom sheets | shared by glossary, calendar, sort |
 | Haptics | touch | tick for choices and scrubbing, tap for toggles, success on save | iOS / Android guidelines | three kinds only, so the app feels consistent |
 | Explore collections | starting points | a two-column grid of cards with an icon and one line on what each holds | Groww's collections | no return claims; each just runs a search |
 | Copy | explanations | one line on screen; the rest behind ⓘ | — | seven paragraphs cut |
+
+## Polish pass (11 Oct 2026)
+
+| Component | Data | Representation | Reference | Our addition |
+|---|---|---|---|---|
+| Corner radius | every surface | one scale by role: tags 4, chips and selector thumbs 6, buttons, inputs, tracks and the tab highlight 10, cards 14; fully round only for data bars | Material 3 shape scale | a tag is boxier than a card, so size and role read together |
+| Watchlist status slot | today's move, or that there is no recent NAV | the right of the middle line holds the day's change; a fund with no NAV for 7 days shows **Stale** there instead | — | every row reads name / NAV, tags / status, house / date; tags have a fixed 20 pt height so they line up with text |
+| NAV dates in lists | the date each latest NAV is from | the section header carries the date most rows share ("NAV · 1D · as of 09 Oct 2026"); a row on another day prints its own date, a stale row "Stale · 01 Jun 2018" | Groww's watchlist | a weekend NAV (liquid funds) doesn't push every other row to print a date |
+| Fund hero | the NAV and its date | "NAV ₹88.9258 +₹1.2703 (+1.45%) as of 09 Oct 2026" under the 3Y figure, above the chart | Groww, Kite | the NAV was below the fold before |
+| Yearly figures | annualised returns | "p.a." on screen ("+12.40% p.a.", "since start, p.a."), "per year" for screen readers | AMC factsheets | one convention instead of five |
+| Disclaimers | — | SEBI's past-performance sentence on every returns footnote; the market-risk line once, at the foot of the fund page | SEBI advertisement code | — |
+| Sample portfolio | real funds priced from real NAVs | a secondary button on the empty Holdings screen; a blue banner with Clear on Holdings and Watchlist while any sample item is saved | product tours | priced by the same domain rules as a typed purchase; Clear removes only what it added |
+
+### Motion and haptics, as built
+
+Motion tokens are `fast` 150 ms, `base` 220 ms and `slow` 320 ms, on the native driver only; reduced motion makes all of it instant (`useReducedMotion`).
+
+| Moment | Motion | Haptic |
+|---|---|---|
+| A selector changes | the marker slides (`base`) | tick |
+| A section opens or closes | the page eases apart (`LayoutAnimation`), the chevron turns | tap |
+| A sheet opens or closes | the dim fades while the sheet glides by its own height | — |
+| A chart range changes | the line draws in left to right; snaps to drawn if interrupted | tick |
+| Scrubbing a chart | crosshair and readout follow the finger | tick on each new point (to be thinned to a new month on long ranges: plan P1-2) |
+| Star, eye | — (cross-fade and a small scale are plan P1-1) | tap |
+| Save a purchase or SIP; load the sample | — | done |
+| Button press | scales to 0.97 and back | — |
+
+Never animated: money and percentages (a counting number shows wrong values on the way), and screen transitions (they stay native to each platform).
 
 ## What we deliberately left out
 

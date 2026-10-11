@@ -163,7 +163,9 @@ describe('isStale', () => {
 });
 
 describe('currentNavDate', () => {
-  it('takes the newest NAV date that is not stale', () => {
+  it('takes the date most current NAVs share, the newest on a tie, ignoring stale ones', () => {
+    // A liquid fund's Saturday NAV doesn't move the shared date off Friday.
+    expect(currentNavDate([d('2026-10-09'), d('2026-10-10'), d('2026-10-09'), d('2018-06-01')], TODAY)).toBe('2026-10-09');
     expect(currentNavDate([d('2026-10-08'), d('2026-10-09'), d('2018-06-01')], TODAY)).toBe('2026-10-09');
     expect(currentNavDate([d('2018-06-01')], TODAY)).toBeNull();
     expect(currentNavDate([], TODAY)).toBeNull();
