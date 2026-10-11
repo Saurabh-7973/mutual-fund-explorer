@@ -9,6 +9,7 @@ import { LargeTitle, ScreenHeader, TopBar, useCollapsingTitle } from '@/componen
 import { Banner } from '@/components/ui/Banner';
 import { Chip } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SampleBanner } from '@/components/holdings/SamplePortfolio';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { UndoToast } from '@/components/ui/UndoToast';
 import { WATCH_ROW_HEIGHT, WatchRow } from '@/components/watchlist/WatchRow';
@@ -159,6 +160,9 @@ export default function WatchlistScreen() {
                 <Banner tone="info" text="Offline: showing saved NAVs" />
               </View>
             )}
+            <View style={{ paddingHorizontal: spacing.lg }}>
+              <SampleBanner />
+            </View>
           </View>
         }
         ListFooterComponent={

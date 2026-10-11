@@ -10,11 +10,13 @@ import {
   PORTFOLIO_VERSION,
   addLot,
   addWatch,
+  removeItems,
   removeLot,
   removeWatch,
   resolveLot,
   restoreWatch,
   sanitizePortfolio,
+  type AddedItems,
   type HoldingLot,
   type PortfolioData,
   type WatchItem,
@@ -41,6 +43,10 @@ export interface PortfolioState extends PortfolioData {
   removeLot: (id: string) => void;
   /** Prices an "Awaiting NAV" lot once its NAV is published. */
   resolveLot: (id: string, applied: AppliedNav) => void;
+  /** Adds a batch of lots and watched schemes in one write (the sample portfolio). */
+  addMany: (lots: HoldingLot[], watch: WatchItem[]) => void;
+  /** Takes out exactly what a batch added. */
+  removeItems: (items: AddedItems) => void;
   /** Replaces everything with restored data (validated again here, whatever the caller did). */
   replaceAll: (data: PortfolioData) => void;
 }
@@ -63,6 +69,14 @@ export const usePortfolioStore = create<PortfolioState>()(
       addLot: (lot) => set((state) => addLot(state, lot)),
       removeLot: (id) => set((state) => removeLot(state, id)),
       resolveLot: (id, applied) => set((state) => resolveLot(state, id, applied)),
+      addMany: (lots, watch) =>
+        set((state) => {
+          let data: PortfolioData = { watchlist: state.watchlist, lots: state.lots };
+          for (const item of watch) data = addWatch(data, item);
+          for (const lot of lots) data = addLot(data, lot);
+          return data;
+        }),
+      removeItems: (items) => set((state) => removeItems({ watchlist: state.watchlist, lots: state.lots }, items)),
       replaceAll: (data) => set(sanitizePortfolio(data)),
     }),
     {

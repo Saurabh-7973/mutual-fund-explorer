@@ -26,6 +26,7 @@ import {
 import { AppText } from '@/components/ui/AppText';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { LoadSampleButton, SampleBanner } from '@/components/holdings/SamplePortfolio';
 import { IconButton } from '@/components/ui/IconButton';
 import { PrivateAmount } from '@/components/ui/PrivateAmount';
 import { LargeTitle, ScreenHeader, TopBar, useCollapsingTitle } from '@/components/ui/ScreenHeader';
@@ -212,6 +213,7 @@ export default function HoldingsScreen() {
             body="Record a purchase from any fund's page to see its value and return here."
             action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
           >
+            <LoadSampleButton />
             <Button label="Restore from a backup" variant="ghost" onPress={() => router.push('/backup')} />
           </EmptyState>
         </View>
@@ -227,7 +229,10 @@ export default function HoldingsScreen() {
   const asOf = totals.oldestNavDate !== null ? formatAsOf(totals.oldestNavDate, totals.newestNavDate) : undefined;
   const summary = (
     <View onLayout={onHeaderLayout}>
-      <LargeTitle title="Holdings" subtitle={asOf !== undefined ? `NAVs ${asOf}` : undefined} />
+      <LargeTitle title="Holdings" subtitle={asOf === undefined ? undefined : asOf.startsWith('as of') ? `NAVs ${asOf}` : asOf} />
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <SampleBanner />
+      </View>
       <View
         style={[
           styles.summary,

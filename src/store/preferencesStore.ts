@@ -15,11 +15,20 @@ export interface RecentFund {
   schemeName: string;
 }
 
+/** What the sample portfolio added, so Clear takes out only that. */
+export interface SampleRecord {
+  lotIds: string[];
+  watchCodes: number[];
+}
+
 export interface PreferencesState {
   /** Hide rupee amounts of the user's own money (percentages stay visible). */
   hideAmounts: boolean;
   /** Funds opened most recently, newest first. */
   recentlyViewed: RecentFund[];
+  /** Set while the sample portfolio is loaded; null otherwise. */
+  sample: SampleRecord | null;
+  setSample: (sample: SampleRecord | null) => void;
   toggleHideAmounts: () => void;
   markViewed: (fund: RecentFund) => void;
 }
@@ -29,6 +38,8 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       hideAmounts: false,
       recentlyViewed: [],
+      sample: null,
+      setSample: (sample) => set({ sample }),
       toggleHideAmounts: () => set((state) => ({ hideAmounts: !state.hideAmounts })),
       markViewed: (fund) =>
         set((state) => {
@@ -43,7 +54,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       name: PREFERENCES_STORAGE_KEY,
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ hideAmounts: state.hideAmounts, recentlyViewed: state.recentlyViewed }),
+      partialize: (state) => ({ hideAmounts: state.hideAmounts, recentlyViewed: state.recentlyViewed, sample: state.sample }),
       // Validate what was saved: anything unexpected falls back to the defaults.
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<PreferencesState>;
@@ -59,8 +70,18 @@ export const usePreferencesStore = create<PreferencesState>()(
               )
               .slice(0, RECENTLY_VIEWED_MAX)
           : [];
-        return { ...current, hideAmounts: saved.hideAmounts === true, recentlyViewed: recent };
+        return { ...current, hideAmounts: saved.hideAmounts === true, recentlyViewed: recent, sample: sanitizeSample(saved.sample) };
       },
     },
   ),
 );
+
+function sanitizeSample(value: unknown): SampleRecord | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const { lotIds, watchCodes } = value as Partial<Record<keyof SampleRecord, unknown>>;
+  if (!Array.isArray(lotIds) || !Array.isArray(watchCodes)) return null;
+  return {
+    lotIds: lotIds.filter((id): id is string => typeof id === 'string'),
+    watchCodes: watchCodes.filter((code): code is number => Number.isInteger(code) && code > 0),
+  };
+}

@@ -5,8 +5,10 @@ import {
   EMPTY_PORTFOLIO,
   addLot,
   addWatch,
+  hasAnyOf,
   isWatched,
   newLotId,
+  removeItems,
   removeLot,
   removeWatch,
   resolveLot,
@@ -146,5 +148,24 @@ describe('newLotId', () => {
     expect(newLotId(0, () => 0)).toBe('0-0');
     expect(newLotId(1_760_000_000_000, () => 0.5)).toBe(`${(1_760_000_000_000).toString(36)}-${(500_000_000).toString(36)}`);
     expect(newLotId(1, () => 0.1)).not.toBe(newLotId(1, () => 0.2));
+  });
+});
+
+describe('removeItems and hasAnyOf', () => {
+  const data: PortfolioData = {
+    watchlist: [watch(1), watch(2)],
+    lots: [lot({ id: 'mine' }), lot({ id: 's1' }), lot({ id: 's2' })],
+  };
+  const sample = { lotIds: ['s1', 's2'], watchCodes: [2] };
+
+  it('removes exactly the listed lots and watched schemes', () => {
+    const left = removeItems(data, sample);
+    expect(left.lots.map((item) => item.id)).toEqual(['mine']);
+    expect(codes(left)).toEqual([1]);
+  });
+
+  it('says whether anything from the batch is still saved', () => {
+    expect(hasAnyOf(data, sample)).toBe(true);
+    expect(hasAnyOf(removeItems(data, sample), sample)).toBe(false);
   });
 });

@@ -52,16 +52,10 @@ export function planSip(
     if (date > today) break;
     const resolution = resolvePurchaseNavWithLatest(historyPoints, latest, date, today);
     if (resolution.kind === 'matched') {
-      const nav = parseScaled(resolution.point.nav, NAV_SCALE);
-      if (nav === null || nav <= 0n) continue;
-      const units = divRound(amount * pow10(UNITS_SCALE + NAV_SCALE), nav);
+      const instalment = buyAtNav(amountRupees, date, resolution.point);
+      if (instalment === null) continue;
       plan.paid += amount * pow10(VALUE_SCALE);
-      plan.instalments.push({
-        purchaseDate: date,
-        units: toPlainString(units, UNITS_SCALE),
-        applied: { navDate: resolution.point.date, nav: resolution.point.nav },
-        amount: String(amountRupees),
-      });
+      plan.instalments.push(instalment);
     } else if (resolution.kind === 'pending') {
       plan.awaiting.push(date);
     } else if (i === 0) {
@@ -70,6 +64,35 @@ export function planSip(
     }
   }
   return plan;
+}
+
+/** Whole rupees invested at one NAV: units to 4 decimals, the amount saved as paid. */
+function buyAtNav(amountRupees: number, purchaseDate: IsoDate, point: NavPoint): SipInstalment | null {
+  const nav = parseScaled(point.nav, NAV_SCALE);
+  if (nav === null || nav <= 0n) return null;
+  const units = divRound(BigInt(amountRupees) * pow10(UNITS_SCALE + NAV_SCALE), nav);
+  return {
+    purchaseDate,
+    units: toPlainString(units, UNITS_SCALE),
+    applied: { navDate: point.date, nav: point.nav },
+    amount: String(amountRupees),
+  };
+}
+
+/**
+ * One purchase of whole rupees on a date, priced exactly like a SIP instalment (the first
+ * NAV on or after the date). Null when no NAV applies yet, or the date is outside the data.
+ */
+export function buyRupees(
+  historyPoints: readonly NavPoint[],
+  latest: NavPoint | null,
+  amountRupees: number,
+  purchaseDate: IsoDate,
+  today: IsoDate,
+): SipInstalment | null {
+  if (!Number.isInteger(amountRupees) || amountRupees <= 0) return null;
+  const resolution = resolvePurchaseNavWithLatest(historyPoints, latest, purchaseDate, today);
+  return resolution.kind === 'matched' ? buyAtNav(amountRupees, purchaseDate, resolution.point) : null;
 }
 
 /** What a planned SIP gained against the rupees actually paid, at VALUE_SCALE. */

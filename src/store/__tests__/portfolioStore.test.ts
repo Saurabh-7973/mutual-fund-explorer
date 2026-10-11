@@ -86,4 +86,20 @@ describe('portfolio store', () => {
     expect(state.lots.map((item) => item.id)).toEqual(['good']);
     expect(state.hydrated).toBe(true);
   });
+
+  it('takes out only what the sample added, keeping what the user saved', async () => {
+    const { addLot, watch, addMany, removeItems } = usePortfolioStore.getState();
+    addLot(lot('mine'));
+    watch({ schemeCode: 122639, schemeName: 'PPFAS' });
+    addMany([lot('sample-1'), lot('sample-2')], [
+      { schemeCode: 122639, schemeName: 'PPFAS', addedAt: '2026-10-11T00:00:00.000Z' },
+      { schemeCode: 100121, schemeName: 'HDFC Balanced', addedAt: '2026-10-11T00:00:00.000Z' },
+    ]);
+    // 122639 was already watched, so the sample didn't add it and doesn't record it.
+    removeItems({ lotIds: ['sample-1', 'sample-2'], watchCodes: [100121] });
+    const state = usePortfolioStore.getState();
+    expect(state.lots.map((item) => item.id)).toEqual(['mine']);
+    expect(state.watchlist.map((item) => item.schemeCode)).toEqual([122639]);
+    expect(await savedJson()).toMatchObject({ state: { lots: [{ id: 'mine' }] } });
+  });
 });

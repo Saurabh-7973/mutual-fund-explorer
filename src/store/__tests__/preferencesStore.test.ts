@@ -8,7 +8,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 );
 
 beforeEach(async () => {
-  usePreferencesStore.setState({ hideAmounts: false, recentlyViewed: [] });
+  usePreferencesStore.setState({ hideAmounts: false, recentlyViewed: [], sample: null });
   await AsyncStorage.clear();
 });
 
@@ -42,5 +42,18 @@ describe('preferences store', () => {
     const state = usePreferencesStore.getState();
     expect(state.hideAmounts).toBe(false);
     expect(state.recentlyViewed).toEqual([{ schemeCode: 122639, schemeName: 'PPFAS' }]);
+  });
+
+  it('keeps the sample record across a reload, and drops a corrupt one', async () => {
+    usePreferencesStore.getState().setSample({ lotIds: ['a', 'b'], watchCodes: [100121] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    const raw = await AsyncStorage.getItem(PREFERENCES_STORAGE_KEY);
+    expect(JSON.parse(raw ?? '{}')).toMatchObject({ state: { sample: { lotIds: ['a', 'b'], watchCodes: [100121] } } });
+    await usePreferencesStore.persist.rehydrate();
+    expect(usePreferencesStore.getState().sample).toEqual({ lotIds: ['a', 'b'], watchCodes: [100121] });
+
+    await AsyncStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({ version: 1, state: { sample: { lotIds: 'x' } } }));
+    await usePreferencesStore.persist.rehydrate();
+    expect(usePreferencesStore.getState().sample).toBeNull();
   });
 });

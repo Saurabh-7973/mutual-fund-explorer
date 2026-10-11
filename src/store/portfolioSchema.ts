@@ -159,6 +159,29 @@ export function removeLot(data: PortfolioData, id: string): PortfolioData {
   return { ...data, lots: data.lots.filter((lot) => lot.id !== id) };
 }
 
+/** What one batch added (the sample portfolio), so it can be taken out again on its own. */
+export interface AddedItems {
+  lotIds: string[];
+  watchCodes: number[];
+}
+
+/** Removes exactly these lots and watched schemes; anything else the user saved stays. */
+export function removeItems(data: PortfolioData, items: AddedItems): PortfolioData {
+  const lotIds = new Set(items.lotIds);
+  const watchCodes = new Set(items.watchCodes);
+  return {
+    watchlist: data.watchlist.filter((item) => !watchCodes.has(item.schemeCode)),
+    lots: data.lots.filter((lot) => !lotIds.has(lot.id)),
+  };
+}
+
+/** True while anything from the batch is still saved. */
+export function hasAnyOf(data: PortfolioData, items: AddedItems): boolean {
+  const lotIds = new Set(items.lotIds);
+  const watchCodes = new Set(items.watchCodes);
+  return data.lots.some((lot) => lotIds.has(lot.id)) || data.watchlist.some((item) => watchCodes.has(item.schemeCode));
+}
+
 /** Fills in the NAV for an "Awaiting NAV" lot. Lots that already have one are left alone. */
 export function resolveLot(data: PortfolioData, id: string, applied: AppliedNav): PortfolioData {
   let changed = false;
