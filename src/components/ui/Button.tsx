@@ -4,13 +4,14 @@ import { ActivityIndicator, Animated, Pressable, StyleSheet } from 'react-native
 
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 
-import { MIN_TOUCH, motion } from '@/theme/tokens';
+import { motion } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
 import type { IoniconName } from './icons';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'ghost';
+/** 'surface' is for a button on a tinted panel (white, green text), where the tonal one would vanish. */
+export type ButtonVariant = 'primary' | 'secondary' | 'surface' | 'destructive' | 'ghost';
 
 export interface ButtonProps {
   label: string;
@@ -34,7 +35,9 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
   };
   const look = {
     primary: { bg: colors.primary, fg: colors.onPrimary, border: colors.primary },
-    secondary: { bg: colors.surface, fg: colors.primary, border: colors.border },
+    // Tonal: a green tint that reads on the page, on white cards and on sheets alike.
+    secondary: { bg: colors.primarySoft, fg: colors.primary, border: colors.primarySoft },
+    surface: { bg: colors.surface, fg: colors.primary, border: colors.surface },
     destructive: { bg: colors.dangerSurface, fg: colors.danger, border: colors.dangerSurface },
     ghost: { bg: 'transparent', fg: colors.primary, border: 'transparent' },
   }[variant];
@@ -53,7 +56,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
           {
             backgroundColor: look.bg,
             borderColor: look.border,
-            borderRadius: radius.md,
+            borderRadius: radius.control,
             paddingHorizontal: spacing.xl,
             gap: spacing.sm,
             opacity: inactive ? 0.5 : pressed ? 0.85 : 1,
@@ -75,7 +78,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: MIN_TOUCH + 4,
+    minHeight: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

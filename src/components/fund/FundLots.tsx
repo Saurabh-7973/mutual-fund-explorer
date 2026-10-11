@@ -226,7 +226,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
             {sipDue && (
               <Button
                 label="Add instalments due"
-                variant="secondary"
+                variant="surface"
                 icon="add"
                 onPress={() =>
                   router.push({
