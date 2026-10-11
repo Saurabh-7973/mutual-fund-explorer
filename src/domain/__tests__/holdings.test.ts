@@ -176,6 +176,21 @@ describe('sortHoldings', () => {
     expect(sortHoldings(funds, 'value', 'asc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
     expect(sortHoldings(funds, 'returns', 'desc').map((f) => f.schemeCode)).toEqual([1, 2, 3]);
   });
+
+  it('orders by name A to Z or Z to A, ignoring plan and option', () => {
+    expect(sortHoldings(funds, 'name', 'asc').map((f) => f.schemeCode)).toEqual([2, 1, 3]);
+    expect(sortHoldings(funds, 'name', 'desc').map((f) => f.schemeCode)).toEqual([3, 1, 2]);
+  });
+
+  it("orders by today's change, with funds whose change isn't loaded last", () => {
+    const point = (date: string, nav: string) => ({ date: date as IsoDate, nav, value: Number(nav) });
+    const changes = new Map([
+      [1, navChange(point('2026-10-08', '40.0000'), point('2026-10-09', '39.8000'))],
+      [2, navChange(point('2026-10-08', '120.0000'), point('2026-10-09', '121.0000'))],
+    ]);
+    expect(sortHoldings(funds, 'day', 'desc', changes).map((f) => f.schemeCode)).toEqual([2, 1, 3]);
+    expect(sortHoldings(funds, 'day', 'asc', changes).map((f) => f.schemeCode)).toEqual([1, 2, 3]);
+  });
 });
 
 describe('allocationByAssetClass', () => {

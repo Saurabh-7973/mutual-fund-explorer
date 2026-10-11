@@ -244,21 +244,40 @@ export function purchaseTimeline(
   });
 }
 
-export type HoldingSort = 'value' | 'returns' | 'xirr';
+export type HoldingSort = 'value' | 'returns' | 'xirr' | 'day' | 'name';
 export type SortDirection = 'desc' | 'asc';
 
 /**
- * Funds ordered by the figure the list is showing. Funds without that figure (nothing valued
- * yet, or XIRR under a year) go last either way, so the order never hides them in the middle.
+ * Funds in the chosen order, independent of which figure the rows show (as Groww's sort
+ * sheet does). Funds without the figure (nothing valued yet, XIRR under a year, today's
+ * change not loaded) go last either way, so the order never hides them in the middle.
+ * By name, 'asc' is A to Z, compared on the fund's title without plan and option.
  */
-export function sortHoldings(funds: readonly FundHolding[], by: HoldingSort, direction: SortDirection): FundHolding[] {
+export function sortHoldings(
+  funds: readonly FundHolding[],
+  by: HoldingSort,
+  direction: SortDirection,
+  dayChanges: ReadonlyMap<number, NavChange | null> = new Map(),
+): FundHolding[] {
+  const sign = direction === 'desc' ? -1 : 1;
+  if (by === 'name') {
+    const title = (fund: FundHolding) => describeScheme(fund.schemeName).title.toLowerCase();
+    return [...funds].sort((a, b) => {
+      const ta = title(a);
+      const tb = title(b);
+      return ta === tb ? a.schemeCode - b.schemeCode : (ta < tb ? -1 : 1) * sign;
+    });
+  }
   const key = (fund: FundHolding): number | null => {
     if (fund.valuedCount === 0) return null;
     if (by === 'value') return toNumber(fund.current, VALUE_SCALE);
     if (by === 'returns') return fund.returnHundredths === null ? null : Number(fund.returnHundredths);
+    if (by === 'day') {
+      const change = dayChanges.get(fund.schemeCode);
+      return change === null || change === undefined ? null : Number(change.pctHundredths);
+    }
     return fund.xirrPercent;
   };
-  const sign = direction === 'desc' ? -1 : 1;
   return [...funds].sort((a, b) => {
     const ka = key(a);
     const kb = key(b);

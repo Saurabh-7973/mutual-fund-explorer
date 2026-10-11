@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import {
   Alert,
-  FlatList,
+  Animated,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 
 import { AllocationCard } from '@/components/holdings/AllocationCard';
+import { SORT_OPTIONS, SortSheet, directionLabels } from '@/components/holdings/SortSheet';
 import {
   FUND_HOLDING_ROW_HEIGHT,
   FundHoldingRow,
@@ -26,7 +27,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { IconButton } from '@/components/ui/IconButton';
 import { PrivateAmount } from '@/components/ui/PrivateAmount';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { LargeTitle, ScreenHeader, TopBar, useCollapsingTitle } from '@/components/ui/ScreenHeader';
 import { Term } from '@/components/ui/Term';
 import { Skeleton, SkeletonRows } from '@/components/ui/Skeleton';
 import { SignedAmount } from '@/components/ui/SignedAmount';
@@ -42,13 +43,15 @@ import {
   holdingsByFund,
   portfolioDayGain,
   sortHoldings,
-  type SortDirection,
   type EvaluatedLot,
+  type HoldingSort,
+  type SortDirection,
   type FundHolding,
 } from '@/domain/holdings';
 import { dayChange, type NavChange } from '@/domain/nav';
 import { assetClassOf } from '@/domain/assetClass';
 import { describeScheme } from '@/domain/schemeName';
+import { detectSip } from '@/domain/sip';
 import { evaluateLot, summarize, type LotStatus } from '@/domain/valuation';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
 import { latestNavQuery, queryKeys, recentNavQuery } from '@/query/hooks';
@@ -70,7 +73,10 @@ export default function HoldingsScreen() {
   // The summary is the list header; its height feeds getItemLayout so row offsets stay exact.
   const [headerHeight, setHeaderHeight] = useState(0);
   const [column, setColumn] = useState<HoldingColumn>('value');
+  const [sortBy, setSortBy] = useState<HoldingSort>('value');
   const [direction, setDirection] = useState<SortDirection>('desc');
+  const [sorting, setSorting] = useState(false);
+  const { scrollY, onScroll } = useCollapsingTitle();
   const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
   const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
 
@@ -95,12 +101,21 @@ export default function HoldingsScreen() {
       navState.set(lot.schemeCode, 'ready');
     }
   }
-  const funds = sortHoldings(holdingsByFund(evaluated), column, direction);
   const changes = new Map<number, NavChange | null>(
     codes.map((code, i) => {
       const points = recents[i]?.data?.points;
       return [code, points === undefined ? null : dayChange(points, byCode.get(code)?.data?.point ?? null)];
     }),
+  );
+  const funds = sortHoldings(holdingsByFund(evaluated), sortBy, direction, changes);
+  const fundDayGains = new Map(
+    funds.map((fund) => [
+      fund.schemeCode,
+      portfolioDayGain([fund], new Map([[fund.schemeCode, changes.get(fund.schemeCode) ?? null]])),
+    ]),
+  );
+  const sips = new Map(
+    codes.map((code) => [code, detectSip(lots.filter((lot) => lot.schemeCode === code))?.amountRupees ?? null]),
   );
   const dayGain = portfolioDayGain(funds, changes);
   const totals = summarize(statuses);
@@ -161,11 +176,13 @@ export default function HoldingsScreen() {
         fund={item}
         nav={navState.get(item.schemeCode) ?? 'loading'}
         column={column}
+        dayGain={fundDayGains.get(item.schemeCode) ?? null}
+        sipRupees={sips.get(item.schemeCode) ?? null}
         onRetry={onRetry}
         onRemove={onRemove}
       />
     ),
-    [navState, column, onRetry, onRemove],
+    [navState, column, fundDayGains, sips, onRetry, onRemove],
   );
 
   if (!hydrated) {
@@ -198,9 +215,12 @@ export default function HoldingsScreen() {
   const columnIndex = HOLDING_COLUMNS.findIndex((c) => c.key === column);
   const nextColumn = HOLDING_COLUMNS[(columnIndex + 1) % HOLDING_COLUMNS.length] ?? HOLDING_COLUMNS[0];
   const columnLabel = HOLDING_COLUMNS[columnIndex]?.label ?? '';
+  const sortOption = SORT_OPTIONS.find((option) => option.key === sortBy) ?? SORT_OPTIONS[0];
 
+  const asOf = totals.oldestNavDate !== null ? formatAsOf(totals.oldestNavDate, totals.newestNavDate) : undefined;
   const summary = (
     <View onLayout={onHeaderLayout}>
+      <LargeTitle title="Holdings" subtitle={asOf !== undefined ? `NAVs ${asOf}` : undefined} />
       <View
         style={[
           styles.summary,
@@ -273,13 +293,8 @@ export default function HoldingsScreen() {
             <AllocationCard byClass={classSlices} byFund={slices} />
           </>
         )}
-        <View style={{ gap: 2, marginTop: spacing.md }}>
-          {totals.oldestNavDate !== null && (
-            <AppText variant="caption" tone="muted">
-              {formatAsOf(totals.oldestNavDate, totals.newestNavDate)}
-            </AppText>
-          )}
-          {excluded > 0 && (
+        {excluded > 0 && (
+          <View style={{ marginTop: spacing.md }}>
             <AppText variant="caption" tone="warning">
               {[
                 totals.pendingCount > 0 ? `${totals.pendingCount} awaiting NAV` : null,
@@ -289,44 +304,48 @@ export default function HoldingsScreen() {
                 .join(' and ')}{' '}
               {excluded === 1 ? "isn't" : "aren't"} in these totals.
             </AppText>
-          )}
-        </View>
+          </View>
+        )}
       </View>
 
       {/* One figure per row keeps the list calm; this switches which one. */}
+      {/* Groww's layout: how the list is ordered on the left, which figure the rows show on the right. */}
       <View style={[styles.listHeader, { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }]}>
+        <Pressable
+          onPress={() => setSorting(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Sorted by ${sortOption.label}, ${directionLabels(sortBy)[direction]}. Change sort`}
+          hitSlop={12}
+          style={[styles.inline, { gap: spacing.xs }]}
+        >
+          <Ionicons name="swap-vertical" size={14} color={colors.primary} />
+          <AppText variant="label" tone="primary" numberOfLines={1}>
+            {sortOption.short}
+          </AppText>
+          <Ionicons name={direction === 'desc' ? 'arrow-down' : 'arrow-up'} size={12} color={colors.primary} />
+        </Pressable>
         <View style={styles.flex} />
-        <View style={[styles.inline, { gap: spacing.md }]}>
-          <Pressable
-            onPress={() => setColumn(nextColumn.key)}
-            accessibilityRole="button"
-            accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
-            hitSlop={12}
-            style={[styles.inline, { gap: spacing.xs }]}
-          >
-            <Ionicons name="swap-horizontal" size={14} color={colors.primary} />
-            <AppText variant="label" tone="primary">
-              {columnLabel}
-            </AppText>
-          </Pressable>
-          {/* The glyph says both what the list is sorted by (the column shown) and which way. */}
-          <IconButton
-            name={direction === 'desc' ? 'arrow-down' : 'arrow-up'}
-            size={16}
-            color={colors.primary}
-            onPress={() => setDirection((d) => (d === 'desc' ? 'asc' : 'desc'))}
-            accessibilityLabel={`Sorted by ${columnLabel}, ${direction === 'desc' ? 'highest first' : 'lowest first'}. Reverse order`}
-          />
-        </View>
+        <Pressable
+          onPress={() => setColumn(nextColumn.key)}
+          accessibilityRole="button"
+          accessibilityLabel={`Showing ${columnLabel}. Switch to ${nextColumn.label}`}
+          hitSlop={12}
+          style={[styles.inline, { gap: spacing.xs }]}
+        >
+          <Ionicons name="code-outline" size={14} color={colors.primary} />
+          <AppText variant="label" tone="primary" style={[styles.dotted, { borderBottomColor: colors.primary }]}>
+            {columnLabel}
+          </AppText>
+        </Pressable>
       </View>
     </View>
   );
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScreenHeader
+      <TopBar
         title="Holdings"
-        subtitle="Swipe left on a fund to remove it"
+        scrollY={scrollY}
         right={
           <IconButton
             name={hideAmounts ? 'eye-off-outline' : 'eye-outline'}
@@ -337,8 +356,10 @@ export default function HoldingsScreen() {
           />
         }
       />
-      <FlatList
+      <Animated.FlatList
         data={funds}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
@@ -353,7 +374,7 @@ export default function HoldingsScreen() {
               rounding, so they can differ from the rows by a paisa.
             </AppText>
             <AppText variant="caption" tone="muted">
-              Your holdings are saved on this phone, nowhere else.
+              Your holdings are saved on this phone, nowhere else. Swipe a fund left to remove it.
             </AppText>
             <Button
               label="Back up or restore your data"
@@ -364,6 +385,16 @@ export default function HoldingsScreen() {
           </View>
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.textMuted} />}
+      />
+      <SortSheet
+        visible={sorting}
+        by={sortBy}
+        direction={direction}
+        onChange={(by, next) => {
+          setSortBy(by);
+          setDirection(next);
+        }}
+        onClose={() => setSorting(false)}
       />
     </View>
   );
@@ -395,4 +426,6 @@ const styles = StyleSheet.create({
   kv: { flexDirection: 'row', alignItems: 'center', minHeight: 22 },
   inline: { flexDirection: 'row', alignItems: 'center' },
   listHeader: { flexDirection: 'row', alignItems: 'center' },
+  // A dotted underline marks the column label as tappable, as Groww does.
+  dotted: { borderBottomWidth: 1, borderStyle: 'dashed' },
 });

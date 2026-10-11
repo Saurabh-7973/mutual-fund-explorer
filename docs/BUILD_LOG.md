@@ -362,3 +362,17 @@ The user asked how real apps handle "invested". Answer: an account statement (CA
 - `motion` tokens (150/220/320 ms) and `useReducedMotion` (system "remove animations").
 - `SegmentedRow` now has one marker that slides to the choice (native-driver `Animated`), with a `track` variant (a raised thumb on a recessed track, new `raised` colour token for dark mode) for mode switches: One purchase / Monthly SIP and the allocation Asset class / Fund switch (which had its own hand-made control). The `plain` variant keeps the chart ranges light.
 - Next (not done yet): Groww-style sort sheet and Day change column on Holdings; long/short-term in rupees and "Invested for"; NAV history calendar view; section open/close animation; pill buttons; alignment audit.
+
+## Round: studio pass, part 2 (own audit of the fund page and Holdings)
+
+The user asked whether the to-do list held anything I'd found myself; mostly it didn't. So this round started from a critical walk through our own screens. Findings and fixes (all checked on the emulator):
+
+1. Two change lines stacked under the fund hero (day change in green, the chart's 1Y change in red) competed, and the 1Y one repeated Returns. → The chart readout is label-size and fixed-height; it reads "−₹4.2405 (−4.55%) over 1 year, absolute".
+2. Low/High text sat between the chart's dates and its range picker. → High and Low are drawn on the line at their dates (exact values from the full range, placed on the downsampled line); the ranges sit right under the chart. While scrubbing, the markers step aside and the second line shows the change from the range's start.
+3–5. Returns rows were two lines (figure, then "absolute"/"a year"), the zero line was fixed mid-track, and "absolute"/"a year" was said three ways. → Two groups headed by their glossary term (Absolute change; A year (CAGR)), one line per row, the zero line placed by the data (flex on the negative and positive extents), one short footnote. Half the height.
+7. Timeline dots were centred on each three-line purchase block, beside the units line. → Dots sit on the date line; the spine still runs continuously.
+8–9. The large tab title never scrolled away (about 200 px pinned), and its subtitle was a gesture tip. → `TopBar` + `LargeTitle` + `useCollapsingTitle` (native-driver scroll): the large title scrolls with the content and the bar fades in a small title and a hairline edge. The subtitle is status ("NAVs as of 09 Oct 2026"); the swipe tip moved to the footer.
+12. Rows said "57 purchases" when the app knew it was a ₹5,000 SIP. → "SIP ₹5,000" (from `detectSip`), as Groww tags SIP holdings.
+13. Sorting was tied to the shown column, with no sort by name or day change. → Groww-style sort sheet (Current value, Returns %, Day change %, XIRR %, Fund name; the direction under the chosen option, "A to Z" for names), independent of the column; a fourth column, Day change (%), with a dashed underline marking the column label as tappable. `sortHoldings` gained 'day' and 'name' (tested).
+   - Found while testing: the sort control stretched over all free space, so after the column label shortened, a tap meant for it opened the sort sheet. The control now hugs its content.
+14. Every bottom sheet slid its dark backdrop up with it, as one slab. → `BottomSheet`: the dim fades while the sheet glides up by its own height, both reverse on close, instant with reduced motion. The glossary sheet and the calendar use it.
