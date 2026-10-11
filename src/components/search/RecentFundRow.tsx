@@ -12,19 +12,28 @@ import type { RecentFund } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from '../ui/AppText';
-import { Badge } from '../ui/Badge';
+import { StatusChip } from '../ui/ChangeChip';
 import { FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 60 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
-export const RECENT_ROW_HEIGHT = PixelRatio.roundToNearestPixel(60);
+export const RECENT_ROW_HEIGHT = PixelRatio.roundToNearestPixel(68);
 
 /**
  * A fund opened earlier: name and plan, with its latest NAV and today's move so the list is worth a glance.
  * The section header carries the shared NAV date (`asOf`); a NAV from another day says its own date, and
  * a stale one (a closed scheme) says "Stale" with its date instead of an old day's move.
  */
-export const RecentFundRow = memo(function RecentFundRow({ fund, asOf }: { fund: RecentFund; asOf: IsoDate | null }) {
+export const RecentFundRow = memo(function RecentFundRow({
+  fund,
+  asOf,
+  last = false,
+}: {
+  fund: RecentFund;
+  asOf: IsoDate | null;
+  /** The last row in its card draws no separator. */
+  last?: boolean;
+}) {
   const { colors, spacing } = useTheme();
   const label = useMemo(() => describeScheme(fund.schemeName), [fund.schemeName]);
   const latest = useLatestNav(fund.schemeCode);
@@ -43,45 +52,38 @@ export const RecentFundRow = memo(function RecentFundRow({ fund, asOf }: { fund:
       onPress={() =>
         router.push({ pathname: '/fund/[code]', params: { code: String(fund.schemeCode), name: fund.schemeName } })
       }
-      style={({ pressed }) => [
-        styles.row,
-        { borderBottomColor: colors.border, gap: spacing.md, opacity: pressed ? 0.6 : 1 },
-      ]}
+      style={({ pressed }) => [styles.row, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
     >
       <FundMark schemeName={fund.schemeName} size={36} />
+      {!last && <View style={[styles.separator, { left: 36 + spacing.md, backgroundColor: colors.hairline }]} />}
       <View style={[styles.flex, { gap: 2 }]}>
-        <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+        <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {label.title}
         </AppText>
         {meta !== '' && (
-          <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
+          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
             {meta}
           </AppText>
         )}
       </View>
       {point !== null && point !== undefined && (
         <View style={[styles.right, { gap: 2 }]}>
-          <AppText variant="label" numeric maxFontSizeMultiplier={1.3}>
+          <AppText variant="rowTitle" numeric maxFontSizeMultiplier={1.3}>
             {formatNav(point.nav)}
           </AppText>
           {stale ? (
-            <View style={[styles.line, { gap: spacing.xs }]}>
-              <Badge label="Stale" tone="warning" />
-              <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-                {formatDate(point.date)}
-              </AppText>
-            </View>
+            <StatusChip label={`Stale · ${formatDate(point.date)}`} />
           ) : (
             change !== null && (
               <AppText
-                variant="caption"
+                variant="labelStrong"
                 numeric
                 maxFontSizeMultiplier={1.3}
                 tone={change.diff > 0n ? 'gain' : change.diff < 0n ? 'loss' : 'muted'}
               >
                 {formatPercentHundredths(change.pctHundredths)}
                 {otherDay ? (
-                  <AppText variant="caption" tone="muted" numeric>
+                  <AppText variant="label" tone="muted" numeric>
                     {` · ${formatDate(point.date)}`}
                   </AppText>
                 ) : null}
@@ -95,7 +97,8 @@ export const RecentFundRow = memo(function RecentFundRow({ fund, asOf }: { fund:
 });
 
 const styles = StyleSheet.create({
-  row: { height: RECENT_ROW_HEIGHT, flexDirection: 'row', alignItems: 'center', borderBottomWidth: StyleSheet.hairlineWidth },
+  row: { height: RECENT_ROW_HEIGHT, flexDirection: 'row', alignItems: 'center' },
+  separator: { position: 'absolute', right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   flex: { flex: 1 },
   right: { alignItems: 'flex-end' },
   line: { flexDirection: 'row', alignItems: 'center' },

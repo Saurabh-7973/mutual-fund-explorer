@@ -21,6 +21,7 @@ jest.mock('@react-native-async-storage/async-storage', () =>
 jest.mock('@expo/vector-icons/Ionicons', () => ({ __esModule: true, default: () => null }));
 require('react-native-gesture-handler/jestSetup');
 
+const d = (value: string) => value as IsoDate;
 const rupees = (value: bigint) => value * 10n ** BigInt(VALUE_SCALE - 2);
 const MINUS = '−';
 
@@ -120,24 +121,31 @@ describe('a watchlist row', () => {
     for (const client of clients.splice(0)) client.clear();
   });
 
-  it('shows the NAV with its date and the day’s change', async () => {
+  it('shows the NAV and the day’s change, leaving the shared date to the list header', async () => {
     const latest = point('2026-10-09', '88.92580');
-    await render(<WatchRow item={item} onRemove={() => undefined} />, {
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
       wrapper: withCache(latest, [point('2026-10-08', '87.65550'), latest]),
     });
     expect(screen.getByText('₹88.9258')).toBeTruthy();
-    expect(screen.getByText('as of 09 Oct 2026')).toBeTruthy();
     expect(screen.getByText('+₹1.2703 (+1.45%)')).toBeTruthy();
-    expect(screen.queryByText('Stale')).toBeNull();
+    expect(screen.queryByText(/09 Oct 2026/)).toBeNull();
+    expect(screen.queryByText(/Stale/)).toBeNull();
+  });
+
+  it('prints its own date when its NAV is from another day than the rest', async () => {
+    const latest = point('2026-10-08', '87.65550');
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
+      wrapper: withCache(latest, [point('2026-10-07', '87.00000'), latest]),
+    });
+    expect(screen.getByText(' · 08 Oct 2026')).toBeTruthy();
   });
 
   it('turns Stale when the latest NAV is more than 7 days old, instead of showing an old day’s move', async () => {
     const latest = point('2026-10-02', '88.00000');
-    await render(<WatchRow item={item} onRemove={() => undefined} />, {
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
       wrapper: withCache(latest, [point('2026-10-01', '87.00000'), latest]),
     });
-    expect(screen.getByText('Stale')).toBeTruthy();
-    expect(screen.getByText('as of 02 Oct 2026')).toBeTruthy();
+    expect(screen.getByText('Stale · 02 Oct 2026')).toBeTruthy();
     expect(screen.queryByText(/\(\+/)).toBeNull();
   });
 });

@@ -5,54 +5,59 @@ import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 import { formatDate, todayInIndia } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
 import { isStale } from '@/domain/nav';
-import { describeScheme } from '@/domain/schemeName';
+import { describeScheme, optionFromIsins } from '@/domain/schemeName';
+import type { IsoDate } from '@/domain/types';
 import { useDayChange, useLatestNav } from '@/query/hooks';
 import type { WatchItem } from '@/store/portfolioSchema';
 import { useTheme } from '@/theme/useTheme';
 
-import { SchemeBadges } from '../search/SchemeBadges';
 import { AppText } from '../ui/AppText';
-import { Badge } from '../ui/Badge';
+import { StatusChip } from '../ui/ChangeChip';
 import { Skeleton } from '../ui/Skeleton';
 import { SwipeRow } from '../ui/SwipeRow';
-import { FundMark } from '../ui/FundMark';
+import { FUND_MARK_SIZE, FundMark } from '../ui/FundMark';
 
-// Whole device pixels: at 2.625x, 92 dp is a fractional pixel height, so every other row overlapped
-// the one above by a pixel and hid its hairline divider.
-export const WATCH_ROW_HEIGHT = PixelRatio.roundToNearestPixel(92);
+// Whole device pixels: at 2.625x a fractional dp height made alternate rows overlap by a pixel.
+export const WATCH_ROW_HEIGHT = PixelRatio.roundToNearestPixel(72);
 
 export interface WatchRowProps {
   item: WatchItem;
   onRemove: (schemeCode: number) => void;
+  /** The date most watched NAVs share (shown in the list header); a row prints its own only when it differs. */
+  asOf: IsoDate | null;
+  /** Where the row sits in the card that holds the list. */
+  first?: boolean;
+  last?: boolean;
 }
 
 /**
- * One watched fund: latest NAV with its date and the day's change. Each row runs its
- * own queries, so one failing scheme never blocks the others, and the height never
- * changes between states. Swipe left to remove.
+ * One watched fund, in the same two-line shape as Explore's rows: name | NAV, then plan and
+ * option | the day's change in rupees and percent. A week without a NAV shows "Stale" with
+ * its date instead of an old move. Each row runs its own queries, so one failing scheme never
+ * blocks the others, and the height never changes between states. Swipe left to remove.
  */
-export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps) {
-  const { colors, spacing } = useTheme();
+export const WatchRow = memo(function WatchRow({ item, onRemove, asOf, first = false, last = false }: WatchRowProps) {
+  const { colors, radius, spacing } = useTheme();
   const { schemeCode, schemeName } = item;
-  const title = useMemo(() => describeScheme(schemeName).title, [schemeName]);
+  const label = useMemo(() => describeScheme(schemeName), [schemeName]);
+  const title = label.title;
   const latest = useLatestNav(schemeCode);
   const point = latest.data?.point;
   const change = useDayChange(schemeCode, point);
-  const fundHouse = latest.data?.meta.fundHouse ?? null;
+  const option =
+    label.option ??
+    (latest.data !== undefined ? optionFromIsins(latest.data.meta.isinGrowth, latest.data.meta.isinDivReinvestment) : null);
+  const meta = [label.plan, option].filter((part): part is NonNullable<typeof part> => part !== null).join(' · ');
   const remove = useCallback(() => {
     onRemove(schemeCode);
     return true;
   }, [onRemove, schemeCode]);
 
-  // Three lines, each split left | right, so every row lines up:
-  // title | NAV, badges | day's change, fund house | as-of date.
   let nav: ReactNode = null;
-  let middle: ReactNode = null;
-  let date: ReactNode = null;
+  let status: ReactNode = null;
   if (latest.data === undefined && latest.isLoading) {
     nav = <Skeleton width={84} height={18} />;
-    middle = <Skeleton width={96} height={12} />;
-    date = <Skeleton width={88} height={12} />;
+    status = <Skeleton width={96} height={12} />;
   } else if (latest.data === undefined) {
     // Failed, or paused offline with nothing saved.
     nav = (
@@ -60,14 +65,14 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
         Couldn't load NAV
       </AppText>
     );
-    middle = (
+    status = (
       <Pressable
         onPress={() => void latest.refetch()}
         accessibilityRole="button"
         accessibilityLabel={`Retry loading the NAV for ${title}`}
         hitSlop={12}
       >
-        <AppText variant="label" tone="primary" maxFontSizeMultiplier={1.3}>
+        <AppText variant="labelStrong" tone="primary" maxFontSizeMultiplier={1.3}>
           Retry
         </AppText>
       </Pressable>
@@ -81,103 +86,109 @@ export const WatchRow = memo(function WatchRow({ item, onRemove }: WatchRowProps
   } else {
     const stale = isStale(point.date, todayInIndia());
     nav = (
-      <AppText variant="heading" numeric maxFontSizeMultiplier={1.3}>
+      <AppText variant="rowTitle" numeric maxFontSizeMultiplier={1.3}>
         {formatNav(point.nav)}
       </AppText>
     );
     if (stale) {
-      // A week or more without a NAV: the status slot says so instead of an old day's change.
-      middle = <Badge label="Stale" tone="warning" />;
+      // A week or more without a NAV: its date, flagged, instead of an old day's change.
+      status = <StatusChip label={`Stale · ${formatDate(point.date)}`} />;
     } else if (change !== null) {
       const direction = change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged';
       const pct = change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths;
-      middle = (
+      const otherDay = point.date !== asOf;
+      status = (
         <AppText
-          variant="label"
+          variant="labelStrong"
           numeric
           maxFontSizeMultiplier={1.3}
           tone={direction === 'up' ? 'gain' : direction === 'down' ? 'loss' : 'muted'}
-          accessibilityLabel={
+          accessibilityLabel={`${
             direction === 'unchanged'
-              ? `unchanged since ${formatDate(change.from.date)}`
-              : `${direction} ${formatPercentHundredths(pct, 'negative-only')} since ${formatDate(change.from.date)}`
-          }
+              ? 'unchanged'
+              : `${direction} ${formatPercentHundredths(pct, 'negative-only')}`
+          } since ${formatDate(change.from.date)}${otherDay ? `, NAV of ${formatDate(point.date)}` : ''}`}
         >
           {formatNavChange(change.diff)} ({formatPercentHundredths(change.pctHundredths)})
+          {otherDay ? (
+            <AppText variant="label" tone="muted" numeric>
+              {` · ${formatDate(point.date)}`}
+            </AppText>
+          ) : null}
+        </AppText>
+      );
+    } else if (point.date !== asOf) {
+      status = (
+        <AppText variant="label" tone="muted" numeric maxFontSizeMultiplier={1.3}>
+          as of {formatDate(point.date)}
         </AppText>
       );
     }
-    date = (
-      <View style={[styles.line, { gap: spacing.xs }]}>
-        <AppText variant="caption" tone="muted" numeric maxFontSizeMultiplier={1.3}>
-          as of {formatDate(point.date)}
-        </AppText>
-      </View>
-    );
   }
 
   return (
-    <SwipeRow actionLabel="Remove" onAction={remove}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityHint="Opens the fund. Swipe left to remove."
-        onPress={() =>
-          router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })
-        }
-        style={({ pressed }) => [
-          styles.row,
-          {
-            borderBottomColor: colors.border,
-            paddingHorizontal: spacing.lg,
-            gap: spacing.md,
-            backgroundColor: pressed ? colors.surfaceMuted : colors.background,
-          },
-        ]}
-      >
-        <FundMark schemeName={schemeName} />
-        <View style={[styles.flex, { gap: spacing.xs }]}>
-          <View style={[styles.line, { gap: spacing.md }]}>
-            <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-              {title}
-            </AppText>
-            {nav}
-          </View>
-          <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-            <View style={styles.flex}>
-              <SchemeBadges
-                name={schemeName}
-                size="sm"
-                isins={
-                  latest.data !== undefined
-                    ? { growth: latest.data.meta.isinGrowth, idcw: latest.data.meta.isinDivReinvestment }
-                    : undefined
-                }
-              />
+    <View
+      style={[
+        styles.card,
+        {
+          marginHorizontal: spacing.lg,
+          backgroundColor: colors.surface,
+          borderTopLeftRadius: first ? radius.lg : 0,
+          borderTopRightRadius: first ? radius.lg : 0,
+          borderBottomLeftRadius: last ? radius.lg : 0,
+          borderBottomRightRadius: last ? radius.lg : 0,
+        },
+      ]}
+    >
+      <SwipeRow actionLabel="Remove" onAction={remove}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityHint="Opens the fund. Swipe left to remove."
+          onPress={() =>
+            router.push({ pathname: '/fund/[code]', params: { code: String(schemeCode), name: schemeName } })
+          }
+          style={({ pressed }) => [
+            styles.row,
+            { paddingHorizontal: spacing.lg, gap: spacing.md, backgroundColor: pressed ? colors.surfaceMuted : colors.surface },
+          ]}
+        >
+          <FundMark schemeName={schemeName} />
+          <View style={[styles.flex, { gap: 2 }]}>
+            <View style={[styles.line, { gap: spacing.md }]}>
+              <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+                {title}
+              </AppText>
+              {nav}
             </View>
-            {middle}
+            <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
+              <AppText variant="label" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
+                {meta}
+              </AppText>
+              {status}
+            </View>
           </View>
-          <View style={[styles.line, styles.minLine, { gap: spacing.md }]}>
-            <AppText variant="caption" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3} style={styles.flex}>
-              {fundHouse ?? ''}
-            </AppText>
-            {date}
-          </View>
-        </View>
-      </Pressable>
-    </SwipeRow>
+        </Pressable>
+        {!last && (
+          <View
+            style={[styles.separator, { left: spacing.lg + FUND_MARK_SIZE + spacing.md, right: spacing.lg, backgroundColor: colors.hairline }]}
+          />
+        )}
+      </SwipeRow>
+    </View>
   );
 });
 
 const styles = StyleSheet.create({
+  card: { overflow: 'hidden' },
   row: {
     height: WATCH_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  separator: { position: 'absolute', bottom: 0, height: StyleSheet.hairlineWidth },
   line: { flexDirection: 'row', alignItems: 'center' },
-  // Keeps each line's height when a fund has no badges, change or fund house.
+  // Keeps the second line's height when a fund has no plan, change or status.
   minLine: { minHeight: 20 },
   flex: { flex: 1 },
 });

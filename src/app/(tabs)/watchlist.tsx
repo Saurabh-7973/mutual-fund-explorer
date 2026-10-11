@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Animated, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
@@ -13,10 +13,14 @@ import { SampleBanner } from '@/components/holdings/SamplePortfolio';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { UndoToast } from '@/components/ui/UndoToast';
 import { WATCH_ROW_HEIGHT, WatchRow } from '@/components/watchlist/WatchRow';
+import { formatDate, todayInIndia } from '@/domain/dates';
+import { currentNavDate } from '@/domain/nav';
 import { describeScheme } from '@/domain/schemeName';
+import type { IsoDate } from '@/domain/types';
 import { SEARCH_SUGGESTIONS } from '@/domain/search';
 import { useOnline } from '@/hooks/useOnline';
 import { useRefreshOnFocus } from '@/hooks/useRefreshOnFocus';
+import { latestNavQuery } from '@/query/hooks';
 import type { WatchItem } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
@@ -38,6 +42,13 @@ export default function WatchlistScreen() {
   const recentlyViewed = usePreferencesStore((s) => s.recentlyViewed);
   const queryClient = useQueryClient();
   useRefreshOnFocus('nav-latest');
+
+  // One "as of" date for the list, in its header (the Recently viewed rule); a row on another day says its own.
+  const latest = useQueries({ queries: watchlist.map((item) => latestNavQuery(item.schemeCode)) });
+  const asOf = currentNavDate(
+    latest.map((result) => result.data?.point?.date).filter((date): date is IsoDate => date !== undefined),
+    todayInIndia(),
+  );
 
   const [removed, setRemoved] = useState<{ item: WatchItem; index: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -83,8 +94,10 @@ export default function WatchlistScreen() {
   }, [queryClient]);
 
   const renderItem = useCallback<ListRenderItem<WatchItem>>(
-    ({ item }) => <WatchRow item={item} onRemove={onRemove} />,
-    [onRemove],
+    ({ item, index }) => (
+      <WatchRow item={item} onRemove={onRemove} asOf={asOf} first={index === 0} last={index === watchlist.length - 1} />
+    ),
+    [onRemove, asOf, watchlist.length],
   );
 
   const toast = (
@@ -169,6 +182,14 @@ export default function WatchlistScreen() {
             <View style={{ paddingHorizontal: spacing.lg }}>
               <SampleBanner />
             </View>
+            <View style={[styles.listHead, { paddingHorizontal: spacing.lg, paddingTop: spacing.sm }]}>
+              <AppText variant="heading" accessibilityRole="header" maxFontSizeMultiplier={1.3} style={styles.flex}>
+                Your watchlist
+              </AppText>
+              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+                {asOf !== null ? `NAV · 1D · as of ${formatDate(asOf)}` : 'NAV · 1D'}
+              </AppText>
+            </View>
           </View>
         }
         ListFooterComponent={
@@ -190,5 +211,6 @@ const styles = StyleSheet.create({
   centered: { justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   recent: { alignSelf: 'stretch' },
+  listHead: { flexDirection: 'row', alignItems: 'baseline' },
   recentRow: { flexDirection: 'row', alignItems: 'center', minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth },
 });

@@ -41,7 +41,6 @@ import { useKeyboardOverlap } from '@/hooks/useKeyboardOverlap';
 import { useOnline } from '@/hooks/useOnline';
 import { latestNavQuery, useSchemeSearch } from '@/query/hooks';
 import { usePreferencesStore } from '@/store/preferencesStore';
-import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 const keyExtractor = (item: SchemeSearchResult) => String(item.schemeCode);
@@ -142,18 +141,19 @@ export default function ExploreScreen() {
             </AppText>
           )}
           {recentlyViewed.length > 0 && (
-            <View style={{ gap: spacing.xs, marginBottom: spacing.md }}>
+            <View style={{ gap: spacing.md, marginBottom: spacing.md }}>
               <View style={styles.sectionHead}>
-                <AppText variant="heading" accessibilityRole="header" style={styles.flexOne}>
+                <AppText variant="heading" accessibilityRole="header" maxFontSizeMultiplier={1.3} style={styles.flexOne}>
                   Recently viewed
                 </AppText>
                 <AppText variant="caption" tone="muted" maxFontSizeMultiplier={1.3}>
                   {recentAsOf !== null ? `NAV · 1D · as of ${formatDate(recentAsOf)}` : 'NAV · 1D'}
                 </AppText>
               </View>
-              <View>
-                {recentlyViewed.map((fund) => (
-                  <RecentFundRow key={fund.schemeCode} fund={fund} asOf={recentAsOf} />
+              {/* The rows share one white card, separated by inset hairlines. */}
+              <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: spacing.lg }}>
+                {recentlyViewed.map((fund, i) => (
+                  <RecentFundRow key={fund.schemeCode} fund={fund} asOf={recentAsOf} last={i === recentlyViewed.length - 1} />
                 ))}
               </View>
             </View>
@@ -167,6 +167,7 @@ export default function ExploreScreen() {
                 key={item.query}
                 item={item}
                 icon={COLLECTION_ICONS[i] ?? 'search'}
+                tone={i}
                 onPress={() => setText(item.query)}
               />
             ))}
@@ -257,22 +258,21 @@ export default function ExploreScreen() {
 
   return (
     <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <ScreenHeader title="Explore" subtitle="Indian mutual funds, NAVs from AMFI" />
+      <ScreenHeader title="Explore" subtitle="Indian mutual funds · NAVs from AMFI" />
       <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, gap: spacing.sm }}>
         <View
           style={[
             styles.field,
             {
               backgroundColor: colors.surface,
-              borderColor: colors.border,
-              borderRadius: radius.md,
-              paddingLeft: spacing.md,
+              borderRadius: radius.field,
+              paddingLeft: spacing.lg,
               paddingRight: spacing.sm,
               gap: spacing.sm,
             },
           ]}
         >
-          <Ionicons name="search" size={18} color={colors.textMuted} />
+          <Ionicons name="search" size={20} color={colors.textMuted} />
           <TextInput
             value={text}
             onChangeText={setText}
@@ -309,13 +309,17 @@ const COLLECTION_ICONS = [
 function CollectionCard({
   item,
   icon,
+  tone,
   onPress,
 }: {
   item: { label: string; blurb: string };
   icon: (typeof COLLECTION_ICONS)[number] | 'search';
+  /** Which tint: each collection keeps its own, from the fund-mark palette. */
+  tone: number;
   onPress: () => void;
 }) {
   const { colors, radius, spacing } = useTheme();
+  const [tint, ink] = colors.mark[tone % colors.mark.length] ?? [colors.primarySoft, colors.primary];
   return (
     <Pressable
       onPress={onPress}
@@ -324,22 +328,20 @@ function CollectionCard({
       style={({ pressed }) => [
         styles.card,
         {
-          backgroundColor: pressed ? colors.surfaceMuted : colors.surface,
-          borderColor: colors.border,
+          backgroundColor: tint,
           borderRadius: radius.lg,
-          padding: spacing.md,
-          gap: spacing.sm,
+          padding: spacing.lg,
+          gap: spacing.md,
+          opacity: pressed ? 0.75 : 1,
         },
       ]}
     >
-      <View style={[styles.cardIcon, { backgroundColor: colors.primarySoft, borderRadius: radius.md }]}>
-        <Ionicons name={icon} size={18} color={colors.primary} />
-      </View>
-      <View style={{ gap: 2 }}>
-        <AppText variant="labelStrong" numberOfLines={1} maxFontSizeMultiplier={1.3}>
+      <Ionicons name={icon} size={22} color={ink} />
+      <View style={{ gap: 4 }}>
+        <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
           {item.label}
         </AppText>
-        <AppText variant="caption" tone="muted" numberOfLines={2} maxFontSizeMultiplier={1.3}>
+        <AppText variant="label" tone="muted" numberOfLines={2} maxFontSizeMultiplier={1.3}>
           {item.blurb}
         </AppText>
       </View>
@@ -352,11 +354,10 @@ const styles = StyleSheet.create({
   flexOne: { flex: 1 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   // Two per row: each takes just under half, then grows to fill what the gap leaves.
-  card: { flexBasis: '45%', flexGrow: 1, minHeight: 116, borderWidth: StyleSheet.hairlineWidth },
-  cardIcon: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  card: { flexBasis: '45%', flexGrow: 1, minHeight: 124 },
   flex: { flex: 1 },
   centered: { flex: 1, justifyContent: 'center' },
-  field: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH, borderWidth: StyleSheet.hairlineWidth },
+  field: { flexDirection: 'row', alignItems: 'center', minHeight: 52 },
   input: { flex: 1, paddingVertical: 10 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
   filters: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
