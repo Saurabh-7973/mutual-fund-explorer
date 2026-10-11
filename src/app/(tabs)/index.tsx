@@ -88,7 +88,11 @@ export default function ExploreScreen() {
   const codeInQuery = schemeCodeInQuery(normalized);
   const typedLength = text.trim().length;
 
-  const renderItem = useCallback<ListRenderItem<SchemeSearchResult>>(({ item }) => <SchemeRow scheme={item} />, []);
+  const lastResult = filtered.length - 1;
+  const renderItem = useCallback<ListRenderItem<SchemeSearchResult>>(
+    ({ item, index }) => <SchemeRow scheme={item} first={index === 0} last={index === lastResult} />,
+    [lastResult],
+  );
   const clearFilters = useCallback(() => {
     setDirectOnly(false);
     setGrowthOnly(false);

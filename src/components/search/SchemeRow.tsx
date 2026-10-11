@@ -9,7 +9,7 @@ import { useTheme } from '@/theme/useTheme';
 import { AppText } from '../ui/AppText';
 import { SchemeBadges } from './SchemeBadges';
 import { WatchToggle } from './WatchToggle';
-import { FundMark } from '../ui/FundMark';
+import { FUND_MARK_SIZE, FundMark } from '../ui/FundMark';
 
 // Whole device pixels: at 2.625x, 76 dp is a fractional pixel height, so every other row overlapped
 // the one above by a pixel and hid its hairline divider.
@@ -17,11 +17,14 @@ export const SCHEME_ROW_HEIGHT = PixelRatio.roundToNearestPixel(76);
 
 export interface SchemeRowProps {
   scheme: SchemeSearchResult;
+  /** Where the row sits in the card that holds the results: rounds its corners, drops the last separator. */
+  first?: boolean;
+  last?: boolean;
 }
 
 /** One search result. The star sits beside the pressable area, so tapping it never opens the fund. */
-export const SchemeRow = memo(function SchemeRow({ scheme }: SchemeRowProps) {
-  const { colors, spacing } = useTheme();
+export const SchemeRow = memo(function SchemeRow({ scheme, first = false, last = false }: SchemeRowProps) {
+  const { colors, radius, spacing } = useTheme();
   const { schemeCode, schemeName } = scheme;
   const title = useMemo(() => describeScheme(schemeName).title, [schemeName]);
 
@@ -29,9 +32,22 @@ export const SchemeRow = memo(function SchemeRow({ scheme }: SchemeRowProps) {
     <View
       style={[
         styles.row,
-        { borderBottomColor: colors.border, paddingLeft: spacing.lg, paddingRight: spacing.md, gap: spacing.sm },
+        {
+          marginHorizontal: spacing.lg,
+          backgroundColor: colors.surface,
+          paddingLeft: spacing.lg,
+          paddingRight: spacing.sm,
+          gap: spacing.sm,
+          borderTopLeftRadius: first ? radius.lg : 0,
+          borderTopRightRadius: first ? radius.lg : 0,
+          borderBottomLeftRadius: last ? radius.lg : 0,
+          borderBottomRightRadius: last ? radius.lg : 0,
+        },
       ]}
     >
+      {!last && (
+        <View style={[styles.separator, { left: spacing.lg + FUND_MARK_SIZE + spacing.md, right: spacing.lg, backgroundColor: colors.hairline }]} />
+      )}
       <Pressable
         accessibilityRole="button"
         accessibilityHint="Opens the fund"
@@ -42,7 +58,7 @@ export const SchemeRow = memo(function SchemeRow({ scheme }: SchemeRowProps) {
       >
         <FundMark schemeName={schemeName} />
         <View style={[styles.text, { gap: spacing.xs }]}>
-          <AppText variant="labelStrong" numberOfLines={2} maxFontSizeMultiplier={1.3}>
+          <AppText variant="rowTitle" numberOfLines={2} maxFontSizeMultiplier={1.3}>
             {title}
           </AppText>
           <View style={[styles.meta, { gap: spacing.sm }]}>
@@ -65,9 +81,9 @@ const styles = StyleSheet.create({
     height: SCHEME_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
   },
+  separator: { position: 'absolute', bottom: 0, height: StyleSheet.hairlineWidth },
   main: { flex: 1, justifyContent: 'center' },
   meta: { flexDirection: 'row', alignItems: 'center' },
 });

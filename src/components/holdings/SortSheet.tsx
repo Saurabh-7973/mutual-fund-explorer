@@ -55,7 +55,7 @@ export function SortSheet({ visible, by, direction, onChange, onClose }: SortShe
             <View
               key={option.key}
               style={[
-                i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+                i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.hairline },
                 { paddingBottom: selected ? spacing.md : 0 },
               ]}
             >
