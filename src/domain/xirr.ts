@@ -18,9 +18,15 @@ export interface CashFlow {
 
 const DAYS_PER_YEAR = 365;
 
-function npv(rate: number, flows: readonly CashFlow[], start: IsoDate): number {
+/** Each flow's amount and its time from the first flow in years, worked out once per solve. */
+interface Timed {
+  amount: number;
+  years: number;
+}
+
+function npv(rate: number, flows: readonly Timed[]): number {
   let total = 0;
-  for (const flow of flows) total += flow.amount / Math.pow(1 + rate, diffDays(start, flow.date) / DAYS_PER_YEAR);
+  for (const flow of flows) total += flow.amount / Math.pow(1 + rate, flow.years);
   return total;
 }
 
@@ -28,17 +34,20 @@ function npv(rate: number, flows: readonly CashFlow[], start: IsoDate): number {
 export function xirrPercent(flows: readonly CashFlow[]): number | null {
   if (flows.length < 2 || !flows.some((f) => f.amount < 0) || !flows.some((f) => f.amount > 0)) return null;
   const start = flows.reduce((min, f) => (f.date < min ? f.date : min), flows[0]?.date ?? ('' as IsoDate));
+  // Dates are parsed once here, not on every step of the search (a 600-purchase portfolio
+  // has 1,200 flows and the search takes ~40 steps).
+  const timed: Timed[] = flows.map((f) => ({ amount: f.amount, years: diffDays(start, f.date) / DAYS_PER_YEAR }));
 
   // Bisection on a bracket that holds any realistic fund return (−99.99% to +10,000% a year).
   // NPV falls as the rate rises when money goes in before it comes out, so the sign change is unique.
   let low = -0.9999;
   let high = 100;
-  let fLow = npv(low, flows, start);
-  const fHigh = npv(high, flows, start);
+  let fLow = npv(low, timed);
+  const fHigh = npv(high, timed);
   if (!Number.isFinite(fLow) || !Number.isFinite(fHigh) || fLow * fHigh > 0) return null;
   for (let i = 0; i < 200 && high - low > 1e-10; i++) {
     const mid = (low + high) / 2;
-    const fMid = npv(mid, flows, start);
+    const fMid = npv(mid, timed);
     if (fMid === 0) return mid * 100;
     if (fLow * fMid < 0) high = mid;
     else {

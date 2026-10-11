@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MAX_BACKUP_CHARS, holdingsCsv, makeBackup, readBackup } from '@/store/backup';
 import { usePortfolioStore } from '@/store/portfolioStore';
+import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 import { haptic } from '@/components/ui/haptics';
 
@@ -21,6 +22,7 @@ export default function BackupScreen() {
   const { colors, radius, spacing, typography } = useTheme();
   const { watchlist, lots } = usePortfolioStore(useShallow((s) => ({ watchlist: s.watchlist, lots: s.lots })));
   const replaceAll = usePortfolioStore((s) => s.replaceAll);
+  const setSample = usePreferencesStore((s) => s.setSample);
   const [pasted, setPasted] = useState('');
   const [error, setError] = useState<string | null>(null);
   const empty = watchlist.length === 0 && lots.length === 0;
@@ -54,6 +56,8 @@ export default function BackupScreen() {
         style: empty ? 'default' : 'destructive',
         onPress: () => {
           replaceAll(result.data);
+          // Restored data is the user's own: the sample record must not let Clear remove any of it.
+          setSample(null);
           setPasted('');
           haptic.done();
           Alert.alert('Restored', `${incoming} are back.`, [{ text: 'OK', onPress: () => router.back() }]);
@@ -143,5 +147,6 @@ export default function BackupScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  input: { minHeight: 120, textAlignVertical: 'top', borderWidth: StyleSheet.hairlineWidth },
+  // A pasted backup runs to thousands of lines: the box scrolls inside itself instead of pushing Restore off screen.
+  input: { minHeight: 120, maxHeight: 220, textAlignVertical: 'top', borderWidth: StyleSheet.hairlineWidth },
 });

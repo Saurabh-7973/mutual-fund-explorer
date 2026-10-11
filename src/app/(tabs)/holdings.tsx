@@ -92,48 +92,70 @@ export default function HoldingsScreen() {
   // Two weeks of NAVs per fund: enough for today's change (persisted with the latest NAV).
   const recents = useQueries({ queries: codes.map((code) => recentNavQuery(code)) });
 
-  // Lots are few and the maths is cheap, so this runs on every render.
-  const evaluated: EvaluatedLot[] = [];
-  const statuses: LotStatus[] = [];
-  const navState = new Map<number, FundRowNav>();
-  for (const lot of lots) {
-    const result = byCode.get(lot.schemeCode);
-    const status = evaluateLot(lot, result?.data?.point);
-    statuses.push(status);
-    evaluated.push({ ...lot, status });
-    if (lot.applied !== null && result?.data === undefined) {
-      navState.set(lot.schemeCode, (result?.isLoading ?? true) ? 'loading' : 'failed');
-    } else if (!navState.has(lot.schemeCode)) {
-      navState.set(lot.schemeCode, 'ready');
+  // Every figure on the screen, worked out once per change in the data it depends on: the
+  // purchases, each fund's latest NAV and loading state, the recent NAVs. Renders
+  // for anything else (the header measuring itself, the sort sheet opening) reuse it, and the
+  // rows keep the same objects so their memo holds. A 600-purchase portfolio takes tens of
+  // milliseconds to work out, so this matters.
+  const latestKey = results
+    .map((r) => `${r.data?.point?.date ?? ''}:${r.data?.point?.nav ?? ''}:${r.isLoading ? 'l' : r.isError ? 'e' : ''}`)
+    .join('|');
+  const recentKey = recents.map((r) => r.dataUpdatedAt).join('|');
+  const { navState, changes, grouped, fundDayGains, sips, dayGain, totals, xirr, slices, classSlices } = useMemo(() => {
+    const evaluated: EvaluatedLot[] = [];
+    const statuses: LotStatus[] = [];
+    const navState = new Map<number, FundRowNav>();
+    for (const lot of lots) {
+      const result = byCode.get(lot.schemeCode);
+      const status = evaluateLot(lot, result?.data?.point);
+      statuses.push(status);
+      evaluated.push({ ...lot, status });
+      if (lot.applied !== null && result?.data === undefined) {
+        navState.set(lot.schemeCode, (result?.isLoading ?? true) ? 'loading' : 'failed');
+      } else if (!navState.has(lot.schemeCode)) {
+        navState.set(lot.schemeCode, 'ready');
+      }
     }
-  }
-  const changes = new Map<number, NavChange | null>(
-    codes.map((code, i) => {
-      const points = recents[i]?.data?.points;
-      return [code, points === undefined ? null : dayChange(points, byCode.get(code)?.data?.point ?? null)];
-    }),
+    const changes = new Map<number, NavChange | null>(
+      codes.map((code, i) => {
+        const points = recents[i]?.data?.points;
+        return [code, points === undefined ? null : dayChange(points, byCode.get(code)?.data?.point ?? null)];
+      }),
+    );
+    // Largest value first, whatever the list's sort: allocation keeps the first four and folds the rest into Other.
+    const grouped = holdingsByFund(evaluated);
+    const fundDayGains = new Map(
+      grouped.map((fund) => [
+        fund.schemeCode,
+        portfolioDayGain([fund], new Map([[fund.schemeCode, changes.get(fund.schemeCode) ?? null]])),
+      ]),
+    );
+    const sips = new Map(
+      codes.map((code) => [code, detectSip(lots.filter((lot) => lot.schemeCode === code))?.amountRupees ?? null]),
+    );
+    const dayGain = portfolioDayGain(grouped, changes);
+    const totals = summarize(statuses);
+    const xirr = annualisedReturn(evaluated);
+    const slices = allocation(grouped);
+    const classSlices = allocationByAssetClass(grouped, (fund) =>
+      assetClassOf(byCode.get(fund.schemeCode)?.data?.meta.schemeCategory ?? null, fund.schemeName),
+    );
+    return { navState, changes, grouped, fundDayGains, sips, dayGain, totals, xirr, slices, classSlices };
+    // results, recents and byCode are new arrays every render; their content is in the keys.
+  }, [lots, codes, latestKey, recentKey]);
+  // A new sort only reorders the rows; nothing else is worked out again.
+  const funds = useMemo(() => sortHoldings(grouped, sortBy, direction, changes), [grouped, sortBy, direction, changes]);
+  // Growth/IDCW from the ISINs, for schemes whose name doesn't say; stable between data changes.
+  const isinOptions = useMemo(
+    () =>
+      new Map(
+        codes.map((code) => {
+          const meta = byCode.get(code)?.data?.meta;
+          return [code, meta !== undefined ? optionFromIsins(meta.isinGrowth, meta.isinDivReinvestment) : null];
+        }),
+      ),
+    [codes, latestKey], // byCode's content is in latestKey
   );
-  const funds = sortHoldings(holdingsByFund(evaluated), sortBy, direction, changes);
-  const fundDayGains = new Map(
-    funds.map((fund) => [
-      fund.schemeCode,
-      portfolioDayGain([fund], new Map([[fund.schemeCode, changes.get(fund.schemeCode) ?? null]])),
-    ]),
-  );
-  const sips = new Map(
-    codes.map((code) => [code, detectSip(lots.filter((lot) => lot.schemeCode === code))?.amountRupees ?? null]),
-  );
-  const dayGain = portfolioDayGain(funds, changes);
-  const totals = summarize(statuses);
-  const xirr = annualisedReturn(evaluated);
-  const slices = allocation(funds);
-  const classSlices = allocationByAssetClass(funds, (fund) =>
-    assetClassOf(byCode.get(fund.schemeCode)?.data?.meta.schemeCategory ?? null, fund.schemeName),
-  );
-  const isinOption = (code: number) => {
-    const meta = byCode.get(code)?.data?.meta;
-    return meta !== undefined ? optionFromIsins(meta.isinGrowth, meta.isinDivReinvestment) : null;
-  };
   const anyFirstLoad = [...navState.values()].includes('loading');
   const excluded = totals.pendingCount + totals.unavailableCount;
 
@@ -190,12 +212,12 @@ export default function HoldingsScreen() {
         column={column}
         dayGain={fundDayGains.get(item.schemeCode) ?? null}
         sipRupees={sips.get(item.schemeCode) ?? null}
-        isinOption={isinOption(item.schemeCode)}
+        isinOption={isinOptions.get(item.schemeCode) ?? null}
         onRetry={onRetry}
         onRemove={onRemove}
       />
     ),
-    [navState, column, fundDayGains, sips, isinOption, onRetry, onRemove],
+    [navState, column, fundDayGains, sips, isinOptions, onRetry, onRemove],
   );
 
   if (!hydrated) {

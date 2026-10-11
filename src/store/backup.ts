@@ -11,7 +11,7 @@ import { sanitizePortfolio, type HoldingLot, type PortfolioData } from './portfo
 export const BACKUP_APP = 'mutual-fund-explorer';
 export const BACKUP_VERSION = 1;
 /**
- * The most text the restore box takes. A backup of 600 purchases is about 150,000
+ * The most text the restore box takes. A backup of 600 purchases is about 200,000
  * characters; the cap keeps a stray paste of something huge from stalling the parse.
  */
 export const MAX_BACKUP_CHARS = 1_000_000;
