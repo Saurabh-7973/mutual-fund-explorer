@@ -218,7 +218,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
             </AppText>
             <AppText variant="caption" tone="muted" numeric>
               {sipDue
-                ? `Instalments due since ${formatDate(sip.lastDate)} aren't recorded yet.`
+                ? `Instalments from ${formatDate(sip.nextDate)} aren't recorded yet.`
                 : sipWaiting
                   ? `The ${formatDate(sip.nextDate)} instalment can be added once its NAV is published.`
                   : `Next instalment ${formatDate(sip.nextDate)}.`}
