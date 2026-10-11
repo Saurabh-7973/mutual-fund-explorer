@@ -87,7 +87,10 @@ Motion tokens are `fast` 150 ms, `base` 220 ms and `slow` 320 ms, on the native 
 | A sheet opens or closes | the dim fades while the sheet glides by its own height | — |
 | A chart range changes | the line draws in left to right; snaps to drawn if interrupted | tick |
 | Scrubbing a chart (NAV and Compare) | crosshair and readout follow the finger | tick on each new point over 1M and 3M, on each new month over longer ranges, and on reaching the marked high or low (`scrubTickKey`) |
-| Star, eye | — (cross-fade and a small scale are plan P1-1) | tap |
+| Starring a fund | the star pops 1 → 1.2 → 1 (unstarring just swaps it) | tap |
+| The eye toggle | each of your amounts cross-fades between figure and dots (`fast`) | tap |
+| A row added or removed (watchlist remove and Undo, removing a fund or a purchase, the sample loading or clearing) | rows ease into place (`LayoutAnimation`, `base`) | — |
+| Fund data replacing its skeleton | fades in (`fast`); cached data just shows | — |
 | Save a purchase or SIP; load the sample; a restore finishes | — | done |
 | Save on an invalid form; a confirmation before removing or replacing data | — | warning |
 | Button press | scales to 0.97 and back | — |

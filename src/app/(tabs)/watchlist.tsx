@@ -22,6 +22,8 @@ import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { MIN_TOUCH } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
+import { easeNextLayout } from '@/components/ui/motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const keyExtractor = (item: WatchItem) => String(item.schemeCode);
 
@@ -31,6 +33,7 @@ export default function WatchlistScreen() {
   const hydrated = usePortfolioStore((s) => s.hydrated);
   const unwatch = usePortfolioStore((s) => s.unwatch);
   const undoUnwatch = usePortfolioStore((s) => s.undoUnwatch);
+  const reduced = useReducedMotion();
   const online = useOnline();
   const recentlyViewed = usePreferencesStore((s) => s.recentlyViewed);
   const queryClient = useQueryClient();
@@ -56,15 +59,18 @@ export default function WatchlistScreen() {
 
   const onRemove = useCallback(
     (schemeCode: number) => {
+      easeNextLayout(reduced);
       const result = unwatch(schemeCode);
       // A second removal replaces the toast; the first removal stays done.
       if (result !== null) setRemoved(result);
     },
-    [unwatch],
+    [unwatch, reduced],
   );
   const onUndo = useCallback(() => {
-    if (removed !== null) undoUnwatch(removed.item, removed.index);
-  }, [removed, undoUnwatch]);
+    if (removed === null) return;
+    easeNextLayout(reduced);
+    undoUnwatch(removed.item, removed.index);
+  }, [removed, undoUnwatch, reduced]);
   const hideToast = useCallback(() => setRemoved(null), []);
 
   const onRefresh = useCallback(async () => {

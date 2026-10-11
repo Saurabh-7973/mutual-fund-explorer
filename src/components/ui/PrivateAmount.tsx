@@ -2,6 +2,7 @@ import { formatInr } from '@/domain/format';
 import { usePreferencesStore } from '@/store/preferencesStore';
 
 import { AppText, type AppTextProps } from './AppText';
+import { FadeOnSwap } from './motion';
 
 /** What a hidden amount looks like: fixed width, so hiding doesn't reflow the layout much. */
 export const HIDDEN_AMOUNT = '•••••';
@@ -20,8 +21,10 @@ export interface PrivateAmountProps extends Omit<AppTextProps, 'children'> {
 export function PrivateAmount({ value, scale, accessibilityLabel, ...rest }: PrivateAmountProps) {
   const hidden = useAmountsHidden();
   return (
-    <AppText numeric accessibilityLabel={hidden ? 'Amount hidden' : accessibilityLabel} {...rest}>
-      {hidden ? HIDDEN_AMOUNT : formatInr(value, scale)}
-    </AppText>
+    <FadeOnSwap swapKey={hidden ? 'hidden' : 'shown'}>
+      <AppText numeric accessibilityLabel={hidden ? 'Amount hidden' : accessibilityLabel} {...rest}>
+        {hidden ? HIDDEN_AMOUNT : formatInr(value, scale)}
+      </AppText>
+    </FadeOnSwap>
   );
 }

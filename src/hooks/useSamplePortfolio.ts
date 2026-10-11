@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
+import { LayoutAnimation } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { todayInIndia } from '@/domain/dates';
@@ -8,6 +9,9 @@ import { latestNavQuery, navHistoryQuery } from '@/query/hooks';
 import { hasAnyOf, newLotId, type HoldingLot, type WatchItem } from '@/store/portfolioSchema';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
+import { motion } from '@/theme/tokens';
+
+import { useReducedMotion } from './useReducedMotion';
 
 export type SampleStatus = { state: 'idle' } | { state: 'loading' } | { state: 'error'; error: unknown };
 
@@ -25,6 +29,11 @@ export function useSamplePortfolio() {
   const removeItems = usePortfolioStore((s) => s.removeItems);
   const saved = usePortfolioStore(useShallow((s) => ({ watchlist: s.watchlist, lots: s.lots })));
   const active = sample !== null && hasAnyOf(saved, sample);
+  const reduced = useReducedMotion();
+  // Rows arriving or leaving ease in and out, as everywhere else in the app.
+  const ease = useCallback(() => {
+    if (!reduced) LayoutAnimation.configureNext(LayoutAnimation.create(motion.base, 'easeInEaseOut', 'opacity'));
+  }, [reduced]);
 
   const load = useCallback(async () => {
     setStatus({ state: 'loading' });
@@ -51,6 +60,7 @@ export function useSamplePortfolio() {
       ).map((fund) => ({ ...fund, addedAt: createdAt }));
       setSample({ lotIds: lots.map((lot) => lot.id), watchCodes: watch.map((item) => item.schemeCode) });
       // Each watched fund goes on top, so add them last-first to keep the sample's order.
+      ease();
       addMany(lots, [...watch].reverse());
       setStatus({ state: 'idle' });
       return true;
@@ -58,12 +68,13 @@ export function useSamplePortfolio() {
       setStatus({ state: 'error', error });
       return false;
     }
-  }, [addMany, queryClient, setSample]);
+  }, [addMany, queryClient, setSample, ease]);
 
   const clear = useCallback(() => {
+    ease();
     if (sample !== null) removeItems(sample);
     setSample(null);
-  }, [removeItems, sample, setSample]);
+  }, [removeItems, sample, setSample, ease]);
 
   return { status, active, load, clear };
 }

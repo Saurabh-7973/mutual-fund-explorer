@@ -26,6 +26,8 @@ import { SignedAmount } from '../ui/SignedAmount';
 import { SignedPercent } from '../ui/SignedPercent';
 import { SwipeRow } from '../ui/SwipeRow';
 import { haptic } from '../ui/haptics';
+import { easeNextLayout } from '../ui/motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 export interface FundLotsProps {
   schemeCode: number;
@@ -57,6 +59,14 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
   const stacked = useWindowDimensions().fontScale > 1.3;
   const lots = usePortfolioStore(useShallow((s) => s.lots.filter((lot) => lot.schemeCode === schemeCode)));
   const removeLot = usePortfolioStore((s) => s.removeLot);
+  const reduced = useReducedMotion();
+  const removeWithEase = useCallback(
+    (id: string) => {
+      easeNextLayout(reduced);
+      removeLot(id);
+    },
+    [removeLot, reduced],
+  );
   const hideAmounts = usePreferencesStore((s) => s.hideAmounts);
   const toggleHideAmounts = usePreferencesStore((s) => s.toggleHideAmounts);
   const change = useDayChange(schemeCode, last);
@@ -258,7 +268,7 @@ export function FundLots({ schemeCode, last, category, schemeName }: FundLotsPro
             key={entry.id}
             entry={entry}
             first={i === 0 && hiddenCount === 0}
-            onRemove={removeLot}
+            onRemove={removeWithEase}
             lockedUntil={periods.locked !== null ? stillLocked(entry.navDate ?? entry.purchaseDate, today) : null}
           />
         ))}

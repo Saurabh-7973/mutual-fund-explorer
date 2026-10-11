@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { isApiError } from '@/api/errors';
@@ -9,6 +9,7 @@ import type { useFundSeries } from '@/query/hooks';
 
 import { EmptyState } from '../ui/EmptyState';
 import { ErrorState } from '../ui/ErrorState';
+import { FadeInOnReady } from '../ui/motion';
 
 export type FundSeries = ReturnType<typeof useFundSeries>;
 
@@ -32,9 +33,14 @@ export interface FundGateProps {
  */
 export function FundGate({ schemeCode, series, loading, children }: FundGateProps) {
   const { history, latest, points } = series;
+  // Set once the skeleton has been on screen, so the data fades in over it (not when cached).
+  const showedSkeleton = useRef(false);
 
   if (history.data === undefined || points === null) {
-    if (history.isLoading) return <>{loading}</>;
+    if (history.isLoading) {
+      showedSkeleton.current = true;
+      return <>{loading}</>;
+    }
     if (isApiError(history.error) && history.error.kind === 'not_found') {
       return (
         <Centered>
@@ -68,7 +74,9 @@ export function FundGate({ schemeCode, series, loading, children }: FundGateProp
       </Centered>
     );
   }
-  return <>{children({ history: history.data, points, last })}</>;
+  return (
+    <FadeInOnReady active={showedSkeleton.current}>{children({ history: history.data, points, last })}</FadeInOnReady>
+  );
 }
 
 function Centered({ children }: { children: ReactNode }) {

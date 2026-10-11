@@ -61,6 +61,8 @@ import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
 import { useTheme } from '@/theme/useTheme';
 import { haptic } from '@/components/ui/haptics';
+import { easeNextLayout } from '@/components/ui/motion';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const keyExtractor = (fund: FundHolding) => String(fund.schemeCode);
 
@@ -69,6 +71,7 @@ export default function HoldingsScreen() {
   const lots = usePortfolioStore((s) => s.lots);
   const hydrated = usePortfolioStore((s) => s.hydrated);
   const removeLot = usePortfolioStore((s) => s.removeLot);
+  const reduced = useReducedMotion();
   const queryClient = useQueryClient();
   useRefreshOnFocus('nav-latest');
 
@@ -150,13 +153,14 @@ export default function HoldingsScreen() {
             text: 'Remove',
             style: 'destructive',
             onPress: () => {
+              easeNextLayout(reduced);
               for (const lot of lots) if (lot.schemeCode === fund.schemeCode) removeLot(lot.id);
               resolve(true);
             },
           },
         ]);
       }),
-    [lots, removeLot],
+    [lots, removeLot, reduced],
   );
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

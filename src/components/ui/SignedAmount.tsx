@@ -3,6 +3,7 @@ import { formatInr } from '@/domain/format';
 import { changeDirection, spokenChange } from '@/domain/signed';
 
 import { AppText, type TextVariant } from './AppText';
+import { FadeOnSwap } from './motion';
 import { HIDDEN_AMOUNT, useAmountsHidden } from './PrivateAmount';
 
 const TONE = { gain: 'gain', loss: 'loss', none: 'muted' } as const;
@@ -30,7 +31,7 @@ export function SignedAmount({
   const magnitude = formatInr(value < 0n ? -value : value, scale);
   const direction = changeDirection(paise);
   const label = hidden ? `${direction === 'none' ? 'no change' : direction}, amount hidden` : spokenChange(paise, magnitude);
-  return (
+  const text = (
     <AppText
       variant={variant}
       tone={TONE[direction]}
@@ -41,5 +42,7 @@ export function SignedAmount({
       {hidden ? HIDDEN_AMOUNT : formatInr(value, scale, 'always')}
     </AppText>
   );
+  // Only the user's own money swaps with the eye toggle, so only it fades.
+  return isPrivate ? <FadeOnSwap swapKey={hidden ? 'hidden' : 'shown'}>{text}</FadeOnSwap> : text;
 }
 
