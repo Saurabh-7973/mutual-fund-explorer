@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider, type ErrorBoundaryProps, type Theme } from 'expo-router';
+import { useFonts } from 'expo-font';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -6,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { usePendingLotResolver } from '@/hooks/usePendingLotResolver';
 import { QueryProvider } from '@/query/QueryProvider';
+import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -22,6 +24,13 @@ function BackgroundTasks() {
 
 export default function RootLayout() {
   const theme = useTheme();
+  // Inter ships with the app (no network); a missing font falls back to the system face.
+  const [fontsLoaded, fontError] = useFonts({
+    [fonts.regular]: require('../../assets/fonts/Inter-Regular.ttf'),
+    [fonts.medium]: require('../../assets/fonts/Inter-Medium.ttf'),
+    [fonts.semibold]: require('../../assets/fonts/Inter-SemiBold.ttf'),
+    [fonts.bold]: require('../../assets/fonts/Inter-Bold.ttf'),
+  });
   const navigationTheme = useMemo<Theme>(() => {
     const base = theme.mode === 'dark' ? DarkTheme : DefaultTheme;
     return {
@@ -38,6 +47,11 @@ export default function RootLayout() {
     };
   }, [theme]);
 
+  // A blank page in the theme's colour for the few milliseconds the bundled fonts take to register.
+  if (!fontsLoaded && fontError === null) {
+    return <View style={[styles.root, { backgroundColor: theme.colors.background }]} />;
+  }
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <QueryProvider>
@@ -50,7 +64,7 @@ export default function RootLayout() {
               headerStyle: { backgroundColor: theme.colors.background },
               headerShadowVisible: false,
               headerTintColor: theme.colors.text,
-              headerTitleStyle: { fontSize: theme.typography.heading.fontSize, fontWeight: theme.typography.heading.fontWeight },
+              headerTitleStyle: { fontSize: theme.typography.heading.fontSize, fontFamily: theme.typography.heading.fontFamily },
             }}
           >
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

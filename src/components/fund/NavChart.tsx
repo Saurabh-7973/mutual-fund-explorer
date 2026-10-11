@@ -8,7 +8,7 @@ import { formatDate } from '@/domain/dates';
 import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
 import { navChange } from '@/domain/nav';
 import type { NavPoint } from '@/domain/types';
-import { tabularNumbers } from '@/theme/tokens';
+import { fonts, tabularNumbers } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -241,7 +241,14 @@ function Marker({
   return (
     <>
       <Circle cx={x} cy={y} r={3} fill={colors.textMuted} />
-      <SvgText x={x} y={above ? y - 8 : y + 16} fontSize={11} fill={colors.textMuted} textAnchor={anchor}>
+      <SvgText
+        x={x}
+        y={above ? y - 8 : y + 16}
+        fontSize={11}
+        fontFamily={fonts.medium}
+        fill={colors.textMuted}
+        textAnchor={anchor}
+      >
         {label}
       </SvgText>
     </>

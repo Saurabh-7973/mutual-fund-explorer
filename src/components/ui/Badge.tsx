@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 import { AppText } from './AppText';
@@ -31,7 +32,7 @@ export function Badge({ label, tone = 'neutral' }: BadgeProps) {
         paddingVertical: 2,
       }}
     >
-      <AppText variant="caption" maxFontSizeMultiplier={1.3} style={{ color: palette.fg, fontWeight: '600' }}>
+      <AppText variant="caption" maxFontSizeMultiplier={1.3} style={{ color: palette.fg, fontFamily: fonts.semibold }}>
         {label}
       </AppText>
     </View>

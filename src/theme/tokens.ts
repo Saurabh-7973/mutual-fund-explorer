@@ -103,17 +103,28 @@ export const motion = { fast: 150, base: 220, slow: 320 } as const;
 /** Minimum touch target (Apple HIG 44 pt; Android recommends 48 dp, reached with hitSlop). */
 export const MIN_TOUCH = 44;
 
+/**
+ * Inter, bundled in assets/fonts (SIL OFL) and loaded at startup. Android picks a weight
+ * by family name, not fontWeight, so each weight is its own family.
+ */
+export const fonts = {
+  regular: 'Inter-Regular',
+  medium: 'Inter-Medium',
+  semibold: 'Inter-SemiBold',
+  bold: 'Inter-Bold',
+} as const;
+
 export const typography = {
   /** A tab's large title. */
-  display: { fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: -0.3 },
-  figure: { fontSize: 32, lineHeight: 38, fontWeight: '700', letterSpacing: -0.5 },
-  title: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
-  heading: { fontSize: 16, lineHeight: 22, fontWeight: '600' },
-  body: { fontSize: 15, lineHeight: 21, fontWeight: '400' },
-  label: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
+  display: { fontSize: 28, lineHeight: 34, fontFamily: fonts.bold, letterSpacing: -0.3 },
+  figure: { fontSize: 32, lineHeight: 38, fontFamily: fonts.bold, letterSpacing: -0.5 },
+  title: { fontSize: 20, lineHeight: 26, fontFamily: fonts.bold },
+  heading: { fontSize: 16, lineHeight: 22, fontFamily: fonts.semibold },
+  body: { fontSize: 15, lineHeight: 21, fontFamily: fonts.regular },
+  label: { fontSize: 13, lineHeight: 18, fontFamily: fonts.medium },
   /** Row titles: a fund's name in a list. */
-  labelStrong: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
+  labelStrong: { fontSize: 13, lineHeight: 18, fontFamily: fonts.semibold },
+  caption: { fontSize: 12, lineHeight: 16, fontFamily: fonts.regular },
 } as const;
 
 /** Numbers in columns line up when every digit has the same width. */

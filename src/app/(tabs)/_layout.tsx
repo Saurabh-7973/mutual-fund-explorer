@@ -41,7 +41,7 @@ export default function TabsLayout() {
           <Text
             maxFontSizeMultiplier={1.3}
             numberOfLines={1}
-            style={{ color, fontSize: typography.caption.fontSize, fontWeight: '600', marginTop: 2 }}
+            style={{ color, fontSize: typography.caption.fontSize, fontFamily: typography.labelStrong.fontFamily, marginTop: 2 }}
           >
             {children}
           </Text>
