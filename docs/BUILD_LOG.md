@@ -117,10 +117,10 @@ _(Claude Code: add entries below this line.)_
 ### Before Phase 3: whole-word search follow-ups (10 Oct 2026, Claude Code)
 
 - The user confirmed both Phase 2 fixes on the phone (filters reset on clear; empty state centred above the keyboard).
-- `mfx-CLAUDE.md` and `mfx-RUNBOOK.md` were already gone: they had been moved over `CLAUDE.md` and `docs/RUNBOOK.md` in `edacb1f`. `git status` was clean.
+- `mfx-CLAUDE.md` and `mfx-RUNBOOK.md` were already gone: they had been moved over `CLAUDE.md` and `docs/RUNBOOK.md` in `d271da4`. `git status` was clean.
 - Corrected the wrong "substring match" claim. The `MIN_QUERY_LENGTH` comment in `src/domain/search.ts` now describes whole-word matching; `docs/ARCHITECTURE.md` lists it with the other API quirks, along with the 15-result cap and date-range support from Phase 0; the README's known limitations say it too.
 - **Domain rule changed (user-approved): `MIN_QUERY_LENGTH` 3 → 2.** With whole-word matching, a two-letter fund house couldn't be searched at all. Checked live: `q=jm` returns 15 (JM Financial schemes), `q=ab` 9 (Birla "Series AB" plans), `q=a` 0. Test updated (`j` no, `JM` yes); the screen's hint now reads the constant.
-- Process correction: commit `178ca49` ran only the type check, not the tests, "to save resources". From now on `npm run check` runs before every commit, including small fixes; it takes seconds.
+- Process correction: commit `71db758` ran only the type check, not the tests, "to save resources". From now on `npm run check` runs before every commit, including small fixes; it takes seconds.
 - Checks: `npm run check`: typecheck 0 errors; 16 suites, 144 tests passed.
 
 ---
@@ -195,7 +195,7 @@ _(Claude Code: add entries below this line.)_
 - Way to test offline cold starts in Expo Go: `adb reverse tcp:8081 tcp:8081`, then open `exp://127.0.0.1:8081`. The bundle comes over the adb tunnel, which airplane mode doesn't cut, while mfapi.in stays unreachable (`ping: unknown host api.mfapi.in`). Note that Expo Go keeps AsyncStorage per project URL, so data saved under the LAN URL isn't visible under `127.0.0.1`; set up test data under the same URL.
 - Results, driven with adb on the emulator: starred 122639, 100121 and 152469 online. Airplane mode on, force-stopped Expo Go, relaunched → Watchlist showed all three with saved NAVs and dates, "Offline: showing saved NAVs", and 100121's "Stale" badge on the same line as "as of 01 Jun 2018". **Step 7 passes.** Remove then Undo restored the fund to its position (step 4). A first Undo attempt arrived after the 5-second timer and correctly did nothing.
 
-**User feedback:** the Stale badge should follow the date, not precede it. Now "as of 01 Jun 2018 [Stale]" (`2fdd449`).
+**User feedback:** the Stale badge should follow the date, not precede it. Now "as of 01 Jun 2018 [Stale]" (`445c33f`).
 
 ---
 
@@ -377,7 +377,7 @@ The user asked whether the to-do list held anything I'd found myself; mostly it 
    - Found while testing: the sort control stretched over all free space, so after the column label shortened, a tap meant for it opened the sort sheet. The control now hugs its content.
 14. Every bottom sheet slid its dark backdrop up with it, as one slab. → `BottomSheet`: the dim fades while the sheet glides up by its own height, both reverse on close, instant with reduced motion. The glossary sheet and the calendar use it.
 15. The Watchlist opened with a permanent explainer above the funds. → Moved to the list footer with the swipe tip; Watchlist uses the collapsing title, its subtitle is the fund count.
-- **Security review (background, on commit 1f4e717): privacy-control bypass.** The new "SIP ₹5,000" row label, and the fund page's "SIP of ₹2,000 on the 5th" banner, showed a rupee amount with amounts hidden. Both now read "SIP" while hidden (checked on the emulator: three rows read "Direct · Growth · SIP"). Rupee figures left visible on purpose: hypotheticals (Compare's ₹10,000, "If you had invested") and amounts typed into the add-holding forms.
+- **Security review (background, on commit d08006f): privacy-control bypass.** The new "SIP ₹5,000" row label, and the fund page's "SIP of ₹2,000 on the 5th" banner, showed a rupee amount with amounts hidden. Both now read "SIP" while hidden (checked on the emulator: three rows read "Direct · Growth · SIP"). Rupee figures left visible on purpose: hypotheticals (Compare's ₹10,000, "If you had invested") and amounts typed into the add-holding forms.
 16. Rupee holding periods and "Invested for" (from the Groww study): "Short-term ⓘ ₹1,11,541.58 of ₹1,22,695.72" (amounts private with the eye; `unitsValue`, tested), and "Invested for 2 years 6 months" under Your investment.
 17. Sections opened with a jump. → `LayoutAnimation` eases the page apart; the chevron turns 180° (native driver); both off with reduced motion. The "If you had invested" mode switch joined the track variant: every selector is now either a track (mode switch) or plain (value picker).
 18. **NAV history as a calendar** (user's idea, built from the purchase calendar's look). `src/domain/navCalendar.ts` (tested): business-day grid, Monday first, 5 columns unless a fund published on a weekend; each day's change from the previous published NAV (the 1st compares with the month before); month change, high, low; a 4-step intensity for the tint. `NavCalendar`: diverging gain/loss tint whose strength follows the size of the move, the percentage always printed (colour never alone), "—" for a weekday without a NAV, faded dates outside the data, tap a day for its NAV, month arrows bounded by the data. Calendar | List track at the top; List is the existing exact table. Checked light and dark: September 2026 shows the 8–9 Sep run of falls and −1.09% on the 28th at a glance.
