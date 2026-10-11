@@ -1,9 +1,11 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { FlatList, Platform, StyleSheet, View, type ListRenderItem } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { FlatList, Platform, ScrollView, StyleSheet, View, type ListRenderItem } from 'react-native';
 
 import { FundGate, InvalidSchemeLink, fundDisplayName, type FundReady } from '@/components/fund/FundGate';
 import { FundTitle } from '@/components/fund/FundTitle';
+import { NavCalendar } from '@/components/fund/NavCalendar';
+import { SegmentedRow } from '@/components/ui/SegmentedRow';
 import { GapRowView, NAV_ROW_HEIGHT, NavHeaderRow, NavRowView } from '@/components/fund/NavRows';
 import { AppText } from '@/components/ui/AppText';
 import { SkeletonRows } from '@/components/ui/Skeleton';
@@ -47,6 +49,8 @@ function NavList({ ready, schemeCode, name }: { ready: FundReady; schemeCode: nu
   const { points, last } = ready;
   const items = useMemo(() => navListItems(points), [points]);
   const first = points[0];
+  // The calendar first: a month's rhythm reads at a glance; the list keeps every NAV in one scroll.
+  const [view, setView] = useState<'calendar' | 'list'>('calendar');
 
   const renderItem = useCallback<ListRenderItem<NavListItem>>(
     ({ item }) =>
@@ -63,27 +67,47 @@ function NavList({ ready, schemeCode, name }: { ready: FundReady; schemeCode: nu
             {points.length} NAVs from {formatDate(first.date)} to {formatDate(last.date)}
           </AppText>
         )}
+        <View style={{ marginTop: spacing.sm }}>
+          <SegmentedRow
+            variant="track"
+            accessibilityLabel="Show NAVs as"
+            options={[
+              { key: 'calendar', label: 'Calendar' },
+              { key: 'list', label: 'List' },
+            ]}
+            selected={view}
+            onSelect={setView}
+          />
+        </View>
       </View>
-      <View style={{ backgroundColor: colors.background }}>
-        <NavHeaderRow />
-      </View>
-      <FlatList
-        data={items}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
-        initialNumToRender={25}
-        maxToRenderPerBatch={25}
-        windowSize={11}
-        removeClippedSubviews={Platform.OS === 'android'}
-        ListFooterComponent={
-          first !== undefined ? (
-            <AppText variant="caption" tone="muted" style={{ padding: spacing.lg, textAlign: 'center' }}>
-              Earliest NAV in the data: {formatDate(first.date)}.
-            </AppText>
-          ) : null
-        }
-      />
+      {view === 'calendar' ? (
+        <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingTop: spacing.sm }}>
+          <NavCalendar points={points} />
+        </ScrollView>
+      ) : (
+        <>
+          <View style={{ backgroundColor: colors.background }}>
+            <NavHeaderRow />
+          </View>
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={keyExtractor}
+            getItemLayout={getItemLayout}
+            initialNumToRender={25}
+            maxToRenderPerBatch={25}
+            windowSize={11}
+            removeClippedSubviews={Platform.OS === 'android'}
+            ListFooterComponent={
+              first !== undefined ? (
+                <AppText variant="caption" tone="muted" style={{ padding: spacing.lg, textAlign: 'center' }}>
+                  Earliest NAV in the data: {formatDate(first.date)}.
+                </AppText>
+              ) : null
+            }
+          />
+        </>
+      )}
     </>
   );
 }
