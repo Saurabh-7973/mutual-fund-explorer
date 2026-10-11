@@ -53,7 +53,7 @@ One row per evaluation criterion in the brief, pointing to where it shows best.
 | Command | What it does |
 |---|---|
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Jest: 278 tests in 33 suites on dates, money, NAV rules, links, parsing, the API client, the sample portfolio and the store, plus component tests (React Native Testing Library) for amounts, hidden amounts, the watchlist row and Add holding |
+| `npm test` | Jest: 279 tests in 34 suites on dates, money, NAV rules, links, parsing, the API client, the sample portfolio and the store, plus component tests (React Native Testing Library) for amounts, hidden amounts, the watchlist row, the SIP banner and Add holding |
 | `npm run check` | Both |
 
 ## Screenshots
