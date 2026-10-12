@@ -1,7 +1,7 @@
 import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Animated, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
+import { Animated, Pressable, RefreshControl, StyleSheet, View, type LayoutChangeEvent, type ListRenderItem } from 'react-native';
 
 import { WatchToggle } from '@/components/search/WatchToggle';
 import { FundMark } from '@/components/ui/FundMark';
@@ -13,7 +13,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SampleBanner } from '@/components/holdings/SamplePortfolio';
 import { SkeletonRows } from '@/components/ui/Skeleton';
 import { UndoToast } from '@/components/ui/UndoToast';
-import { WATCH_ROW_HEIGHT, WatchRow } from '@/components/watchlist/WatchRow';
+import { WATCH_ROW_HEIGHT, WatchRow, type WatchPeriod } from '@/components/watchlist/WatchRow';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { haptic } from '@/components/ui/haptics';
 import { formatDate, todayInIndia } from '@/domain/dates';
 import { currentNavDate } from '@/domain/nav';
 import { describeScheme } from '@/domain/schemeName';
@@ -50,6 +52,11 @@ export default function WatchlistScreen() {
     latest.map((result) => result.data?.point?.date).filter((date): date is IsoDate => date !== undefined),
     todayInIndia(),
   );
+
+  // Which figure the rows show; the button in the list header cycles through them.
+  const [period, setPeriod] = useState<WatchPeriod>('1D');
+  const nextPeriod: Record<WatchPeriod, WatchPeriod> = { '1D': '1Y', '1Y': '3Y', '3Y': '1D' };
+  const periodName: Record<WatchPeriod, string> = { '1D': "today's change", '1Y': '1-year return', '3Y': '3-year return, annualised' };
 
   const [removed, setRemoved] = useState<{ item: WatchItem; index: number } | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -96,9 +103,16 @@ export default function WatchlistScreen() {
 
   const renderItem = useCallback<ListRenderItem<WatchItem>>(
     ({ item, index }) => (
-      <WatchRow item={item} onRemove={onRemove} asOf={asOf} first={index === 0} last={index === watchlist.length - 1} />
+      <WatchRow
+        item={item}
+        onRemove={onRemove}
+        asOf={asOf}
+        period={period}
+        first={index === 0}
+        last={index === watchlist.length - 1}
+      />
     ),
-    [onRemove, asOf, watchlist.length],
+    [onRemove, asOf, watchlist.length, period],
   );
 
   const toast = (
@@ -196,10 +210,30 @@ export default function WatchlistScreen() {
               <AppText variant="heading" accessibilityRole="header" maxFontSizeMultiplier={1.3} style={styles.flex}>
                 Your watchlist
               </AppText>
-              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
-                {asOf !== null ? `NAV · 1D · as of ${formatDate(asOf)}` : 'NAV · 1D'}
-              </AppText>
+              <Pressable
+                onPress={() => {
+                  haptic.tick();
+                  setPeriod(nextPeriod[period]);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Showing ${periodName[period]}. Switch to ${periodName[nextPeriod[period]]}`}
+                hitSlop={6}
+                style={({ pressed }) => [
+                  styles.periodButton,
+                  { backgroundColor: colors.surface, borderRadius: radius.control, paddingHorizontal: spacing.md, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <AppText variant="labelStrong" tone="primary" maxFontSizeMultiplier={1.3}>
+                  {period}
+                </AppText>
+                <Ionicons name="chevron-down" size={14} color={colors.primary} />
+              </Pressable>
             </View>
+            {asOf !== null && (
+              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3} style={{ paddingHorizontal: spacing.lg }}>
+                NAVs as of {formatDate(asOf)}
+              </AppText>
+            )}
           </View>
         }
         ListFooterComponent={
@@ -221,6 +255,7 @@ const styles = StyleSheet.create({
   centered: { justifyContent: 'center' },
   wrap: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' },
   recent: { alignSelf: 'stretch' },
-  listHead: { flexDirection: 'row', alignItems: 'baseline' },
+  listHead: { flexDirection: 'row', alignItems: 'center' },
+  periodButton: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 36 },
   recentRow: { flexDirection: 'row', alignItems: 'center', minHeight: 56 },
 });

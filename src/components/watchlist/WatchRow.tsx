@@ -3,11 +3,14 @@ import { memo, useCallback, useMemo, type ReactNode } from 'react';
 import { PixelRatio, Pressable, StyleSheet, View } from 'react-native';
 
 import { formatDate, todayInIndia } from '@/domain/dates';
-import { formatNav, formatNavChange, formatPercentHundredths } from '@/domain/format';
-import { isStale } from '@/domain/nav';
+import { formatNav, formatNavChange, formatPercent, formatPercentHundredths } from '@/domain/format';
+import { isStale, mergeLatest } from '@/domain/nav';
+import { trailingReturns } from '@/domain/returns';
 import { describeScheme, optionFromIsins } from '@/domain/schemeName';
 import type { IsoDate } from '@/domain/types';
-import { useDayChange, useLatestNav } from '@/query/hooks';
+import { useQuery } from '@tanstack/react-query';
+
+import { navHistoryQuery, useDayChange, useLatestNav } from '@/query/hooks';
 import type { WatchItem } from '@/store/portfolioSchema';
 import { useTheme } from '@/theme/useTheme';
 
@@ -20,11 +23,15 @@ import { FUND_MARK_SIZE, FundMark } from '../ui/FundMark';
 // Whole device pixels: at 2.625x a fractional dp height made alternate rows overlap by a pixel.
 export const WATCH_ROW_HEIGHT = PixelRatio.roundToNearestPixel(72);
 
+export type WatchPeriod = '1D' | '1Y' | '3Y';
+
 export interface WatchRowProps {
   item: WatchItem;
   onRemove: (schemeCode: number) => void;
   /** The date most watched NAVs share (shown in the list header); a row prints its own only when it differs. */
   asOf: IsoDate | null;
+  /** Which figure the right side shows: today's change, or the 1- or 3-year return. */
+  period: WatchPeriod;
   /** Where the row sits in the card that holds the list. */
   first?: boolean;
   last?: boolean;
@@ -36,7 +43,7 @@ export interface WatchRowProps {
  * its date instead of an old move. Each row runs its own queries, so one failing scheme never
  * blocks the others, and the height never changes between states. Swipe left to remove.
  */
-export const WatchRow = memo(function WatchRow({ item, onRemove, asOf, first = false, last = false }: WatchRowProps) {
+export const WatchRow = memo(function WatchRow({ item, onRemove, asOf, period, first = false, last = false }: WatchRowProps) {
   const { colors, radius, spacing } = useTheme();
   const { schemeCode, schemeName } = item;
   const label = useMemo(() => describeScheme(schemeName), [schemeName]);
@@ -44,6 +51,13 @@ export const WatchRow = memo(function WatchRow({ item, onRemove, asOf, first = f
   const latest = useLatestNav(schemeCode);
   const point = latest.data?.point;
   const change = useDayChange(schemeCode, point);
+  // The full history is fetched only when a longer period is chosen (memory-only cache).
+  const history = useQuery({ ...navHistoryQuery(schemeCode), enabled: period !== '1D' });
+  const longReturn = useMemo(() => {
+    if (period === '1D' || history.data === undefined) return null;
+    const rows = trailingReturns(mergeLatest(history.data.points, point ?? null));
+    return rows.find((row) => row.key === period) ?? null;
+  }, [period, history.data, point]);
   const option =
     label.option ??
     (latest.data !== undefined ? optionFromIsins(latest.data.meta.isinGrowth, latest.data.meta.isinDivReinvestment) : null);
@@ -93,6 +107,36 @@ export const WatchRow = memo(function WatchRow({ item, onRemove, asOf, first = f
     if (stale) {
       // A week or more without a NAV: its date, flagged, instead of an old day's change.
       status = <StatusChip label={`Stale · ${formatDate(point.date)}`} />;
+    } else if (period !== '1D') {
+      if (history.isLoading) {
+        status = <Skeleton width={72} height={12} />;
+      } else if (longReturn === null || longReturn.percent === null) {
+        // A fund younger than the period, or a history that failed to load.
+        status = (
+          <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+            {history.isError ? 'Couldn\'t load' : `Under ${period === '1Y' ? 'a year' : '3 years'} old`}
+          </AppText>
+        );
+      } else {
+        const p = longReturn.percent;
+        const annual = longReturn.kind !== 'absolute';
+        status = (
+          <AppText
+            variant="labelStrong"
+            numeric
+            maxFontSizeMultiplier={1.3}
+            tone={p > 0 ? 'gain' : p < 0 ? 'loss' : 'muted'}
+            accessibilityLabel={`${p > 0 ? 'up' : p < 0 ? 'down' : 'unchanged'} ${formatPercent(Math.abs(p), 'negative-only')}${annual ? ' per year' : ''} over ${longReturn.label}`}
+          >
+            {formatPercent(p)}
+            {annual ? (
+              <AppText variant="label" tone="muted">
+                {' p.a.'}
+              </AppText>
+            ) : null}
+          </AppText>
+        );
+      }
     } else if (change !== null) {
       const direction = change.diff > 0n ? 'up' : change.diff < 0n ? 'down' : 'unchanged';
       const pct = change.pctHundredths < 0n ? -change.pctHundredths : change.pctHundredths;

@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 
 import { VALUE_SCALE } from '../../domain/decimal';
 import type { IsoDate, NavPoint, SchemeMeta } from '../../domain/types';
-import { latestNavQuery, recentNavQuery } from '../../query/hooks';
+import { latestNavQuery, navHistoryQuery, recentNavQuery } from '../../query/hooks';
 import { usePreferencesStore } from '../../store/preferencesStore';
 import { ChangeChip } from '../ui/ChangeChip';
 import { MoneyHero } from '../ui/MoneyHero';
@@ -102,11 +102,12 @@ describe('a watchlist row', () => {
   // Cleared after each test: a cached query keeps a garbage-collection timer (7 days for
   // persisted NAVs), and Jest would wait for it.
   const clients: QueryClient[] = [];
-  function withCache(latest: NavPoint, recent: NavPoint[]) {
+  function withCache(latest: NavPoint, recent: NavPoint[], history?: NavPoint[]) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
     clients.push(client);
     client.setQueryData(latestNavQuery(122639).queryKey, { meta, point: latest });
     client.setQueryData(recentNavQuery(122639).queryKey, { meta, points: recent, skipped: 0 });
+    if (history !== undefined) client.setQueryData(navHistoryQuery(122639).queryKey, { meta, points: history, skipped: 0 });
     return ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   }
 
@@ -123,7 +124,7 @@ describe('a watchlist row', () => {
 
   it('shows the NAV and the day’s change, leaving the shared date to the list header', async () => {
     const latest = point('2026-10-09', '88.92580');
-    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} period="1D" />, {
       wrapper: withCache(latest, [point('2026-10-08', '87.65550'), latest]),
     });
     expect(screen.getByText('₹88.9258')).toBeTruthy();
@@ -132,9 +133,19 @@ describe('a watchlist row', () => {
     expect(screen.queryByText(/Stale/)).toBeNull();
   });
 
+  it('shows the 1-year return instead of the day’s change when that period is chosen', async () => {
+    const latest = point('2026-10-09', '88.92580');
+    const history = [point('2025-10-09', '93.15000'), point('2026-04-09', '90.00000'), latest];
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} period="1Y" />, {
+      wrapper: withCache(latest, [point('2026-10-08', '87.65550'), latest], history),
+    });
+    expect(screen.getByText('−4.53%', { exact: false })).toBeTruthy();
+    expect(screen.queryByText('+₹1.2703 (+1.45%)')).toBeNull();
+  });
+
   it('prints its own date when its NAV is from another day than the rest', async () => {
     const latest = point('2026-10-08', '87.65550');
-    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} period="1D" />, {
       wrapper: withCache(latest, [point('2026-10-07', '87.00000'), latest]),
     });
     expect(screen.getByText(' · 08 Oct 2026')).toBeTruthy();
@@ -142,7 +153,7 @@ describe('a watchlist row', () => {
 
   it('turns Stale when the latest NAV is more than 7 days old, instead of showing an old day’s move', async () => {
     const latest = point('2026-10-02', '88.00000');
-    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} />, {
+    await render(<WatchRow item={item} onRemove={() => undefined} asOf={d('2026-10-09')} period="1D" />, {
       wrapper: withCache(latest, [point('2026-10-01', '87.00000'), latest]),
     });
     expect(screen.getByText('Stale · 02 Oct 2026')).toBeTruthy();
