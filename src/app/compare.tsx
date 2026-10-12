@@ -1,6 +1,7 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 
 import { CompareChart } from '@/components/fund/CompareChart';
@@ -18,12 +19,14 @@ import { formatPercent } from '@/domain/format';
 import { maxDrawdown, rollingReturns } from '@/domain/longTerm';
 import { trailingReturns } from '@/domain/returns';
 import { describeScheme } from '@/domain/schemeName';
-import { parseSchemeCode } from '@/domain/search';
+import { MIN_QUERY_LENGTH, parseSchemeCode, rankSearchResults } from '@/domain/search';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
+import { useOnline } from '@/hooks/useOnline';
 import type { NavPoint } from '@/domain/types';
-import { useFundSeries } from '@/query/hooks';
+import { useFundSeries, useSchemeSearch } from '@/query/hooks';
 import { usePortfolioStore } from '@/store/portfolioStore';
 import { usePreferencesStore } from '@/store/preferencesStore';
-import { MIN_TOUCH } from '@/theme/tokens';
+import { MIN_TOUCH, fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
 
 const RANGES = [
@@ -53,15 +56,23 @@ function Centered({ children }: { children: ReactNode }) {
   return <View style={[styles.centered, { backgroundColor: colors.background }]}>{children}</View>;
 }
 
-/** Pick the second fund from the ones you already follow, hold or looked at. */
+/**
+ * Pick the second fund: search any fund, or take one you already hold, watch or looked at
+ * (listed first, so the common case is one tap).
+ */
 function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
   const { colors, radius, spacing } = useTheme();
   const watchlist = usePortfolioStore((s) => s.watchlist);
   const lots = usePortfolioStore((s) => s.lots);
   const recent = usePreferencesStore((s) => s.recentlyViewed);
+  const [text, setText] = useState('');
+  const debounced = useDebouncedValue(text, 300);
+  const { query, enabled } = useSchemeSearch(debounced);
+  const online = useOnline();
+
   const candidates = useMemo(() => {
     const seen = new Set<number>([a]);
-    const list: { schemeCode: number; schemeName: string; why: string }[] = [];
+    const list: Choice[] = [];
     const add = (code: number, name: string, why: string) => {
       if (seen.has(code)) return;
       seen.add(code);
@@ -73,48 +84,121 @@ function ChooseFund({ a, nameA }: { a: number; nameA: string | undefined }) {
     return list;
   }, [a, lots, watchlist, recent]);
 
-  if (candidates.length === 0) {
-    return (
-      <Centered>
-        <EmptyState
-          icon="git-compare-outline"
-          title="Nothing to compare with yet"
-          body="Open or star another fund first; it will show up here."
-          action={{ label: 'Find a fund', onPress: () => router.navigate('/') }}
-        />
-      </Centered>
-    );
-  }
+  // keepPreviousData would show old results for a new query that is paused offline.
+  const stalePaused = query.isPlaceholderData && query.fetchStatus === 'paused';
+  const results = useMemo<Choice[]>(
+    () =>
+      !enabled || query.data === undefined || stalePaused
+        ? []
+        : rankSearchResults(query.data)
+            .filter((item) => item.schemeCode !== a)
+            .map((item) => ({ schemeCode: item.schemeCode, schemeName: item.schemeName, why: null })),
+    [enabled, query.data, stalePaused, a],
+  );
 
+  const searching = text.trim().length > 0;
   return (
-    <ScrollView style={{ backgroundColor: colors.background }} contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}>
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      style={{ backgroundColor: colors.background }}
+      contentContainerStyle={{ padding: spacing.lg, gap: spacing.md }}
+    >
       <AppText variant="heading" accessibilityRole="header">
         Compare {nameA !== undefined ? describeScheme(nameA).title : 'this fund'} with
       </AppText>
-      <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: spacing.lg }}>
-        {candidates.map((fund, i) => {
-          const label = describeScheme(fund.schemeName);
-          return (
-            <Pressable
-              key={fund.schemeCode}
-              accessibilityRole="button"
-              onPress={() => router.setParams({ b: String(fund.schemeCode) })}
-              style={({ pressed }) => [
-                styles.choice,
-                { borderBottomColor: colors.hairline, borderBottomWidth: i === candidates.length - 1 ? 0 : StyleSheet.hairlineWidth, gap: 2, paddingVertical: spacing.sm, opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
+      <View style={[styles.search, { backgroundColor: colors.surface, borderRadius: radius.field, paddingLeft: spacing.lg, gap: spacing.sm }]}>
+        <Ionicons name="search" size={20} color={colors.textMuted} />
+        <TextInput
+          value={text}
+          onChangeText={setText}
+          placeholder="Search any fund"
+          placeholderTextColor={colors.textMuted}
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+          accessibilityLabel="Search a fund to compare with"
+          style={[styles.searchInput, { color: colors.text, fontFamily: fonts.regular, fontSize: 15 }]}
+        />
+      </View>
+
+      {searching ? (
+        !enabled ? (
+          <AppText variant="label" tone="muted">
+            Type at least {MIN_QUERY_LENGTH} characters. Search matches whole words.
+          </AppText>
+        ) : query.isError || stalePaused || (!online && query.data === undefined) ? (
+          <ErrorState compact error={query.error} onRetry={() => void query.refetch()} />
+        ) : query.data === undefined || query.isPlaceholderData ? (
+          <AppText variant="label" tone="muted">
+            Searching…
+          </AppText>
+        ) : results.length === 0 ? (
+          <AppText variant="label" tone="muted">
+            No funds match "{text.trim()}". Try a whole word, such as a fund house's name.
+          </AppText>
+        ) : (
+          <ChoiceList choices={results} />
+        )
+      ) : candidates.length > 0 ? (
+        <>
+          <AppText variant="label" tone="muted">
+            Yours
+          </AppText>
+          <ChoiceList choices={candidates} />
+        </>
+      ) : (
+        <AppText variant="label" tone="muted">
+          Search above, or star or open another fund and it will be listed here.
+        </AppText>
+      )}
+    </ScrollView>
+  );
+}
+
+interface Choice {
+  schemeCode: number;
+  schemeName: string;
+  /** Why it's suggested ("In your holdings"); null for a search result. */
+  why: string | null;
+}
+
+/** Funds to pick from, in one white card. */
+function ChoiceList({ choices }: { choices: Choice[] }) {
+  const { colors, radius, spacing } = useTheme();
+  return (
+    <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, paddingHorizontal: spacing.lg }}>
+      {choices.map((fund, i) => {
+        const label = describeScheme(fund.schemeName);
+        return (
+          <Pressable
+            key={fund.schemeCode}
+            accessibilityRole="button"
+            onPress={() => router.setParams({ b: String(fund.schemeCode) })}
+            style={({ pressed }) => [
+              styles.choice,
+              {
+                borderBottomColor: colors.hairline,
+                borderBottomWidth: i === choices.length - 1 ? 0 : StyleSheet.hairlineWidth,
+                gap: spacing.md,
+                paddingVertical: spacing.sm,
+                opacity: pressed ? 0.6 : 1,
+              },
+            ]}
+          >
+            <FundMark schemeName={fund.schemeName} size={36} />
+            <View style={{ flex: 1, gap: 2 }}>
               <AppText variant="rowTitle" numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {label.title}
               </AppText>
-              <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
+              <AppText variant="label" tone="muted" numberOfLines={1} maxFontSizeMultiplier={1.3}>
                 {[label.plan, label.option, fund.why].filter((part): part is string => part !== null).join(' · ')}
               </AppText>
-            </Pressable>
-          );
-        })}
-      </View>
-    </ScrollView>
+            </View>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
@@ -285,7 +369,9 @@ function Comparison({ a, b }: { a: number; b: number }) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center' },
-  choice: { minHeight: 64, justifyContent: 'center' },
+  choice: { minHeight: 64, flexDirection: 'row', alignItems: 'center' },
+  search: { flexDirection: 'row', alignItems: 'center', minHeight: 52 },
+  searchInput: { flex: 1, paddingVertical: 12 },
   row: { flexDirection: 'row', alignItems: 'center' },
   divider: { borderTopWidth: StyleSheet.hairlineWidth },
   labelCol: { flex: 1.3 },
