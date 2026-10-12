@@ -1,6 +1,6 @@
 # AI_CONTEXT
 
-> Drafted with Claude from my answers and `docs/BUILD_LOG.md` (the full record of the build). I checked every line.
+> Written with Claude from my answers and `docs/BUILD_LOG.md` (the full record of the build). I checked every line.
 
 ## AI tools used
 
