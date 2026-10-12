@@ -1,4 +1,5 @@
 import { addMonths, diffDays } from './dates';
+import { NAV_SCALE, divRound, parseScaled } from './decimal';
 import { navOnOrBefore } from './nav';
 import type { IsoDate, NavPoint } from './types';
 
@@ -70,4 +71,22 @@ export function headlineReturn(rows: readonly PeriodReturn[]): PeriodReturn | nu
     if (row !== undefined) return row;
   }
   return null;
+}
+
+/** The amount behind "Value of ₹10,000" on the returns table. */
+export const RETURNS_SAMPLE_RUPEES = 10_000;
+
+/**
+ * What ₹10,000 invested at the start of a trailing period is worth at its end, in paise,
+ * exactly (BigInt, from the two NAV strings). Null when the period has no return.
+ */
+export function tenThousandBecame(points: readonly NavPoint[], row: PeriodReturn): bigint | null {
+  if (row.startDate === null || row.endDate === null) return null;
+  const start = navOnOrBefore(points, row.startDate);
+  const end = navOnOrBefore(points, row.endDate);
+  if (start === null || end === null || start.date !== row.startDate || end.date !== row.endDate) return null;
+  const s = parseScaled(start.nav, NAV_SCALE);
+  const e = parseScaled(end.nav, NAV_SCALE);
+  if (s === null || e === null || s <= 0n) return null;
+  return divRound(BigInt(RETURNS_SAMPLE_RUPEES) * 100n * e, s);
 }

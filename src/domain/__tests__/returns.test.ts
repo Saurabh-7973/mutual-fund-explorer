@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { headlineReturn, pointToPointReturn, trailingReturns } from '../returns';
+import { headlineReturn, pointToPointReturn, tenThousandBecame, trailingReturns } from '../returns';
 import type { IsoDate, NavPoint } from '../types';
 
 const p = (date: string, nav: string): NavPoint => ({ date: date as IsoDate, nav, value: Number(nav) });
@@ -78,5 +78,26 @@ describe('headlineReturn', () => {
     expect(headlineReturn([row('1Y', 5), row('3Y', null), row('ALL', 15)])?.key).toBe('1Y');
     expect(headlineReturn([row('1Y', null), row('3Y', null), row('ALL', 15)])?.key).toBe('ALL');
     expect(headlineReturn([row('ALL', null)])).toBeNull();
+  });
+});
+
+describe('tenThousandBecame', () => {
+  const points = [p('2025-10-09', '62.5967'), p('2026-04-09', '80.0000'), p('2026-10-09', '88.9258')];
+  const rows = trailingReturns(points);
+  const row = (key: string) => {
+    const found = rows.find((r) => r.key === key);
+    if (found === undefined) throw new Error(`no ${key} row`);
+    return found;
+  };
+
+  it('works out ₹10,000 at the start NAV to the paisa at the end NAV', () => {
+    // 10,000 × 88.9258 / 62.5967 = 14,206.1514… → ₹14,206.15
+    expect(tenThousandBecame(points, row('1Y'))).toBe(1_420_615n);
+    // 10,000 × 88.9258 / 80.0000 = 11,115.725 → ₹11,115.73 (half up)
+    expect(tenThousandBecame(points, row('6M'))).toBe(1_111_573n);
+  });
+
+  it('is null for a period the history doesn’t cover', () => {
+    expect(tenThousandBecame(points, row('3Y'))).toBeNull();
   });
 });
