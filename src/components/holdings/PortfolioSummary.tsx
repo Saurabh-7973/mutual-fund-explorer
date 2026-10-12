@@ -48,7 +48,8 @@ export function PortfolioSummary({
   excluded,
 }: PortfolioSummaryProps) {
   const { colors, spacing } = useTheme();
-  // At large text sizes three figures can't share a row: each gets its own line.
+  // At large text sizes three figures can't share a row: each gets its own line, and amounts
+  // shorten to lakh/crore so they fit. Otherwise the summary is exact, to match the statement.
   const stacked = useWindowDimensions().fontScale > 1.3;
 
   if (loading) {
@@ -70,7 +71,7 @@ export function PortfolioSummary({
         </AppText>
         <MoneyHero value={totals.current} scale={VALUE_SCALE} />
         <View style={[styles.inline, { gap: spacing.sm, marginTop: spacing.xs }]}>
-          <ChangeChip amount={totals.gain} scale={VALUE_SCALE} pctHundredths={totals.returnHundredths} private compact />
+          <ChangeChip amount={totals.gain} scale={VALUE_SCALE} pctHundredths={totals.returnHundredths} private compact={stacked} />
           <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
             total return
           </AppText>
@@ -80,13 +81,13 @@ export function PortfolioSummary({
       <Card style={{ paddingVertical: spacing.md }}>
         <View style={stacked ? { gap: spacing.md } : styles.strip}>
           <Cell label="Invested" stacked={stacked}>
-            <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} compact />
+            <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} compact={stacked} />
           </Cell>
           {!stacked && <View style={[styles.divider, { backgroundColor: colors.hairline }]} />}
           <Cell label="Today" term="oneDay" stacked={stacked}>
             {dayGain !== null ? (
               <>
-                <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} private compact />
+                <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} private compact={stacked} />
                 <SignedPercent hundredths={dayGain.pctHundredths} variant="label" maxFontSizeMultiplier={1.3} />
               </>
             ) : (
