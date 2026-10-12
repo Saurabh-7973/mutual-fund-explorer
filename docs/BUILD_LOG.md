@@ -518,4 +518,4 @@ Presentation only: nothing in `src/domain`, `src/api`, `src/query` or `src/store
 ## Final check (12 Oct 2026)
 
 - README screenshots 02, 04 and 07 retaken for the last features (the "Other plans" chip, the returns toggle, the watchlist period button).
-- AI_CONTEXT.md finalised at the user's request: the Draft note and the drafting comments removed; the research-tools line states what is known (three earlier deep-research reports from other AI assistants) without naming tools. Other docs that mentioned the placeholder markers now say "author's-own-words sections". `git grep` finds no "[YOU]", "TODO" or "Draft" outside the lockfile.
+- AI_CONTEXT.md finalised at the user's request: the draft note and the drafting comments removed; the research-tools line states what is known (three earlier deep-research reports from other AI assistants) without naming tools. Other docs that mentioned the placeholder markers now say "author's-own-words sections". A search for the placeholder, to-do and draft markers finds none outside the lockfile.
