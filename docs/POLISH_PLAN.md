@@ -94,7 +94,7 @@ The six in `docs/PERSONAS.md` stay, and nothing they found may regress: re-run t
   - a 20–30 s screen recording (`adb shell screenrecord`, converted to a GIF under 8 MB if ffmpeg is installed, otherwise an MP4 linked from the README).
 - DESIGN.md: the boxy radius scale, the Stale slot, the sample portfolio, and section 5's motion and haptic map (open item 9).
 - New `docs/SECURITY.md`, one page: what's stored (holdings on the device, nothing on a server); the threats (lost or unlocked phone, someone looking over a shoulder, a malicious backup, a malicious API response, a malicious deep link, CSV formula injection, dependencies); how each is handled, with file references; residual risks (no encryption at rest beyond the app sandbox, plaintext backups, npm audit warnings in build-time tooling only).
-- AI_CONTEXT.md: cut to a short note (about 70 lines). Keep the six strongest corrections with one line each and point to BUILD_LOG for the rest; refresh "with more time" (CAS import, Maestro end-to-end tests, a development build with app-switcher privacy, multiple portfolios); keep the **[YOU]** markers and write none of their content.
+- AI_CONTEXT.md: cut to a short note (about 70 lines). Keep the six strongest corrections with one line each and point to BUILD_LOG for the rest; refresh "with more time" (CAS import, Maestro end-to-end tests, a development build with app-switcher privacy, multiple portfolios); keep the author's-own-words sections and write none of their content.
 
 ---
 

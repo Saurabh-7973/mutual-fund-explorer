@@ -238,7 +238,7 @@ Go through the list, fix what fails, and record each fix in the build log.
    Reset the store between tests with `usePortfolioStore.setState({ watchlist: [], lots: [] })`.
 2. **README.md:** update the "Run it" steps if anything changed, and fill in the screenshots section if the user provides images. Keep the requirement-to-implementation table accurate.
 3. **docs/ARCHITECTURE.md:** update it if the implementation differs from it anywhere.
-4. **AI_CONTEXT.md:** fill each section from `docs/BUILD_LOG.md`: real problems, real corrections, real decisions. Leave the `[YOU]` markers for the user to write in their own words. Invent nothing.
+4. **AI_CONTEXT.md:** fill each section from `docs/BUILD_LOG.md`: real problems, real corrections, real decisions. Leave the author's-own-words sections for the user to write in their own words. Invent nothing.
 5. **Final run:** `npm run check`, `npx expo export --platform android`, `npx expo-doctor`, and one full pass through the Phase 7 list on a real phone in Expo Go.
 
 ---

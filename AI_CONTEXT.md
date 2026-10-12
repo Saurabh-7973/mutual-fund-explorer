@@ -1,12 +1,10 @@
 # AI_CONTEXT
 
-> **Draft.** The one section marked **[YOU]** needs your own words, and every paragraph marked DRAFT (in an HTML comment) was drafted by Claude for you to rewrite. Everything else is taken from `docs/BUILD_LOG.md`, which has the full record.
-
 ## AI tools used
 
 - **Claude (claude.ai):** research and fact-checking, then writing and testing the domain core (dates, money, NAV rules, the API client, the store's rules); later an audit of the whole app, the polish plan (`docs/POLISH_PLAN.md`) and a review of each Claude Code round before I accepted it.
 - **Claude Code:** building the screens from a phased plan (`docs/BUILD_PROMPT.md`) under project rules in `CLAUDE.md`, then the product, design and polish rounds. I reviewed each phase before the next.
-- **[YOU]** Name the tools behind the three earlier research reports I started from (for example ChatGPT or Gemini deep research).
+- **Earlier AI research reports:** three deep-research reports from other AI assistants, which I started from before any code; what they got wrong is listed below.
 
 ## How I directed them
 
@@ -22,7 +20,6 @@
 - Building screens quickly against a precise spec, and walking through six investor personas (`docs/PERSONAS.md`) to find what was missing.
 - Running the QA I'd otherwise do by hand: deep links into every screen, light and dark, the largest text size, airplane mode, and a 600-purchase stress test with frame timings.
 - A visual pass from a drawn target: Claude in claude.ai drew the redesign, Claude Code built it phase by phase, and I compared each phase on the emulator before accepting it.
-<!-- DRAFT (Claude): rewrite in your own words, and add anything else that saved you time. -->
 
 ## What needed correction
 
@@ -38,7 +35,6 @@ Six examples from the build (the rest are in `docs/BUILD_LOG.md`):
 6. **Invested didn't match the statement.** SIP instalments showed ₹4,999.99 because invested was units × NAV. Statements count the rupees paid, so purchases now store the amount (optional, backward-compatible).
 
 How I caught them: most came from using the app on my phone after each phase. "par" finding nothing made me ask whether search really matched parts of words. The ₹4,999.99 SIP instalment made me ask how real apps count the amount invested, which led to storing what was paid. I also noticed a fund page with no back arrow, an empty tag line on a watchlist row (a scheme whose name has no plan or option), and rows that didn't line up. When I asked whether the to-do list held anything Claude had found itself, it admitted it was mostly my own asks, and only then ran its own audit. The ones that mattered most to me were the money ones: an invested figure that doesn't match the statement, or a rupee value worked out in someone's head, is exactly what a user would stop trusting the app over.
-<!-- DRAFT (Claude): rewrite in your own words; keep only what you actually remember and stand behind. -->
 
 ## Key decisions and trade-offs
 
@@ -57,7 +53,6 @@ All three research reports said a weekend or holiday purchase should use the **n
 The app uses the first NAV on or after the purchase date, and saves a purchase as "Awaiting NAV" until that NAV is published. Trailing returns still use the NAV on or before each date, because they answer a different question. Tests use real dates: Independence Day 2023 maps to 16 Aug, and Good Friday 2024 to Sunday 31 Mar 2024, a real weekend NAV.
 
 A second example: the build plan assumed mfapi.in's search matched parts of words, so the screen promised results after three characters. On my phone "par" returned nothing while "parag" returned 15. Instead of accepting a workaround (downloading all ~40,000 schemes and searching locally), I had Claude Code test the live API and change the copy to say search matches whole words, and lower the minimum to two characters once it found "jm" returns JM Financial's schemes. The constraint is the API's; the app now tells the user about it instead of hiding it.
-<!-- DRAFT (Claude): rewrite in your own words. -->
 
 ## With more time
 

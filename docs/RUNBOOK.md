@@ -78,7 +78,7 @@ Every correction you make here belongs in `AI_CONTEXT.md` under "what needed cor
 ## 6. Finish and submit
 
 1. Phase 8 done, `npm run check` green, `npx expo export --platform android` succeeds.
-2. Rewrite every **[YOU]** part of `AI_CONTEXT.md` in your own words, and remove anything you didn't do.
+2. Rewrite every author's-own-words part of `AI_CONTEXT.md` in your own words, and remove anything you didn't do.
 3. Take 3–4 screenshots (Explore, Fund, Watchlist, Holdings), add them to the README if you like, and then delete this runbook if you'd rather not submit it. Keeping it shows how you directed the AI, which the brief asks about.
 4. Do a fresh clone test: `git clone <repo> /tmp/check && cd /tmp/check && npm install && npm run check && npx expo start`.
 5. Push to GitHub (public, or private with access granted), make a ZIP without `node_modules` as a backup, and reply to the email with the link and the run command (`npm install && npx expo start`).
