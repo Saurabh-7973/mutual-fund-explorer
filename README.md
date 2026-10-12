@@ -53,7 +53,7 @@ One row per evaluation criterion in the brief, pointing to where it shows best.
 | Command | What it does |
 |---|---|
 | `npm run typecheck` | TypeScript, strict |
-| `npm test` | Jest: 279 tests in 34 suites on dates, money, NAV rules, links, parsing, the API client, the sample portfolio and the store, plus component tests (React Native Testing Library) for amounts, hidden amounts, the watchlist row, the SIP banner and Add holding |
+| `npm test` | Jest: 289 tests in 34 suites on dates, money, NAV rules, links, parsing, the API client, the sample portfolio and the store, plus component tests (React Native Testing Library) for amounts, hidden amounts, the watchlist row, the SIP banner and Add holding |
 | `npm run check` | Both |
 
 ## Screenshots
@@ -75,9 +75,9 @@ Android emulator, light mode, Expo Go (SDK 57), with the sample portfolio loaded
 ## Features
 
 - **Explore:** recently viewed funds with their NAV and today's move; search by name (debounced, from 2 characters, whole words), Direct/Regular and Growth/IDCW badges parsed from scheme names, "Direct only" and "Growth only" filters, a star to watch any fund, and suggestion chips before you type. Typing a scheme code opens that scheme directly.
-- **Fund screen:** the 3-year annualised return and today's move up front, a chart with 1M to All ranges and touch scrubbing, key facts, your own investment (value, return, XIRR, and every purchase on a timeline with your average cost after each), then collapsible sections that state their takeaway while closed: trailing returns from 1M to 10Y as a bar chart, "If you had invested" (a monthly SIP or one-time investment replayed on the fund's real NAVs), "How consistent were returns?" (worst, typical and best 3- and 5-year holding periods, plus the worst fall and how long it took to recover), and the full NAV history.
-- **Compare:** two funds on one chart as the growth of ₹10,000 from the same day, and a side-by-side table of returns, consistency and worst fall.
-- **Watchlist:** each fund's latest NAV with its date and today's change, a Stale flag for NAVs over 7 days old, pull to refresh, swipe to remove with Undo, and offline display from the saved cache.
+- **Fund screen:** the 3-year annualised return and today's move up front, a switch to the same scheme's other plans, a chart with 1M to All ranges and touch scrubbing, key facts, your own investment (value, return, XIRR, and every purchase on a timeline with your average cost after each), then collapsible sections that state their takeaway while closed: trailing returns from 1M to 10Y as a bar chart or as what ₹10,000 became, "If you had invested" (a monthly SIP or one-time investment replayed on the fund's real NAVs), "How consistent were returns?" (worst, typical and best 3- and 5-year holding periods, plus the worst fall and how long it took to recover), and the full NAV history.
+- **Compare:** two funds on one chart as the growth of ₹10,000 from the same day, and a side-by-side table of returns, consistency and worst fall. Pick the second fund from yours or search any fund.
+- **Watchlist:** each fund's latest NAV with its date and today's change (or its 1- or 3-year return, one tap away), a Stale flag for NAVs over 7 days old, pull to refresh, swipe to remove with Undo, and offline display from the saved cache.
 - **Holdings:** one row per fund with value, returns or XIRR (switchable, sortable); a summary with today's change, total return, invested, XIRR across purchases, and allocation by asset class or by fund; an eye toggle that hides rupee amounts.
 - **Adding purchases:** one purchase by units and date, or a monthly SIP in one go (amount and start date; every instalment priced at its first NAV on or after the date). The app's own calendar jumps by year and greys out dates outside the fund's data.
 - **For newcomers:** a plain-language explanation behind an ⓘ wherever a term like NAV, XIRR, CAGR, IDCW or Direct appears.
