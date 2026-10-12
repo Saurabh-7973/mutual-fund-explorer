@@ -1,5 +1,5 @@
 import { rescale } from '@/domain/decimal';
-import { formatInr } from '@/domain/format';
+import { formatInr, formatInrCompact } from '@/domain/format';
 import { changeDirection, spokenChange } from '@/domain/signed';
 
 import { AppText, type TextVariant } from './AppText';
@@ -16,6 +16,8 @@ export interface SignedAmountProps {
   maxFontSizeMultiplier?: number;
   /** The user's own money: shown as dots while amounts are hidden (the eye toggle). */
   private?: boolean;
+  /** "+₹1.31 L" from a lakh up; the spoken label keeps the exact amount. */
+  compact?: boolean;
 }
 
 /** "+₹1,763.24" in the gain colour, read as "gain of ₹1,763.24". The sign is judged after rounding to the paisa. */
@@ -25,6 +27,7 @@ export function SignedAmount({
   variant = 'body',
   maxFontSizeMultiplier,
   private: isPrivate = false,
+  compact = false,
 }: SignedAmountProps) {
   const hidden = useAmountsHidden() && isPrivate;
   const paise = rescale(value, scale, 2);
@@ -39,7 +42,7 @@ export function SignedAmount({
       maxFontSizeMultiplier={maxFontSizeMultiplier}
       accessibilityLabel={label}
     >
-      {hidden ? HIDDEN_AMOUNT : formatInr(value, scale, 'always')}
+      {hidden ? HIDDEN_AMOUNT : compact ? formatInrCompact(value, scale, 'always') : formatInr(value, scale, 'always')}
     </AppText>
   );
   // Only the user's own money swaps with the eye toggle, so only it fades.

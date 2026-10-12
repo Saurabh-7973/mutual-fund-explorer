@@ -114,7 +114,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
     );
   } else if (column === 'value') {
     primary = (
-      <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} />
+      <PrivateAmount value={fund.current} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} compact />
     );
     // Invested, under the value: the column switch's "Current" says which is which.
     secondary = (
@@ -124,12 +124,13 @@ export const FundHoldingRow = memo(function FundHoldingRow({
         variant="label"
         tone="muted"
         maxFontSizeMultiplier={1.3}
+        compact
         accessibilityLabel={`invested ${formatInr(fund.invested, VALUE_SCALE)}`}
       />
     );
   } else if (column === 'returns') {
     primary = (
-      <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} private />
+      <SignedAmount value={fund.gain} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} private compact />
     );
     secondary =
       fund.returnHundredths !== null ? (
@@ -138,7 +139,7 @@ export const FundHoldingRow = memo(function FundHoldingRow({
   } else if (column === 'day') {
     primary =
       dayGain !== null ? (
-        <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} private />
+        <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="heading" maxFontSizeMultiplier={1.3} private compact />
       ) : (
         <AppText variant="heading" tone="muted" maxFontSizeMultiplier={1.3}>
           —

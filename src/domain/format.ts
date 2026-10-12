@@ -53,11 +53,14 @@ export function formatInr(value: bigint, scale: number, mode: SignMode = 'negati
   return `${signFor(paise, mode)}₹${formatMagnitude(value, scale, 2)}`;
 }
 
-/** Compact rupees for headline figures: "₹12.35 L", "₹1.23 Cr"; full form below one lakh. */
-export function formatInrCompact(value: bigint, scale: number): string {
+/**
+ * Compact rupees for dense places (list rows, strips): "₹12.35 L", "₹1.23 Cr"; the full form
+ * below one lakh. `mode: 'always'` puts a "+" on gains, like `formatInr`.
+ */
+export function formatInrCompact(value: bigint, scale: number, mode: SignMode = 'negative-only'): string {
   const paise = rescale(value, scale, 2);
   const magnitude = paise < 0n ? -paise : paise;
-  const sign = paise < 0n ? MINUS : '';
+  const sign = signFor(paise, mode);
   const PAISE_PER_CRORE = 1_000_000_000n;
   const PAISE_PER_LAKH = 10_000_000n;
   // Lakhs to 2 decimals = paise / 10^5, rounded. 100.00 L or more reads better as crores.

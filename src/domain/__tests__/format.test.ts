@@ -54,6 +54,12 @@ describe('formatInrCompact', () => {
     expect(formatInrCompact(9_999_999n, 2)).toBe('₹99,999.99');
   });
 
+  it('signs gains and losses on request, judged after rounding', () => {
+    expect(formatInrCompact(13_121_458n, 2, 'always')).toBe('+₹1.31 L');
+    expect(formatInrCompact(-47_540n, 2, 'always')).toBe(`${MINUS}₹475.40`);
+    expect(formatInrCompact(0n, 2, 'always')).toBe('₹0.00');
+  });
+
   it('never shows "100.00 L": rounding up moves to crore', () => {
     expect(formatInrCompact(999_960_000n, 2)).toBe('₹1.00 Cr'); // ₹99,99,600
     expect(formatInrCompact(999_940_000n, 2)).toBe('₹99.99 L'); // ₹99,99,400

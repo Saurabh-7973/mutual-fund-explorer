@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
 import { rescale } from '@/domain/decimal';
-import { formatInr, formatPercentHundredths } from '@/domain/format';
+import { formatInr, formatInrCompact, formatPercentHundredths } from '@/domain/format';
 import { changeDirection, spokenChange } from '@/domain/signed';
 import { fonts } from '@/theme/tokens';
 import { useTheme } from '@/theme/useTheme';
@@ -20,6 +20,8 @@ export interface ChangeChipProps {
   pctHundredths: bigint | null;
   /** The user's own money: the rupee part becomes dots while amounts are hidden. */
   private?: boolean;
+  /** "+₹1.31 L" from a lakh up; the spoken label keeps the exact amount. */
+  compact?: boolean;
 }
 
 /**
@@ -27,7 +29,7 @@ export interface ChangeChipProps {
  * red on a red tint for a loss, grey for none; the sign is always printed and the label
  * says "gain of" or "loss of", so colour is never the only signal.
  */
-export function ChangeChip({ amount, scale, pctHundredths, private: isPrivate = false }: ChangeChipProps) {
+export function ChangeChip({ amount, scale, pctHundredths, private: isPrivate = false, compact = false }: ChangeChipProps) {
   const { colors, radius, spacing } = useTheme();
   const hidden = useAmountsHidden() && isPrivate;
   const paise = amount !== null ? rescale(amount, scale, 2) : null;
@@ -41,7 +43,7 @@ export function ChangeChip({ amount, scale, pctHundredths, private: isPrivate = 
   const parts: string[] = [];
   const spoken: string[] = [];
   if (amount !== null && paise !== null) {
-    parts.push(hidden ? HIDDEN_AMOUNT : formatInr(amount, scale, 'always'));
+    parts.push(hidden ? HIDDEN_AMOUNT : compact ? formatInrCompact(amount, scale, 'always') : formatInr(amount, scale, 'always'));
     spoken.push(hidden ? `${direction === 'none' ? 'no change' : direction}, amount hidden` : spokenChange(paise, formatInr(amount < 0n ? -amount : amount, scale)));
   }
   if (pctHundredths !== null) {

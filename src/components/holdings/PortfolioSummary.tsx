@@ -70,7 +70,7 @@ export function PortfolioSummary({
         </AppText>
         <MoneyHero value={totals.current} scale={VALUE_SCALE} />
         <View style={[styles.inline, { gap: spacing.sm, marginTop: spacing.xs }]}>
-          <ChangeChip amount={totals.gain} scale={VALUE_SCALE} pctHundredths={totals.returnHundredths} private />
+          <ChangeChip amount={totals.gain} scale={VALUE_SCALE} pctHundredths={totals.returnHundredths} private compact />
           <AppText variant="label" tone="muted" maxFontSizeMultiplier={1.3}>
             total return
           </AppText>
@@ -80,13 +80,13 @@ export function PortfolioSummary({
       <Card style={{ paddingVertical: spacing.md }}>
         <View style={stacked ? { gap: spacing.md } : styles.strip}>
           <Cell label="Invested" stacked={stacked}>
-            <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} />
+            <PrivateAmount value={totals.invested} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} compact />
           </Cell>
           {!stacked && <View style={[styles.divider, { backgroundColor: colors.hairline }]} />}
           <Cell label="Today" term="oneDay" stacked={stacked}>
             {dayGain !== null ? (
               <>
-                <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} private />
+                <SignedAmount value={dayGain.amount} scale={VALUE_SCALE} variant="rowTitle" maxFontSizeMultiplier={1.3} private compact />
                 <SignedPercent hundredths={dayGain.pctHundredths} variant="label" maxFontSizeMultiplier={1.3} />
               </>
             ) : (
