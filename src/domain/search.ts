@@ -103,3 +103,22 @@ export function rankSearchResults<T extends { schemeName: string }>(items: reado
   );
   return keyed.map((entry) => entry.item);
 }
+
+/**
+ * The same scheme's other plans and options (Direct/Regular × Growth/IDCW) among search
+ * results: same title, case aside, any other scheme code. Direct Growth first, as on Explore.
+ */
+export function otherPlans<T extends { schemeCode: number; schemeName: string }>(
+  results: readonly T[],
+  schemeCode: number,
+  schemeName: string,
+): T[] {
+  const title = describeScheme(schemeName).title.trim().toLowerCase();
+  const seen = new Set<number>([schemeCode]);
+  const same = results.filter((item) => {
+    if (seen.has(item.schemeCode)) return false;
+    seen.add(item.schemeCode);
+    return describeScheme(item.schemeName).title.trim().toLowerCase() === title;
+  });
+  return rankSearchResults(same);
+}

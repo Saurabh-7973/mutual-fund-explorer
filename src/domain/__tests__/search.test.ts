@@ -9,6 +9,7 @@ import {
   parseSchemeCode,
   rankSearchResults,
   schemeCodeInQuery,
+  otherPlans,
 } from '../search';
 
 describe('normalizeQuery', () => {
@@ -90,5 +91,24 @@ describe('rankSearchResults', () => {
       'Parag Parikh Liquid Fund - Direct Plan - Growth',
       'Parag Parikh Liquid Fund - Regular Plan - IDCW',
     ]);
+  });
+});
+
+describe('otherPlans', () => {
+  const results = [
+    { schemeCode: 122639, schemeName: 'Parag Parikh Flexi Cap Fund - Direct Plan - Growth' },
+    { schemeCode: 122640, schemeName: 'Parag Parikh Flexi Cap Fund - Regular Plan - Growth' },
+    { schemeCode: 153964, schemeName: 'Parag Parikh Flexi Cap Fund - Direct Plan - IDCW' },
+    { schemeCode: 143269, schemeName: 'Parag Parikh Liquid Fund - Direct Plan - Growth' },
+    { schemeCode: 153965, schemeName: 'PARAG PARIKH FLEXI CAP FUND - REGULAR PLAN - IDCW' },
+  ];
+
+  it('lists only the same scheme’s other plans, Direct Growth first, case aside', () => {
+    const others = otherPlans(results, 122640, 'Parag Parikh Flexi Cap Fund - Regular Plan - Growth');
+    expect(others.map((item) => item.schemeCode)).toEqual([122639, 153964, 153965]);
+  });
+
+  it('is empty when the scheme has no other plan in the results', () => {
+    expect(otherPlans(results, 143269, 'Parag Parikh Liquid Fund - Direct Plan - Growth')).toEqual([]);
   });
 });

@@ -13,6 +13,7 @@ import { AppText } from '../ui/AppText';
 import { Term, TermChip } from '../ui/Term';
 import { Banner } from '../ui/Banner';
 import { FundMark } from '../ui/FundMark';
+import { OtherPlans } from './OtherPlans';
 
 /** "Equity Scheme - Flexi Cap Fund" → "Equity · Flexi Cap", the way investors name categories. */
 function shortCategory(category: string | null): string | null {
@@ -59,6 +60,7 @@ export function FundHero({ name, meta, points }: { name: string; meta: SchemeMet
           {label.plan !== null && <TermChip term="direct" label={label.plan} />}
           {option !== null && <TermChip term="idcw" label={option} />}
           {category !== null && <TermChip term="assetClass" label={category} />}
+          <OtherPlans schemeCode={meta.schemeCode} schemeName={name} />
         </View>
       </View>
 
